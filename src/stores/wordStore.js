@@ -9,6 +9,7 @@ export const useWordStore = defineStore('word', () => {
   const currentStudyWord = ref(null)
   const showAnswer = ref(false)
   const loading = ref(false)
+  const loadedBookId = ref(null) // 缓存：当前已加载的词本 ID
 
   // 合并共享单词和个人进度
   function mergeWithProgress(dbWords) {
@@ -35,11 +36,20 @@ export const useWordStore = defineStore('word', () => {
 
   async function loadWords(bookId) {
     if (!supabase || !bookId) return
+    // 缓存命中：同词本不重复请求
+    if (loadedBookId.value === bookId && wordList.value.length) return
     loading.value = true
     const { data, error } = await supabase.from('words').select('*').eq('book_id', bookId).order('created_at')
     if (error) throw error
     wordList.value = mergeWithProgress(data)
+    loadedBookId.value = bookId
     loading.value = false
+  }
+
+  /** 强制刷新（增删后调用） */
+  async function reloadWords(bookId) {
+    loadedBookId.value = null
+    await loadWords(bookId || loadedBookId.value)
   }
 
   async function addWord(data) {
@@ -51,6 +61,7 @@ export const useWordStore = defineStore('word', () => {
     if (error) throw error
     if (inserted) {
       savePersonalProgress(inserted.id, { learnLevel: 0, nextReview: 0 })
+      loadedBookId.value = null // 清除缓存
       await loadWords(data.bookId)
     }
   }
@@ -59,6 +70,7 @@ export const useWordStore = defineStore('word', () => {
     if (!supabase) return
     await supabase.from('words').delete().eq('id', id)
     removePersonalProgress(id)
+    loadedBookId.value = null
   }
 
   function markRight(id) {
@@ -93,7 +105,7 @@ export const useWordStore = defineStore('word', () => {
   return {
     wordList, studyQueue, currentStudyWord, showAnswer, loading,
     reviewCount, wrongWordList,
-    loadWords, addWord, deleteWord,
+    loadWords, reloadWords, addWord, deleteWord,
     markRight, markWrong,
     initStudyQueue, nextWord, handleRight, handleWrong
   }
