@@ -3,15 +3,16 @@ import { ref, computed } from 'vue'
 import { supabase, getPersonalProgress, savePersonalProgress, removePersonalProgress } from '../utils/supabase'
 import { Storage, DB_KEYS } from '../utils/storage'
 
+const CACHE_PREFIX = 'cache_words_'
+
 export const useWordStore = defineStore('word', () => {
   const wordList = ref([])
   const studyQueue = ref([])
   const currentStudyWord = ref(null)
   const showAnswer = ref(false)
   const loading = ref(false)
-  const loadedBookId = ref(null) // 缓存：当前已加载的词本 ID
+  const loadedBookId = ref(null)
 
-  // 合并共享单词和个人进度
   function mergeWithProgress(dbWords) {
     const progress = getPersonalProgress()
     return (dbWords || []).map(w => ({
@@ -34,26 +35,54 @@ export const useWordStore = defineStore('word', () => {
     return wordList.value.filter(item => wrongIds.includes(item.id))
   })
 
+  /** 从 localStorage 恢复缓存 */
+  function restoreCache(bookId) {
+    try {
+      const cached = localStorage.getItem(CACHE_PREFIX + bookId)
+      if (cached) {
+        wordList.value = mergeWithProgress(JSON.parse(cached))
+        loadedBookId.value = bookId
+        return true
+      }
+    } catch (e) { /* ignore */ }
+    return false
+  }
+
+  function saveCache(bookId, data) {
+    try {
+      localStorage.setItem(CACHE_PREFIX + bookId, JSON.stringify(data))
+    } catch (e) { /* ignore */ }
+  }
+
   async function loadWords(bookId) {
     if (!supabase || !bookId) return
     // 缓存命中：同词本不重复请求
     if (loadedBookId.value === bookId && wordList.value.length) return
+    // 先显示缓存，再后台刷新
+    const hasCache = restoreCache(bookId)
+    if (hasCache) {
+      // 后台刷新
+      loadWordsFromServer(bookId)
+      return
+    }
+    await loadWordsFromServer(bookId)
+  }
+
+  async function loadWordsFromServer(bookId) {
+    if (!supabase || !bookId) return
     loading.value = true
     const { data, error } = await supabase.from('words').select('*').eq('book_id', bookId).order('created_at')
     if (error) throw error
-    wordList.value = mergeWithProgress(data)
+    const merged = mergeWithProgress(data)
+    wordList.value = merged
     loadedBookId.value = bookId
+    saveCache(bookId, data)
     loading.value = false
-  }
-
-  /** 强制刷新（增删后调用） */
-  async function reloadWords(bookId) {
-    loadedBookId.value = null
-    await loadWords(bookId || loadedBookId.value)
   }
 
   async function addWord(data) {
     if (!supabase) return
+    loading.value = true
     const { data: inserted, error } = await supabase.from('words').insert({
       book_id: data.bookId, word: data.word,
       phonetic: data.phonetic || '', mean: data.mean || '', sentence: data.sentence || ''
@@ -61,9 +90,11 @@ export const useWordStore = defineStore('word', () => {
     if (error) throw error
     if (inserted) {
       savePersonalProgress(inserted.id, { learnLevel: 0, nextReview: 0 })
-      loadedBookId.value = null // 清除缓存
-      await loadWords(data.bookId)
+      loadedBookId.value = null
+      localStorage.removeItem(CACHE_PREFIX + data.bookId)
+      await loadWordsFromServer(data.bookId)
     }
+    loading.value = false
   }
 
   async function deleteWord(id) {
@@ -105,7 +136,7 @@ export const useWordStore = defineStore('word', () => {
   return {
     wordList, studyQueue, currentStudyWord, showAnswer, loading,
     reviewCount, wrongWordList,
-    loadWords, reloadWords, addWord, deleteWord,
+    loadWords, addWord, deleteWord,
     markRight, markWrong,
     initStudyQueue, nextWord, handleRight, handleWrong
   }
