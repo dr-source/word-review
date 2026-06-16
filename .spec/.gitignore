@@ -1,0 +1,7 @@
+# SDD Cache
+.spec/cache/
+.spec/logs/
+
+# Temporary files
+*.tmp
+*.bak

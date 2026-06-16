@@ -1,0 +1,14 @@
+{
+  "name": "英语单词复习系统",
+  "short_name": "单词复习",
+  "description": "艾宾浩斯记忆曲线单词复习工具 - 翻卡/拼写/选择题",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#F8FAFC",
+  "theme_color": "#4A6CF7",
+  "icons": [
+    { "src": "/icon-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "/icon-512.png", "sizes": "512x512", "type": "image/png" },
+    { "src": "/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}

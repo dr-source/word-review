@@ -1,0 +1,16 @@
+{
+  "version": "1.0.0",
+  "currentStage": null,
+  "currentSpec": null,
+  "history": [],
+  "checkpoints": {},
+  "stages": {},
+  "metrics": {
+    "aiTimeSec": 0,
+    "iterations": {}
+  },
+  "metadata": {
+    "createdAt": "2026-06-15T11:58:11.408Z",
+    "updatedAt": "2026-06-15T11:58:11.408Z"
+  }
+}

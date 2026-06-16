@@ -1,0 +1,17 @@
+version: 1.0.0
+project:
+  name: word-review
+  type: unknown
+  platform: vehicle-hmi
+settings:
+  autoLint: true
+  autoTest: false
+hooks:
+  enabled: true
+  postWrite:
+    - compose-lint
+  postStage:
+    - save-state
+paths:
+  plugin_dir: C:\Users\uidq0405\.codechat\cli_app\marketplace\.claude-plugin\.agentpipe
+  scripts: C:\Users\uidq0405\.codechat\cli_app\marketplace\.claude-plugin\.agentpipe\scripts
