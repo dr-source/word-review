@@ -5,6 +5,25 @@
       <span class="app-title">单词复习</span>
     </div>
 
+    <!-- 词本切换器（所有人可见） -->
+    <div class="book-switcher">
+      <el-select
+        v-model="selectedBookId"
+        placeholder="选择词本"
+        size="small"
+        @change="switchBook"
+        :loading="bookStore.loading"
+        fit-input-width
+      >
+        <el-option
+          v-for="book in bookStore.bookList"
+          :key="book.id"
+          :label="book.name + ' (' + bookStore.getWordCount(book.id) + '词)'"
+          :value="book.id"
+        />
+      </el-select>
+    </div>
+
     <el-menu
       :default-active="currentRoute"
       mode="vertical"
@@ -31,26 +50,48 @@
 </template>
 
 <script setup>
-import { computed, ref } from 'vue'
+import { ref, computed, onMounted, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useAuthStore } from '../stores/authStore'
+import { useBookStore } from '../stores/bookStore'
+import { useWordStore } from '../stores/wordStore'
 
 const route = useRoute()
 const router = useRouter()
 const auth = useAuthStore()
+const bookStore = useBookStore()
+const wordStore = useWordStore()
 const currentRoute = computed(() => route.path)
+
+const selectedBookId = ref(null)
 
 const tapCount = ref(0)
 let tapTimer = null
+
+onMounted(async () => {
+  if (!bookStore.bookList.length) await bookStore.loadBooks()
+  selectedBookId.value = bookStore.currentBookId
+})
+
+watch(() => bookStore.currentBookId, (id) => {
+  selectedBookId.value = id
+})
+
+async function switchBook(id) {
+  if (id === bookStore.currentBookId) return
+  // 保存当前词本词数
+  if (wordStore.wordList.length > 0) {
+    bookStore.updateWordCount(bookStore.currentBookId, wordStore.wordList.length, true)
+  }
+  bookStore.selectBook(id)
+  await wordStore.loadWords(id)
+}
 
 function onTitleClick() {
   tapCount.value++
   clearTimeout(tapTimer)
   tapTimer = setTimeout(() => { tapCount.value = 0 }, 800)
-  if (tapCount.value >= 5) {
-    auth.enableAdmin()
-    tapCount.value = 0
-  }
+  if (tapCount.value >= 5) { auth.enableAdmin(); tapCount.value = 0 }
 }
 
 const allMenuItems = [
@@ -80,7 +121,7 @@ function handleSelect(index) {
   overflow: hidden;
 }
 .sidebar-header {
-  padding: 20px 20px 16px;
+  padding: 20px 20px 12px;
   border-bottom: 1px solid var(--color-border);
   display: flex;
   align-items: center;
@@ -90,6 +131,14 @@ function handleSelect(index) {
 }
 .logo-icon { font-size: 22px; }
 .app-title { font-size: 17px; font-weight: 700; color: var(--color-text); }
+
+/* 词本切换器 */
+.book-switcher {
+  padding: 10px 12px;
+  border-bottom: 1px solid var(--color-border);
+}
+.book-switcher .el-select { width: 100%; }
+
 .sidebar-menu { flex: 1; padding: 8px 0; border-right: none; }
 .sidebar-menu .el-menu-item {
   margin: 2px 8px;

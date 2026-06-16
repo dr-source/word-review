@@ -4,7 +4,9 @@
     <div class="welcome-section">
       <div class="welcome-text">
         <h1 class="greeting">📚 今天想学点什么？</h1>
-        <p class="subtitle">当前词本：<strong>{{ bookStore.currentBook.name || '暂无' }}</strong></p>
+        <p class="subtitle" style="cursor:pointer;" @click="showBookPicker = true">
+          当前词本：<strong>{{ bookStore.currentBook.name || '暂无' }}</strong> ✏️
+        </p>
       </div>
       <div class="progress-ring">
         <svg viewBox="0 0 120 120" class="ring-svg">
@@ -90,11 +92,25 @@
         </div>
       </div>
     </el-card>
+
+    <!-- 词本切换弹窗 -->
+    <el-dialog v-model="showBookPicker" title="选择词本" width="300px">
+      <el-radio-group v-model="tempBookId" direction="vertical" style="width:100%;">
+        <el-radio v-for="book in bookStore.bookList" :key="book.id" :value="book.id" style="margin-bottom:8px;">
+          {{ book.name }}
+          <span style="color:#909399;font-size:12px;margin-left:6px;">{{ bookStore.getWordCount(book.id) }}词</span>
+        </el-radio>
+      </el-radio-group>
+      <template #footer>
+        <el-button @click="showBookPicker = false">取消</el-button>
+        <el-button type="primary" @click="switchHomeBook">切换</el-button>
+      </template>
+    </el-dialog>
   </div>
 </template>
 
 <script setup>
-import { computed, onMounted } from 'vue'
+import { ref, computed, onMounted, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { useBookStore } from '../stores/bookStore'
 import { useWordStore } from '../stores/wordStore'
@@ -104,6 +120,8 @@ const router = useRouter()
 const bookStore = useBookStore()
 const wordStore = useWordStore()
 const stats = useStatsStore()
+const showBookPicker = ref(false)
+const tempBookId = ref(null)
 
 const RING_CIRCUMFERENCE = 2 * Math.PI * 54
 const DAILY_GOAL = 20
@@ -159,6 +177,14 @@ onMounted(async () => {
 
 function goStudy() { router.push('/study') }
 function goBooks() { router.push('/books') }
+
+async function switchHomeBook() {
+  if (!tempBookId.value || tempBookId.value === bookStore.currentBookId) { showBookPicker.value = false; return }
+  bookStore.selectBook(tempBookId.value)
+  await wordStore.loadWords(tempBookId.value)
+  await stats.loadStats(tempBookId.value)
+  showBookPicker.value = false
+}
 </script>
 
 <style scoped>
