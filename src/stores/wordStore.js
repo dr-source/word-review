@@ -1,64 +1,131 @@
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
-import {
-  getWordsByBook, addWord as addWordUtil, delWord, updateWord,
-  wordRight, wordWrong, getReviewWords, getNewWordsCount
-} from '../utils/word'
+import { supabase, getPersonalProgress, savePersonalProgress, removePersonalProgress } from '../utils/supabase'
 import { Storage, DB_KEYS } from '../utils/storage'
-import { useBookStore } from './bookStore'
 
 export const useWordStore = defineStore('word', () => {
   const wordList = ref([])
   const studyQueue = ref([])
   const currentStudyWord = ref(null)
   const showAnswer = ref(false)
+  const loading = ref(false)
+
+  // ---- 合并共享单词和个人进度 ----
+  function mergeWithProgress(dbWords) {
+    const progress = getPersonalProgress()
+    return (dbWords || []).map(w => ({
+      id: w.id,
+      bookId: w.book_id,
+      word: w.word,
+      phonetic: w.phonetic || '',
+      mean: w.mean || '',
+      sentence: w.sentence || '',
+      star: false,
+      note: '',
+      learnLevel: 0,
+      nextReview: 0,
+      createdAt: w.created_at,
+      // 叠加个人进度
+      ...(progress[w.id] || {})
+    }))
+  }
 
   // ---- Getters ----
   const reviewCount = computed(() => {
-    const bookId = useBookStore().currentBookId
-    if (!bookId) return 0
-    const review = getReviewWords(bookId).length
-    const newWords = getNewWordsCount(bookId)
+    if (!wordList.value.length) return 0
+    const now = Date.now()
+    const review = wordList.value.filter(w => w.nextReview > 0 && w.nextReview <= now).length
+    const newWords = wordList.value.filter(w => w.learnLevel === 0).length
     return review + newWords
   })
 
   const wrongWordList = computed(() => {
     const wrongIds = Storage.get(DB_KEYS.WRONG_WORDS) || []
-    const all = Storage.get(DB_KEYS.WORD_DATA) || []
-    return all.filter(item => wrongIds.includes(item.id))
+    return wordList.value.filter(item => wrongIds.includes(item.id))
   })
 
   // ---- Actions ----
-  function loadWords(bookId) {
-    wordList.value = getWordsByBook(bookId)
+  async function loadWords(bookId) {
+    if (!supabase || !bookId) return
+    loading.value = true
+    const { data } = await supabase
+      .from('words')
+      .select('*')
+      .eq('book_id', bookId)
+      .order('created_at')
+    wordList.value = mergeWithProgress(data)
+    loading.value = false
   }
 
-  function addWord(data) {
-    addWordUtil(data)
-    loadWords(data.bookId)
+  async function addWord(data) {
+    if (!supabase) return
+    const { data: inserted } = await supabase
+      .from('words')
+      .insert({
+        book_id: data.bookId,
+        word: data.word,
+        phonetic: data.phonetic || '',
+        mean: data.mean || '',
+        sentence: data.sentence || ''
+      })
+      .select()
+      .single()
+    if (inserted) {
+      // 初始化个人进度
+      savePersonalProgress(inserted.id, { learnLevel: 0, nextReview: 0, star: false, note: '' })
+      await loadWords(data.bookId)
+    }
   }
 
-  function deleteWord(id) {
-    delWord(id)
+  async function deleteWord(id) {
+    if (!supabase) return
+    await supabase.from('words').delete().eq('id', id)
+    removePersonalProgress(id)
   }
 
-  function editWord(id, data) {
-    updateWord(id, data)
+  async function editWord(id, data) {
+    if (!supabase) return
+    await supabase.from('words').update({
+      word: data.word,
+      phonetic: data.phonetic,
+      mean: data.mean,
+      sentence: data.sentence
+    }).eq('id', id)
   }
 
   function markRight(id) {
-    wordRight(id)
+    trackDailyStudy()
+    const progress = getPersonalProgress()
+    const word = progress[id] || { learnLevel: 0, nextReview: 0 }
+    let level = (word.learnLevel || 0) + 1
+    if (level >= 7) level = 7
+    const intervals = [5, 30, 1440, 2880, 5760, 10080, 20160, 43200]
+    savePersonalProgress(id, {
+      learnLevel: level,
+      nextReview: Date.now() + intervals[level] * 60 * 1000
+    })
+    // 从错题本移除
+    let wrong = Storage.get(DB_KEYS.WRONG_WORDS) || []
+    wrong = wrong.filter(w => w !== id)
+    Storage.set(DB_KEYS.WRONG_WORDS, wrong)
   }
 
   function markWrong(id) {
-    wordWrong(id)
+    trackDailyStudy()
+    savePersonalProgress(id, { learnLevel: 0, nextReview: Date.now() + 5 * 60 * 1000 })
+    let wrong = Storage.get(DB_KEYS.WRONG_WORDS) || []
+    if (!wrong.includes(id)) {
+      wrong.push(id)
+      Storage.set(DB_KEYS.WRONG_WORDS, wrong)
+    }
   }
 
   // ---- Study Queue ----
   function initStudyQueue(bookId) {
-    const review = getReviewWords(bookId)
-    const all = getWordsByBook(bookId).filter(item => item.learnLevel === 0)
-    studyQueue.value = [...review, ...all]
+    const now = Date.now()
+    const review = wordList.value.filter(w => w.nextReview > 0 && w.nextReview <= now)
+    const newWords = wordList.value.filter(w => w.learnLevel === 0)
+    studyQueue.value = [...review, ...newWords].sort(() => Math.random() - 0.5)
     nextWord()
   }
 
@@ -69,21 +136,33 @@ export const useWordStore = defineStore('word', () => {
 
   function handleRight() {
     if (!currentStudyWord.value) return
-    wordRight(currentStudyWord.value.id)
+    markRight(currentStudyWord.value.id)
     nextWord()
   }
 
   function handleWrong() {
     if (!currentStudyWord.value) return
-    wordWrong(currentStudyWord.value.id)
+    markWrong(currentStudyWord.value.id)
     nextWord()
   }
 
   return {
-    wordList, studyQueue, currentStudyWord, showAnswer,
+    wordList, studyQueue, currentStudyWord, showAnswer, loading,
     reviewCount, wrongWordList,
     loadWords, addWord, deleteWord, editWord,
     markRight, markWrong,
     initStudyQueue, nextWord, handleRight, handleWrong
   }
 })
+
+/** 记录每日学习数 */
+let _dailyTick = false
+function trackDailyStudy() {
+  if (_dailyTick) return
+  _dailyTick = true
+  setTimeout(() => { _dailyTick = false }, 1000)
+  const record = Storage.get(DB_KEYS.LEARN_RECORD) || {}
+  const today = new Date().toISOString().slice(0, 10)
+  record[today] = (record[today] || 0) + 1
+  Storage.set(DB_KEYS.LEARN_RECORD, record)
+}

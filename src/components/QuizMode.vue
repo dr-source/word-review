@@ -1,13 +1,11 @@
 <template>
   <div class="quiz-mode">
-    <!-- 进度 -->
     <div class="quiz-header">
       <span class="mode-badge">📝 选择题</span>
       <span class="quiz-progress">{{ doneCount }}/{{ totalCount }}</span>
     </div>
     <el-progress :percentage="progressPct" :stroke-width="6" :show-text="false" color="#F59E0B" />
 
-    <!-- 题目 -->
     <div class="quiz-card" v-if="currentWord">
       <h2 class="quiz-word">{{ currentWord.word }}</h2>
       <p class="quiz-hint">选择正确的释义</p>
@@ -32,27 +30,25 @@
         <p :class="isCorrect ? 'feedback-correct' : 'feedback-wrong'">
           {{ isCorrect ? '🎉 回答正确！' : '😅 正确答案是：' + currentWord.mean }}
         </p>
-        <el-button type="primary" @click="next" style="margin-top:8px;">
-          下一题
-        </el-button>
+        <el-button type="primary" @click="next" style="margin-top:8px;">下一题</el-button>
       </div>
     </div>
 
-    <el-empty v-if="!currentWord" description="答题完成！">
+    <el-empty v-if="!currentWord && !loading" description="答题完成！">
       <el-button type="primary" @click="$emit('done')">返回</el-button>
     </el-empty>
+    <el-empty v-if="loading" description="加载中..." />
   </div>
 </template>
 
 <script setup>
 import { ref, computed, watch } from 'vue'
-import { getWordsByBook } from '../utils/word'
+import { useWordStore } from '../stores/wordStore'
 import { wordRight, wordWrong } from '../utils/word'
 
-const props = defineProps({
-  bookId: { type: String, default: '' }
-})
+const props = defineProps({ bookId: { type: Number, default: 0 } })
 const emit = defineEmits(['done'])
+const wordStore = useWordStore()
 
 const words = ref([])
 const currentIdx = ref(0)
@@ -62,18 +58,21 @@ const selectedIdx = ref(-1)
 const answered = ref(false)
 const score = ref(0)
 const doneCount = ref(0)
+const loading = ref(false)
 
 const totalCount = computed(() => words.value.length)
 const progressPct = computed(() => totalCount.value ? Math.round((currentIdx.value / totalCount.value) * 100) : 0)
 const currentWord = computed(() => words.value[currentIdx.value])
 const isCorrect = computed(() => selectedIdx.value === correctIdx.value)
 
-watch(() => props.bookId, (id) => {
-  if (id) initQuiz(id)
+watch(() => props.bookId, async (id) => {
+  if (id) await initQuiz(id)
 }, { immediate: true })
 
-function initQuiz(bookId) {
-  const all = getWordsByBook(bookId)
+async function initQuiz(bookId) {
+  loading.value = true
+  await wordStore.loadWords(bookId)
+  const all = wordStore.wordList
     .filter(w => w.mean)
     .sort(() => Math.random() - 0.5)
     .slice(0, 20)
@@ -81,6 +80,7 @@ function initQuiz(bookId) {
   currentIdx.value = 0
   score.value = 0
   doneCount.value = 0
+  loading.value = false
   generateOptions()
 }
 
@@ -90,9 +90,8 @@ function generateOptions() {
   selectedIdx.value = -1
   answered.value = false
 
-  // 从所有词中随机取3个干扰项
-  const all = getWordsByBook(props.bookId).filter(w => w.mean && w.id !== word.id)
-  const distractors = all
+  const distractors = wordStore.wordList
+    .filter(w => w.mean && w.id !== word.id)
     .sort(() => Math.random() - 0.5)
     .slice(0, 3)
     .map(w => w.mean)

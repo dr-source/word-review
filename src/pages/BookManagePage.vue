@@ -207,13 +207,13 @@ const filteredWords = computed(() => {
   )
 })
 
-onMounted(() => {
-  if (!bookStore.bookList.length) bookStore.loadBooks()
-  if (bookStore.currentBookId) wordStore.loadWords(bookStore.currentBookId)
+onMounted(async () => {
+  if (!bookStore.bookList.length) await bookStore.loadBooks()
+  if (bookStore.currentBookId) await wordStore.loadWords(bookStore.currentBookId)
 })
 
-watch(() => bookStore.currentBookId, (id) => {
-  if (id) wordStore.loadWords(id)
+watch(() => bookStore.currentBookId, async (id) => {
+  if (id) await wordStore.loadWords(id)
 })
 
 function wordCountByBook(bookId) {

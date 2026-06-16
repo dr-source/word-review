@@ -5,14 +5,14 @@ import 'element-plus/dist/index.css'
 import * as ElementPlusIconsVue from '@element-plus/icons-vue'
 import App from './App.vue'
 import router from './router'
-import { initDefaultData } from './utils/word'
+import { Storage, DB_KEYS } from './utils/storage'
 
-// 初始化默认数据
-initDefaultData()
+// 初始化 localStorage 的个人数据键
+if (!Storage.get(DB_KEYS.LEARN_RECORD)) Storage.set(DB_KEYS.LEARN_RECORD, {})
+if (!Storage.get(DB_KEYS.WRONG_WORDS)) Storage.set(DB_KEYS.WRONG_WORDS, [])
 
 const app = createApp(App)
 
-// 注册所有图标
 for (const [key, component] of Object.entries(ElementPlusIconsVue)) {
   app.component(key, component)
 }

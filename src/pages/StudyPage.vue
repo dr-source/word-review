@@ -79,8 +79,8 @@ const studyMode = ref('flashcard')
 const showBookSelector = ref(false)
 const tempBookId = ref('')
 
-onMounted(() => {
-  if (!bookStore.bookList.length) bookStore.loadBooks()
+onMounted(async () => {
+  if (!bookStore.bookList.length) await bookStore.loadBooks()
   if (!bookStore.currentBookId && bookStore.bookList.length) {
     bookStore.selectBook(bookStore.bookList[0].id)
   }

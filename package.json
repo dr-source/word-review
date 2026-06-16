@@ -11,6 +11,7 @@
     "dist": "npm run build && npm run serve"
   },
   "dependencies": {
+    "@supabase/supabase-js": "^2.108.2",
     "axios": "^1.18.0",
     "chart.js": "^4.5.1",
     "element-plus": "^2.14.2",

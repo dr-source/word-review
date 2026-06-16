@@ -148,10 +148,10 @@ function barPercent(levelGroup) {
   return 0
 }
 
-onMounted(() => {
-  if (!bookStore.bookList.length) bookStore.loadBooks()
+onMounted(async () => {
+  if (!bookStore.bookList.length) await bookStore.loadBooks()
   if (bookStore.currentBookId) {
-    wordStore.loadWords(bookStore.currentBookId)
+    await wordStore.loadWords(bookStore.currentBookId)
   }
 })
 

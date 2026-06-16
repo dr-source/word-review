@@ -17,7 +17,7 @@
         class="study-progress-bar"
       />
 
-      <div class="flashcard-wrapper" @click="handleShowAnswer" v-if="!isFlipping">
+      <div class="flashcard-wrapper" @click="handleShowAnswer">
         <div class="flashcard" :class="{ flipped: showAnswer }">
           <div class="flashcard-inner">
             <div class="flashcard-front">
@@ -67,22 +67,26 @@
       </div>
     </div>
 
-    <el-empty v-else description="当前词本暂无待背诵单词">
+    <el-empty v-else-if="!loading" description="当前词本暂无待背诵单词">
       <el-button type="primary" @click="router.push('/books')">去添加单词</el-button>
     </el-empty>
+    <el-empty v-else description="加载中..." />
   </div>
 </template>
 
 <script setup>
-import { ref, computed, onMounted, onUnmounted, watch, nextTick } from 'vue'
+import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
 import { useRouter } from 'vue-router'
-import { getWordsByBook, getReviewWords, updateWord } from '../utils/word'
-import { useSpeech } from '../composables/useSpeech'
+import { useWordStore } from '../stores/wordStore'
 import { useBookStore } from '../stores/bookStore'
+import { savePersonalProgress } from '../utils/supabase'
+import { Storage, DB_KEYS } from '../utils/storage'
+import { useSpeech } from '../composables/useSpeech'
 
-const props = defineProps({ bookId: { type: String, default: '' } })
+const props = defineProps({ bookId: { type: Number, default: 0 } })
 const router = useRouter()
 const bookStore = useBookStore()
+const wordStore = useWordStore()
 const { speak } = useSpeech()
 
 const studyQueue = ref([])
@@ -91,24 +95,15 @@ const showAnswer = ref(false)
 const studiedCount = ref(0)
 const totalCount = ref(0)
 const ratingLocked = ref(false)
+const loading = ref(false)
 
 const progressPercent = computed(() => {
   if (!totalCount.value) return 0
   return Math.round((studiedCount.value / totalCount.value) * 100)
 })
 
-const isFlipping = ref(false)
-
-// 移动端滑动手势
-import { useTouchSwipe } from '../composables/useTouchSwipe'
-useTouchSwipe('.flashcard', {
-  onSwipeLeft: () => { if (showAnswer.value) handleRating('again') },
-  onSwipeRight: () => { if (showAnswer.value) handleRating('good') },
-  onSwipeUp: () => { if (!showAnswer.value) handleShowAnswer() }
-})
-
-watch(() => props.bookId, (id) => {
-  if (id) startStudy()
+watch(() => props.bookId, async (id) => {
+  if (id) await startStudy()
 }, { immediate: true })
 
 onMounted(() => {
@@ -119,13 +114,17 @@ onUnmounted(() => {
   window.removeEventListener('keydown', handleKeydown)
 })
 
-function startStudy() {
+async function startStudy() {
   if (!props.bookId) return
-  const review = getReviewWords(props.bookId)
-  const all = getWordsByBook(props.bookId).filter(item => item.learnLevel === 0)
-  studyQueue.value = [...review, ...all].sort(() => Math.random() - 0.5)
+  loading.value = true
+  await wordStore.loadWords(props.bookId)
+  const now = Date.now()
+  const review = wordStore.wordList.filter(w => w.nextReview > 0 && w.nextReview <= now)
+  const newWords = wordStore.wordList.filter(w => w.learnLevel === 0)
+  studyQueue.value = [...review, ...newWords].sort(() => Math.random() - 0.5)
   studiedCount.value = 0
   totalCount.value = studyQueue.value.length
+  loading.value = false
   nextWord()
 }
 
@@ -144,14 +143,18 @@ function handleRating(type) {
   const word = currentWord.value
 
   if (type === 'again') {
-    updateWord(word.id, { learnLevel: 0, nextReview: Date.now() + 5 * 60 * 1000 })
+    savePersonalProgress(word.id, { learnLevel: 0, nextReview: Date.now() + 5 * 60 * 1000 })
   } else if (type === 'hard') {
     const level = Math.max(0, (word.learnLevel || 0) - 1)
-    updateWord(word.id, { learnLevel: level, nextReview: Date.now() + 30 * 60 * 1000 })
+    const intervals = [5, 30, 1440, 2880, 5760, 10080, 20160, 43200]
+    savePersonalProgress(word.id, {
+      learnLevel: level,
+      nextReview: Date.now() + intervals[level] * 60 * 1000
+    })
   } else if (type === 'good') {
     const level = Math.min((word.learnLevel || 0) + 1, 7)
     const intervals = [5, 30, 1440, 2880, 5760, 10080, 20160, 43200]
-    updateWord(word.id, {
+    savePersonalProgress(word.id, {
       learnLevel: level,
       nextReview: Date.now() + intervals[level] * 60 * 1000
     })
@@ -230,7 +233,6 @@ function handleKeydown(e) {
 .slide-up-enter-from { opacity: 0; transform: translateY(20px); }
 .slide-up-leave-to { opacity: 0; transform: translateY(-10px); }
 
-/* 移动端响应式 */
 @media (max-width: 640px) {
   .flashcard { height: 220px; }
   .flashcard-front, .flashcard-back { padding: 20px; }

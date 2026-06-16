@@ -26,10 +26,7 @@
           size="large"
           :disabled="!userInput || answered"
           @click="checkAnswer"
-          class="check-btn"
-        >
-          确认
-        </el-button>
+        >确认</el-button>
       </div>
 
       <div v-if="answered" class="spelling-result">
@@ -43,20 +40,22 @@
       </div>
     </div>
 
-    <el-empty v-if="!currentWord" description="拼写练习完成！">
+    <el-empty v-if="!currentWord && !loading" description="拼写练习完成！">
       <el-button type="primary" @click="$emit('done')">返回</el-button>
     </el-empty>
+    <el-empty v-if="loading" description="加载中..." />
   </div>
 </template>
 
 <script setup>
 import { ref, computed, watch, nextTick } from 'vue'
-import { getWordsByBook } from '../utils/word'
+import { useWordStore } from '../stores/wordStore'
 import { wordRight, wordWrong } from '../utils/word'
 import { useSpeech } from '../composables/useSpeech'
 
-const props = defineProps({ bookId: { type: String, default: '' } })
+const props = defineProps({ bookId: { type: Number, default: 0 } })
 const emit = defineEmits(['done'])
+const wordStore = useWordStore()
 const { speak } = useSpeech()
 
 const words = ref([])
@@ -65,6 +64,7 @@ const userInput = ref('')
 const answered = ref(false)
 const score = ref(0)
 const doneCount = ref(0)
+const loading = ref(false)
 const inputRef = ref(null)
 
 const totalCount = computed(() => words.value.length)
@@ -75,12 +75,14 @@ const isCorrect = computed(() => {
   return userInput.value.trim().toLowerCase() === currentWord.value.word.toLowerCase()
 })
 
-watch(() => props.bookId, (id) => {
-  if (id) init(id)
+watch(() => props.bookId, async (id) => {
+  if (id) await init(id)
 }, { immediate: true })
 
-function init(bookId) {
-  const all = getWordsByBook(bookId).filter(w => w.mean)
+async function init(bookId) {
+  loading.value = true
+  await wordStore.loadWords(bookId)
+  const all = wordStore.wordList.filter(w => w.mean)
     .sort(() => Math.random() - 0.5)
     .slice(0, 20)
   words.value = all
@@ -89,6 +91,7 @@ function init(bookId) {
   doneCount.value = 0
   userInput.value = ''
   answered.value = false
+  loading.value = false
   nextTick(() => inputRef.value?.focus())
 }
 
@@ -126,8 +129,7 @@ function next() {
 .mean-display { font-size: 22px; font-weight: 600; color: var(--color-text); margin-bottom: 8px; }
 .phonetic-hint { font-size: 14px; color: var(--color-primary); margin-bottom: 4px; }
 .sentence-hint { font-size: 13px; color: var(--color-text-muted); font-style: italic; margin-bottom: 20px; }
-.input-row { display: flex; gap: 8px; margin-bottom: 0; }
-.check-btn { min-width: 80px; }
+.input-row { display: flex; gap: 8px; }
 .spelling-result { margin-top: 20px; }
 .result-correct { color: #16A34A; font-weight: 600; font-size: 16px; }
 .result-wrong { color: #DC2626; font-weight: 600; font-size: 16px; }
