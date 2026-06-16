@@ -51,6 +51,14 @@ const router = createRouter({
   routes
 })
 
+// 路由守卫：非管理员访问 /books 跳转到首页
+router.beforeEach((to) => {
+  if (to.path === '/books') {
+    const isAdmin = localStorage.getItem('word_review_admin') === 'true'
+    if (!isAdmin) return '/'
+  }
+})
+
 router.onError((err) => {
   console.error('[router] 导航错误:', err)
 })

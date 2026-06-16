@@ -29,18 +29,25 @@
 </template>
 
 <script setup>
+import { computed } from 'vue'
 import { useRoute } from 'vue-router'
+import { useAuthStore } from './stores/authStore'
 import AppSidebar from './components/AppSidebar.vue'
 
 const route = useRoute()
+const auth = useAuthStore()
 
-const mobileMenu = [
+const allMobileMenu = [
   { path: '/', label: '首页', icon: 'House' },
   { path: '/study', label: '背诵', icon: 'Reading' },
-  { path: '/books', label: '词本', icon: 'DocumentAdd' },
+  { path: '/books', label: '词本', icon: 'DocumentAdd', admin: true },
   { path: '/wrong', label: '错题', icon: 'Warning' },
   { path: '/stats', label: '统计', icon: 'DataAnalysis' }
 ]
+
+const mobileMenu = computed(() =>
+  auth.isAdmin ? allMobileMenu : allMobileMenu.filter(m => !m.admin)
+)
 </script>
 
 <style>
