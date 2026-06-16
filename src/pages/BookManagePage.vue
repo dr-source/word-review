@@ -247,6 +247,8 @@ async function refreshCounts() {
 onMounted(async () => {
   if (!bookStore.bookList.length) await bookStore.loadBooks()
   if (bookStore.currentBookId) await wordStore.loadWords(bookStore.currentBookId)
+  // 每次进入页面刷新词数，防止缓存过期
+  await bookStore.loadWordCounts()
 })
 
 watch(() => bookStore.currentBookId, async (id) => {
