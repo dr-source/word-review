@@ -33,12 +33,12 @@
 
 <script setup>
 import { ref, computed, watch } from 'vue'
-import { getWordsByBook } from '../utils/word'
-import { wordRight, wordWrong } from '../utils/word'
+import { useWordStore } from '../stores/wordStore'
 
-const props = defineProps({ bookId: { type: String, default: '' } })
+const props = defineProps({ bookId: { type: Number, default: 0 } })
 const emit = defineEmits(['done'])
 
+const wordStore = useWordStore()
 const words = ref([])
 const currentIdx = ref(0)
 const options = ref([])
@@ -52,10 +52,11 @@ const progressPct = computed(() => totalCount.value ? Math.round((currentIdx.val
 const currentWord = computed(() => words.value[currentIdx.value])
 const isCorrect = computed(() => selectedIdx.value === correctIdx.value)
 
-watch(() => props.bookId, (id) => { if (id) initQuiz(id) }, { immediate: true })
+watch(() => props.bookId, async (id) => { if (id) await initQuiz(id) }, { immediate: true })
 
-function initQuiz(bookId) {
-  const all = getWordsByBook(bookId).filter(w => w.mean).sort(() => Math.random() - 0.5).slice(0, 20)
+async function initQuiz(bookId) {
+  await wordStore.loadWords(bookId)
+  const all = wordStore.wordList.filter(w => w.mean).sort(() => Math.random() - 0.5).slice(0, 20)
   words.value = all
   currentIdx.value = 0; doneCount.value = 0; generateOptions()
 }
@@ -63,7 +64,7 @@ function initQuiz(bookId) {
 function generateOptions() {
   const word = currentWord.value; if (!word) return
   selectedIdx.value = -1; answered.value = false
-  const distractors = getWordsByBook(props.bookId).filter(w => w.mean && w.id !== word.id).sort(() => Math.random() - 0.5).slice(0, 3).map(w => w.mean)
+  const distractors = wordStore.wordList.filter(w => w.mean && w.id !== word.id).sort(() => Math.random() - 0.5).slice(0, 3).map(w => w.mean)
   const opts = [word.mean, ...distractors].sort(() => Math.random() - 0.5)
   options.value = opts; correctIdx.value = opts.indexOf(word.mean)
 }
@@ -71,8 +72,8 @@ function generateOptions() {
 function handleSelect(idx) {
   if (answered.value) return
   selectedIdx.value = idx; answered.value = true; doneCount.value++
-  if (idx === correctIdx.value) wordRight(currentWord.value.id)
-  else wordWrong(currentWord.value.id)
+  if (idx === correctIdx.value) wordStore.markRight(currentWord.value.id)
+  else wordStore.markWrong(currentWord.value.id)
 }
 
 function next() { currentIdx.value++; if (currentWord.value) generateOptions() }

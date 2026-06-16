@@ -3,21 +3,26 @@ import { createClient } from '@supabase/supabase-js'
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL
 const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY
 
-if (!supabaseUrl || !supabaseAnonKey) {
-  console.warn('⚠️ Supabase 未配置，请设置 VITE_SUPABASE_URL 和 VITE_SUPABASE_ANON_KEY')
+let client = null
+let clientReady = false
+
+if (supabaseUrl && supabaseAnonKey) {
+  try {
+    client = createClient(supabaseUrl, supabaseAnonKey)
+    clientReady = true
+  } catch (e) {
+    console.warn('Supabase 客户端初始化失败:', e)
+  }
 }
 
-export const supabase = supabaseUrl && supabaseAnonKey
-  ? createClient(supabaseUrl, supabaseAnonKey)
-  : null
+export const supabase = client
+export const isSupabaseReady = clientReady
 
 /** 个人学习进度 key（localStorage） */
 const PROGRESS_KEY = 'word_personal_progress'
 
 export function getPersonalProgress() {
-  try {
-    return JSON.parse(localStorage.getItem(PROGRESS_KEY) || '{}')
-  } catch { return {} }
+  try { return JSON.parse(localStorage.getItem(PROGRESS_KEY) || '{}') } catch { return {} }
 }
 
 export function savePersonalProgress(wordId, data) {

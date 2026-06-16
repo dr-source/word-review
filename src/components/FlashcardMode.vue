@@ -8,9 +8,7 @@
           <span class="progress-text" v-else>复习</span>
         </div>
       </div>
-
       <el-progress :percentage="progressPercent" :stroke-width="6" :show-text="false" color="#4A6CF7" class="study-progress-bar" />
-
       <div class="flashcard-wrapper" @click="handleShowAnswer">
         <div class="flashcard" :class="{ flipped: showAnswer }">
           <div class="flashcard-inner">
@@ -26,15 +24,13 @@
           </div>
         </div>
       </div>
-
       <div class="study-actions">
-        <div class="action-row speech-row">
+        <div class="speech-row">
           <el-button size="small" circle @click="speak(currentWord.word)"><el-icon><Microphone /></el-icon></el-button>
           <span class="speech-label">美音</span>
           <el-button size="small" circle @click="speak(currentWord.word, true)"><el-icon><Microphone /></el-icon></el-button>
           <span class="speech-label">英音</span>
         </div>
-
         <transition name="slide-up">
           <div v-if="showAnswer" class="rating-buttons">
             <el-button class="rating-btn rating-again" :disabled="ratingLocked" @click="handleRating('again')">
@@ -50,7 +46,7 @@
         </transition>
       </div>
     </div>
-
+    <el-empty v-else-if="loading" description="加载中..." />
     <el-empty v-else description="当前词本暂无待背诵单词">
       <el-button type="primary" @click="router.push('/books')">去添加单词</el-button>
     </el-empty>
@@ -60,12 +56,14 @@
 <script setup>
 import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
 import { useRouter } from 'vue-router'
-import { getWordsByBook, getReviewWords, updateWord } from '../utils/word'
-import { Storage, DB_KEYS } from '../utils/storage'
+import { useWordStore } from '../stores/wordStore'
+import { useBookStore } from '../stores/bookStore'
 import { useSpeech } from '../composables/useSpeech'
 
-const props = defineProps({ bookId: { type: String, default: '' } })
+const props = defineProps({ bookId: { type: Number, default: 0 } })
 const router = useRouter()
+const wordStore = useWordStore()
+const bookStore = useBookStore()
 const { speak } = useSpeech()
 
 const studyQueue = ref([])
@@ -74,56 +72,46 @@ const showAnswer = ref(false)
 const studiedCount = ref(0)
 const totalCount = ref(0)
 const ratingLocked = ref(false)
+const loading = ref(false)
 
 const progressPercent = computed(() => {
   if (!totalCount.value) return 0
   return Math.round((studiedCount.value / totalCount.value) * 100)
 })
 
-watch(() => props.bookId, (id) => {
-  if (id) startStudy()
-}, { immediate: true })
+watch(() => props.bookId, async (id) => { if (id) await startStudy() }, { immediate: true })
+onMounted(() => window.addEventListener('keydown', handleKeydown))
+onUnmounted(() => window.removeEventListener('keydown', handleKeydown))
 
-onMounted(() => { window.addEventListener('keydown', handleKeydown) })
-onUnmounted(() => { window.removeEventListener('keydown', handleKeydown) })
-
-function startStudy() {
+async function startStudy() {
   if (!props.bookId) return
-  const review = getReviewWords(props.bookId)
-  const all = getWordsByBook(props.bookId).filter(item => item.learnLevel === 0)
-  studyQueue.value = [...review, ...all].sort(() => Math.random() - 0.5)
+  loading.value = true
+  await wordStore.loadWords(props.bookId)
+  const now = Date.now()
+  const review = wordStore.wordList.filter(w => w.nextReview > 0 && w.nextReview <= now)
+  const newWords = wordStore.wordList.filter(w => w.learnLevel === 0)
+  studyQueue.value = [...review, ...newWords].sort(() => Math.random() - 0.5)
   studiedCount.value = 0
   totalCount.value = studyQueue.value.length
+  loading.value = false
   nextWord()
 }
 
-function nextWord() {
-  showAnswer.value = false
-  currentWord.value = studyQueue.value.shift() || null
-}
-
+function nextWord() { showAnswer.value = false; currentWord.value = studyQueue.value.shift() || null }
 function handleShowAnswer() { showAnswer.value = true }
 
 function handleRating(type) {
   if (ratingLocked.value || !currentWord.value) return
   ratingLocked.value = true
-  const word = currentWord.value
-  if (type === 'again') {
-    updateWord(word.id, { learnLevel: 0, nextReview: Date.now() + 5 * 60 * 1000 })
-  } else if (type === 'hard') {
-    const level = Math.max(0, (word.learnLevel || 0) - 1)
-    updateWord(word.id, { learnLevel: level, nextReview: Date.now() + 30 * 60 * 1000 })
-  } else if (type === 'good') {
-    const level = Math.min((word.learnLevel || 0) + 1, 7)
-    const intervals = [5, 30, 1440, 2880, 5760, 10080, 20160, 43200]
-    updateWord(word.id, { learnLevel: level, nextReview: Date.now() + intervals[level] * 60 * 1000 })
-  }
+  if (type === 'again') wordStore.markWrong(currentWord.value.id)
+  else if (type === 'hard') wordStore.markWrong(currentWord.value.id)
+  else wordStore.markRight(currentWord.value.id)
   studiedCount.value++
   setTimeout(() => { nextWord(); ratingLocked.value = false }, 200)
 }
 
 function handleKeydown(e) {
-  if (e.key === ' ' || e.key === 'Enter') { e.preventDefault(); if (!showAnswer.value) handleShowAnswer() }
+  if ((e.key === ' ' || e.key === 'Enter') && !showAnswer.value) { e.preventDefault(); handleShowAnswer() }
   if (showAnswer.value) {
     if (e.key === '1') handleRating('again')
     if (e.key === '2') handleRating('hard')

@@ -206,13 +206,13 @@ const filteredWords = computed(() => {
   )
 })
 
-onMounted(() => {
-  if (!bookStore.bookList.length) bookStore.loadBooks()
-  if (bookStore.currentBookId) wordStore.loadWords(bookStore.currentBookId)
+onMounted(async () => {
+  if (!bookStore.bookList.length) await bookStore.loadBooks()
+  if (bookStore.currentBookId) await wordStore.loadWords(bookStore.currentBookId)
 })
 
-watch(() => bookStore.currentBookId, (id) => {
-  if (id) wordStore.loadWords(id)
+watch(() => bookStore.currentBookId, async (id) => {
+  if (id) await wordStore.loadWords(id)
 })
 
 function wordCountByBook(bookId) {
@@ -223,29 +223,29 @@ function selectBook(book) {
   bookStore.selectBook(book.id)
 }
 
-function handleDeleteBook(book) {
-  bookStore.deleteBook(book.id)
-  wordStore.loadWords(bookStore.currentBookId)
+async function handleDeleteBook(book) {
+  await bookStore.deleteBook(book.id)
+  if (bookStore.currentBookId) await wordStore.loadWords(bookStore.currentBookId)
 }
 
-function handleAddBook() {
+async function handleAddBook() {
   if (!newBookName.value) return
-  bookStore.addBook(newBookName.value)
+  await bookStore.addBook(newBookName.value)
   newBookName.value = ''
 }
 
-function handleAddWord() {
+async function handleAddWord() {
   if (!addForm.value.word || !bookStore.currentBookId) return
-  wordStore.addWord({
+  await wordStore.addWord({
     bookId: bookStore.currentBookId,
     ...addForm.value
   })
   addForm.value = { word: '', phonetic: '', mean: '', sentence: '' }
 }
 
-function handleDeleteWord(id) {
-  wordStore.deleteWord(id)
-  wordStore.loadWords(bookStore.currentBookId)
+async function handleDeleteWord(id) {
+  await wordStore.deleteWord(id)
+  if (bookStore.currentBookId) await wordStore.loadWords(bookStore.currentBookId)
 }
 
 function openImport() {

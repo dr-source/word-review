@@ -32,14 +32,14 @@
 
 <script setup>
 import { ref, computed, watch, nextTick } from 'vue'
-import { getWordsByBook } from '../utils/word'
-import { wordRight, wordWrong } from '../utils/word'
+import { useWordStore } from '../stores/wordStore'
 import { useSpeech } from '../composables/useSpeech'
 
-const props = defineProps({ bookId: { type: String, default: '' } })
+const props = defineProps({ bookId: { type: Number, default: 0 } })
 const emit = defineEmits(['done'])
 const { speak } = useSpeech()
 
+const wordStore = useWordStore()
 const words = ref([])
 const currentIdx = ref(0)
 const userInput = ref('')
@@ -56,10 +56,11 @@ const isCorrect = computed(() => {
   return userInput.value.trim().toLowerCase() === currentWord.value.word.toLowerCase()
 })
 
-watch(() => props.bookId, (id) => { if (id) init(id) }, { immediate: true })
+watch(() => props.bookId, async (id) => { if (id) await init(id) }, { immediate: true })
 
-function init(bookId) {
-  const all = getWordsByBook(bookId).filter(w => w.mean).sort(() => Math.random() - 0.5).slice(0, 20)
+async function init(bookId) {
+  await wordStore.loadWords(bookId)
+  const all = wordStore.wordList.filter(w => w.mean).sort(() => Math.random() - 0.5).slice(0, 20)
   words.value = all; currentIdx.value = 0; score.value = 0; doneCount.value = 0
   userInput.value = ''; answered.value = false
   nextTick(() => inputRef.value?.focus())
@@ -68,8 +69,8 @@ function init(bookId) {
 function checkAnswer() {
   if (!userInput.value || answered.value) return
   answered.value = true; doneCount.value++
-  if (isCorrect.value) { score.value++; wordRight(currentWord.value.id); speak(currentWord.value.word) }
-  else wordWrong(currentWord.value.id)
+  if (isCorrect.value) { score.value++; wordStore.markRight(currentWord.value.id); speak(currentWord.value.word) }
+  else wordStore.markWrong(currentWord.value.id)
 }
 
 function next() {
