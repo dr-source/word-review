@@ -52,7 +52,7 @@
             建议优先复习这些容易遗忘的词。
           </p>
         </div>
-        <el-button type="primary" @click="router.push('/study')">开始复习</el-button>
+        <el-button type="primary" @click="reviewWrong">开始复习</el-button>
       </div>
     </el-card>
   </div>
@@ -67,8 +67,11 @@ const router = useRouter()
 const wordStore = useWordStore()
 const { speak } = useSpeech()
 
-function speakWord(text) {
-  speak(text)
+function speakWord(text) { speak(text) }
+
+function reviewWrong() {
+  wordStore.studyFilter = 'wrong'
+  router.push('/study')
 }
 </script>
 

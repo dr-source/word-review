@@ -20,6 +20,7 @@ export const useWordStore = defineStore('word', () => {
   const showAnswer = ref(false)
   const loading = ref(false)
   const loadedBookId = ref(null)
+  const studyFilter = ref('') // '' = 全部, 'wrong' = 仅错题
 
   function mergeWithProgress(dbWords) {
     const progress = getPersonalProgress()
@@ -157,10 +158,16 @@ export const useWordStore = defineStore('word', () => {
   }
 
   function initStudyQueue(bookId) {
-    const now = Date.now()
-    const review = wordList.value.filter(w => w.nextReview > 0 && w.nextReview <= now)
-    const newWords = wordList.value.filter(w => w.learnLevel === 0)
-    studyQueue.value = [...review, ...newWords].sort(() => Math.random() - 0.5)
+    if (studyFilter.value === 'wrong') {
+      const wrongIds = Storage.get(DB_KEYS.WRONG_WORDS) || []
+      studyQueue.value = wordList.value.filter(w => wrongIds.includes(w.id)).sort(() => Math.random() - 0.5)
+      studyFilter.value = ''
+    } else {
+      const now = Date.now()
+      const review = wordList.value.filter(w => w.nextReview > 0 && w.nextReview <= now)
+      const newWords = wordList.value.filter(w => w.learnLevel === 0)
+      studyQueue.value = [...review, ...newWords].sort(() => Math.random() - 0.5)
+    }
     nextWord()
   }
 
@@ -169,7 +176,7 @@ export const useWordStore = defineStore('word', () => {
   function handleWrong() { if (currentStudyWord.value) { markWrong(currentStudyWord.value.id); nextWord() } }
 
   return {
-    wordList, studyQueue, currentStudyWord, showAnswer, loading,
+    wordList, studyQueue, currentStudyWord, showAnswer, loading, studyFilter,
     reviewCount, wrongWordList,
     loadWords, addWord, batchAddWords, deleteWord,
     markRight, markWrong,

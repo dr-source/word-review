@@ -88,17 +88,17 @@ async function startStudy() {
   if (!props.bookId) return
   loading.value = true
   await wordStore.loadWords(props.bookId)
-  const now = Date.now()
-  const review = wordStore.wordList.filter(w => w.nextReview > 0 && w.nextReview <= now)
-  const newWords = wordStore.wordList.filter(w => w.learnLevel === 0)
-  studyQueue.value = [...review, ...newWords].sort(() => Math.random() - 0.5)
+  wordStore.initStudyQueue(props.bookId)
   studiedCount.value = 0
-  totalCount.value = studyQueue.value.length
+  totalCount.value = wordStore.studyQueue.length
   loading.value = false
   nextWord()
 }
 
-function nextWord() { showAnswer.value = false; currentWord.value = studyQueue.value.shift() || null }
+function nextWord() {
+  showAnswer.value = false
+  currentWord.value = wordStore.studyQueue.shift() || null
+}
 function handleShowAnswer() { showAnswer.value = true }
 
 function handleRating(type) {
