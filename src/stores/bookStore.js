@@ -1,6 +1,7 @@
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
 import { supabase } from '../utils/supabase'
+import { ElMessage } from 'element-plus'
 
 export const useBookStore = defineStore('book', () => {
   const bookList = ref([])
@@ -12,9 +13,10 @@ export const useBookStore = defineStore('book', () => {
   )
 
   async function loadBooks() {
-    if (!supabase) return
+    if (!supabase) { ElMessage.error('Supabase 未配置'); return }
     loading.value = true
-    const { data } = await supabase.from('books').select('*').order('created_at')
+    const { data, error } = await supabase.from('books').select('*').order('created_at')
+    if (error) { ElMessage.error('加载词本失败：' + error.message); loading.value = false; return }
     bookList.value = data || []
     if (bookList.value.length && !currentBookId.value) {
       currentBookId.value = bookList.value[0].id
@@ -23,8 +25,9 @@ export const useBookStore = defineStore('book', () => {
   }
 
   async function addBook(name) {
-    if (!supabase) return
-    const { data } = await supabase.from('books').insert({ name }).select().single()
+    if (!supabase) { ElMessage.error('Supabase 未配置'); return }
+    const { data, error } = await supabase.from('books').insert({ name }).select().single()
+    if (error) { ElMessage.error('添加词本失败：' + error.message); return }
     if (data) {
       currentBookId.value = data.id
       await loadBooks()

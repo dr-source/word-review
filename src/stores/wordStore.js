@@ -1,5 +1,6 @@
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
+import { ElMessage } from 'element-plus'
 import { supabase, getPersonalProgress, savePersonalProgress, removePersonalProgress } from '../utils/supabase'
 import { Storage, DB_KEYS } from '../utils/storage'
 
@@ -46,20 +47,22 @@ export const useWordStore = defineStore('word', () => {
 
   // ---- Actions ----
   async function loadWords(bookId) {
-    if (!supabase || !bookId) return
+    if (!supabase) { ElMessage.error('Supabase 未配置'); return }
+    if (!bookId) return
     loading.value = true
-    const { data } = await supabase
+    const { data, error } = await supabase
       .from('words')
       .select('*')
       .eq('book_id', bookId)
       .order('created_at')
+    if (error) { ElMessage.error('加载单词失败：' + error.message); loading.value = false; return }
     wordList.value = mergeWithProgress(data)
     loading.value = false
   }
 
   async function addWord(data) {
-    if (!supabase) return
-    const { data: inserted } = await supabase
+    if (!supabase) { ElMessage.error('Supabase 未配置'); return }
+    const { data: inserted, error } = await supabase
       .from('words')
       .insert({
         book_id: data.bookId,
@@ -70,8 +73,8 @@ export const useWordStore = defineStore('word', () => {
       })
       .select()
       .single()
+    if (error) { ElMessage.error('添加单词失败：' + error.message); return }
     if (inserted) {
-      // 初始化个人进度
       savePersonalProgress(inserted.id, { learnLevel: 0, nextReview: 0, star: false, note: '' })
       await loadWords(data.bookId)
     }
