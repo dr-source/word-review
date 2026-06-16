@@ -1,6 +1,7 @@
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
 import { supabase } from '../utils/supabase'
+import { useWordStore } from './wordStore'
 
 const CACHE_KEY = 'cache_books'
 const COUNTS_KEY = 'cache_word_counts'
@@ -16,7 +17,18 @@ export const useBookStore = defineStore('book', () => {
     bookList.value.find(b => b.id === currentBookId.value) || { id: null, name: '' }
   )
 
-  function getWordCount(bookId) { return wordCounts.value[bookId] || 0 }
+  function getWordCount(bookId) {
+    // 优先用全量统计
+    if (wordCounts.value[bookId] !== undefined) return wordCounts.value[bookId]
+    // 如果当前打开的词本有数据，直接用 wordList 长度
+    if (bookId === currentBookId.value) {
+      try {
+        const ws = useWordStore()
+        if (ws.wordList.length > 0) return ws.wordList.length
+      } catch (e) { /* ignore */ }
+    }
+    return 0
+  }
 
   /** 从 localStorage 恢复缓存，实现秒开 */
   function restoreCache() {
@@ -43,10 +55,10 @@ export const useBookStore = defineStore('book', () => {
 
   async function loadWordCounts() {
     if (!supabase) return
-    const { data } = await supabase.from('words').select('book_id')
-    if (!data) return
+    const { data, error } = await supabase.from('words').select('book_id')
+    if (error) { console.error('词数统计失败:', error); return }
     const counts = {}
-    for (const w of data) counts[w.book_id] = (counts[w.book_id] || 0) + 1
+    for (const w of data || []) counts[w.book_id] = (counts[w.book_id] || 0) + 1
     wordCounts.value = counts
   }
 
