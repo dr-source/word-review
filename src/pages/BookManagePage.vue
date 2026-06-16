@@ -42,7 +42,7 @@
           >
             <div class="book-item">
               <span class="book-name">{{ book.name }}</span>
-              <span class="book-count">{{ bookStore.getWordCount(book.id) }}词</span>
+              <span class="book-count">{{ book.id === bookStore.currentBookId ? wordStore.wordList.length : bookStore.getWordCount(book.id) }}词</span>
               <el-popconfirm
                 title="删除后词本内所有单词也会被删除，确定吗？"
                 @confirm.stop="handleDeleteBook(book)"
@@ -247,8 +247,6 @@ async function refreshCounts() {
 onMounted(async () => {
   if (!bookStore.bookList.length) await bookStore.loadBooks()
   if (bookStore.currentBookId) await wordStore.loadWords(bookStore.currentBookId)
-  // 每次进入页面刷新词数，防止缓存过期
-  await bookStore.loadWordCounts()
 })
 
 watch(() => bookStore.currentBookId, async (id) => {
@@ -277,13 +275,13 @@ async function handleAddWord() {
     ...addForm.value
   })
   addForm.value = { word: '', phonetic: '', mean: '', sentence: '' }
-  await bookStore.loadWordCounts() // 刷新词数
+  bookStore.updateWordCount(bookStore.currentBookId, 1)
 }
 
 async function handleDeleteWord(id) {
   await wordStore.deleteWord(id)
   if (bookStore.currentBookId) await wordStore.loadWords(bookStore.currentBookId)
-  await bookStore.loadWordCounts() // 刷新词数
+  bookStore.updateWordCount(bookStore.currentBookId, -1)
 }
 
 function openImport() {

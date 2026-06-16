@@ -281,8 +281,8 @@ async function confirmImport() {
     importProgress.value = 100
     importedCount.value = result.count
 
-    // 刷新词本词数
-    await bookStore.loadWordCounts()
+    // 直接增加词数，不走全量统计
+    if (result.count > 0) bookStore.updateWordCount(bookStore.currentBookId, result.count)
 
     if (result.count > 0) {
       resultType.value = 'success'

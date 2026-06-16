@@ -1,7 +1,6 @@
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
 import { supabase } from '../utils/supabase'
-import { useWordStore } from './wordStore'
 
 const CACHE_KEY = 'cache_books'
 const COUNTS_KEY = 'cache_word_counts'
@@ -18,34 +17,31 @@ export const useBookStore = defineStore('book', () => {
   )
 
   function getWordCount(bookId) {
-    // 优先用全量统计
-    if (wordCounts.value[bookId] !== undefined) return wordCounts.value[bookId]
-    // 如果当前打开的词本有数据，直接用 wordList 长度
-    if (bookId === currentBookId.value) {
-      try {
-        const ws = useWordStore()
-        if (ws.wordList.length > 0) return ws.wordList.length
-      } catch (e) { /* ignore */ }
-    }
-    return 0
+    return wordCounts.value[bookId] ?? 0
   }
 
-  /** 从 localStorage 恢复缓存，实现秒开 */
+  /** 增/减某个词本的单词计数（实时更新，不依赖全量统计） */
+  function updateWordCount(bookId, delta) {
+    wordCounts.value = {
+      ...wordCounts.value,
+      [bookId]: (wordCounts.value[bookId] || 0) + delta
+    }
+    saveCache()
+  }
+
+  /** 从 localStorage 恢复缓存 */
   function restoreCache() {
     try {
       const cached = localStorage.getItem(CACHE_KEY)
       if (cached) {
         bookList.value = JSON.parse(cached)
-        if (bookList.value.length && !currentBookId.value) {
-          currentBookId.value = bookList.value[0].id
-        }
+        if (bookList.value.length && !currentBookId.value) currentBookId.value = bookList.value[0].id
       }
       const counts = localStorage.getItem(COUNTS_KEY)
-      if (counts) wordCounts.value = { ...wordCounts.value, ...JSON.parse(counts) }
+      if (counts) wordCounts.value = JSON.parse(counts)
     } catch (e) { /* ignore */ }
   }
 
-  /** 保存到 localStorage 缓存 */
   function saveCache() {
     try {
       localStorage.setItem(CACHE_KEY, JSON.stringify(bookList.value))
@@ -53,10 +49,11 @@ export const useBookStore = defineStore('book', () => {
     } catch (e) { /* ignore */ }
   }
 
+  /** 全量统计（只在首次加载时使用） */
   async function loadWordCounts() {
     if (!supabase) return
     const { data, error } = await supabase.from('words').select('book_id')
-    if (error) { console.error('词数统计失败:', error); return }
+    if (error) return
     const counts = {}
     for (const w of data || []) counts[w.book_id] = (counts[w.book_id] || 0) + 1
     wordCounts.value = counts
