@@ -1,5 +1,5 @@
 <template>
-  <el-dialog v-model="visible" title="批量导入单词" width="520px">
+  <el-dialog v-model="visible" title="批量导入单词" width="520px" :close-on-click-modal="!importing">
     <div style="margin-bottom: 12px; color: #666; font-size: 14px;">
       <p>支持 .xlsx / .csv / .txt 格式</p>
       <p style="margin-top:4px;">
@@ -15,12 +15,13 @@
       :on-change="handleFileChange"
       :limit="1"
       accept=".xlsx,.xls,.csv,.txt"
+      :disabled="importing"
     >
-      <el-button type="primary">选择文件</el-button>
+      <el-button type="primary" :disabled="importing">选择文件</el-button>
     </el-upload>
 
     <!-- 导入预览 -->
-    <div v-if="previewRows.length" style="margin-top:16px;">
+    <div v-if="previewRows.length && !importing" style="margin-top:16px;">
       <el-tag type="success" size="small" style="margin-bottom:8px;">
         已识别 {{ matchedCount }} 条单词
       </el-tag>
@@ -34,12 +35,41 @@
       </p>
     </div>
 
+    <!-- 导入进度 -->
+    <div v-if="importing" style="margin-top:16px; text-align:center;">
+      <el-progress :percentage="importProgress" :stroke-width="12" striped striped-flow />
+      <p style="margin-top:8px; color:#909399; font-size:13px;">
+        正在导入 {{ importedCount }}/{{ matchedCount }} 条...
+      </p>
+    </div>
+
+    <!-- 导入完成提示 -->
+    <el-alert
+      v-if="showResult"
+      :title="resultMsg"
+      :type="resultType"
+      show-icon
+      :closable="false"
+      style="margin-top:12px;"
+    />
+
+    <!-- 导入完成后的操作提示 -->
+    <el-card v-if="showResult && resultType === 'success'" shadow="never" style="margin-top:12px; background:#fafafa;">
+      <template #header><span style="font-weight:600; font-size:14px;">💡 提示</span></template>
+      <ul style="margin:0; padding-left:18px; font-size:13px; line-height:2; color:#606266;">
+        <li>词本列表的 <strong>词数</strong> 会自动更新</li>
+        <li>如果仍显示 <strong>0词</strong>，点击左侧词本名称切换一下即可刷新</li>
+        <li>切换到 <strong>背诵</strong> 页面即可开始学习</li>
+      </ul>
+    </el-card>
+
     <template #footer>
-      <el-button @click="visible = false">关闭</el-button>
+      <el-button @click="handleClose" :disabled="importing">关闭</el-button>
       <el-button
-        v-if="previewRows.length"
+        v-if="previewRows.length && !importing"
         type="primary"
         @click="confirmImport"
+        :loading="importing"
       >
         确认导入 {{ matchedCount }} 条
       </el-button>
@@ -61,6 +91,14 @@ let parsedRows = []
 const previewRows = ref([])
 const matchedCount = ref(0)
 
+// 导入状态
+const importing = ref(false)
+const importProgress = ref(0)
+const importedCount = ref(0)
+const showResult = ref(false)
+const resultMsg = ref('')
+const resultType = ref('success')
+
 // 常见列名映射
 const COLUMN_KEYS = {
   word: ['word', '单词', '英文', 'english', '单词', '词汇', 'name'],
@@ -74,6 +112,16 @@ function open() {
   parsedRows = []
   previewRows.value = []
   matchedCount.value = 0
+  importing.value = false
+  importProgress.value = 0
+  importedCount.value = 0
+  showResult.value = false
+  resultMsg.value = ''
+  resultType.value = 'success'
+}
+
+function handleClose() {
+  visible.value = false
 }
 
 /** 检测某行是否为表头行 */
@@ -219,21 +267,39 @@ function handleFileChange(file) {
   }
 }
 
-function confirmImport() {
-  previewRows.value.forEach(item => {
-    wordStore.addWord({
-      bookId: bookStore.currentBookId,
-      word: item.word,
-      phonetic: item.phonetic || '',
-      mean: item.mean || '',
-      sentence: item.sentence || ''
-    })
-  })
-  wordStore.loadWords(bookStore.currentBookId)
-  visible.value = false
-  previewRows.value = []
-  matchedCount.value = 0
+async function confirmImport() {
+  importing.value = true
+  importProgress.value = 0
+  importedCount.value = 0
+  showResult.value = false
+
+  const items = previewRows.value
+  try {
+    // 模拟进度：先快速到 30%（准备中），然后等待插入结果
+    importProgress.value = 10
+    const result = await wordStore.batchAddWords(bookStore.currentBookId, items)
+    importProgress.value = 100
+    importedCount.value = result.count
+
+    // 刷新词本词数
+    await bookStore.loadWordCounts()
+
+    if (result.count > 0) {
+      resultType.value = 'success'
+      resultMsg.value = `✅ 成功导入 ${result.count} 条单词！`
+    } else {
+      resultType.value = 'warning'
+      resultMsg.value = '没有导入任何单词，请检查文件格式'
+    }
+  } catch (e) {
+    resultType.value = 'error'
+    resultMsg.value = '导入失败：' + (e.message || '请检查网络连接后重试')
+    importProgress.value = 0
+  }
+  showResult.value = true
+  importing.value = false
+  // 不清空预览，让用户看到导入结果
 }
 
-defineExpose({ open })
+defineExpose({ open, handleClose })
 </script>

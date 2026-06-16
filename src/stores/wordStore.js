@@ -97,6 +97,31 @@ export const useWordStore = defineStore('word', () => {
     loading.value = false
   }
 
+  /** 批量插入单词（一次性提交，大幅提升导入速度） */
+  async function batchAddWords(bookId, words) {
+    if (!supabase || !words.length) return { count: 0 }
+    loading.value = true
+    const rows = words.map(w => ({
+      book_id: bookId,
+      word: w.word,
+      phonetic: w.phonetic || '',
+      mean: w.mean || '',
+      sentence: w.sentence || ''
+    }))
+    const { data: inserted, error } = await supabase.from('words').insert(rows).select()
+    if (error) throw error
+    if (inserted && inserted.length) {
+      for (const row of inserted) {
+        savePersonalProgress(row.id, { learnLevel: 0, nextReview: 0 })
+      }
+      loadedBookId.value = null
+      localStorage.removeItem(CACHE_PREFIX + bookId)
+      await loadWordsFromServer(bookId)
+    }
+    loading.value = false
+    return { count: inserted?.length || 0 }
+  }
+
   async function deleteWord(id) {
     if (!supabase) return
     await supabase.from('words').delete().eq('id', id)
@@ -136,7 +161,7 @@ export const useWordStore = defineStore('word', () => {
   return {
     wordList, studyQueue, currentStudyWord, showAnswer, loading,
     reviewCount, wrongWordList,
-    loadWords, addWord, deleteWord,
+    loadWords, addWord, batchAddWords, deleteWord,
     markRight, markWrong,
     initStudyQueue, nextWord, handleRight, handleWrong
   }

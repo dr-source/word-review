@@ -1,5 +1,5 @@
 import { defineStore } from 'pinia'
-import { ref, computed, reactive } from 'vue'
+import { ref, computed } from 'vue'
 import { supabase } from '../utils/supabase'
 
 const CACHE_KEY = 'cache_books'
@@ -9,14 +9,14 @@ export const useBookStore = defineStore('book', () => {
   const bookList = ref([])
   const currentBookId = ref(null)
   const loading = ref(false)
-  const wordCounts = reactive({})
+  const wordCounts = ref({}) // ref 在 Pinia 中响应更可靠
   let loaded = false
 
   const currentBook = computed(() =>
     bookList.value.find(b => b.id === currentBookId.value) || { id: null, name: '' }
   )
 
-  function getWordCount(bookId) { return wordCounts[bookId] || 0 }
+  function getWordCount(bookId) { return wordCounts.value[bookId] || 0 }
 
   /** 从 localStorage 恢复缓存，实现秒开 */
   function restoreCache() {
@@ -29,7 +29,7 @@ export const useBookStore = defineStore('book', () => {
         }
       }
       const counts = localStorage.getItem(COUNTS_KEY)
-      if (counts) Object.assign(wordCounts, JSON.parse(counts))
+      if (counts) wordCounts.value = { ...wordCounts.value, ...JSON.parse(counts) }
     } catch (e) { /* ignore */ }
   }
 
@@ -37,7 +37,7 @@ export const useBookStore = defineStore('book', () => {
   function saveCache() {
     try {
       localStorage.setItem(CACHE_KEY, JSON.stringify(bookList.value))
-      localStorage.setItem(COUNTS_KEY, JSON.stringify({ ...wordCounts }))
+      localStorage.setItem(COUNTS_KEY, JSON.stringify(wordCounts.value))
     } catch (e) { /* ignore */ }
   }
 
@@ -47,7 +47,7 @@ export const useBookStore = defineStore('book', () => {
     if (!data) return
     const counts = {}
     for (const w of data) counts[w.book_id] = (counts[w.book_id] || 0) + 1
-    Object.assign(wordCounts, counts)
+    wordCounts.value = counts
   }
 
   async function loadBooks(force = false) {

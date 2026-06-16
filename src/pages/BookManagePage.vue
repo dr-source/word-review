@@ -3,6 +3,14 @@
     <!-- 左侧：词本列表 -->
     <el-col :xs="24" :sm="24" :md="8">
       <el-card header="教材词本">
+        <template #header>
+          <div style="display:flex; justify-content:space-between; align-items:center;">
+            <span>教材词本</span>
+            <el-button size="small" text @click="refreshCounts" :loading="refreshing" title="刷新词数">
+              <el-icon><Refresh /></el-icon>
+            </el-button>
+          </div>
+        </template>
         <div class="book-header-row">
           <el-input
             v-model="newBookName"
@@ -15,6 +23,16 @@
             新增词本
           </el-button>
         </div>
+        <!-- 词数提示条 -->
+        <el-alert
+          v-if="showZeroHint"
+          title="词本显示 0 词？点击右侧 🔄 刷新按钮重新计数，或切换词本名称刷新"
+          type="warning"
+          :closable="true"
+          show-icon
+          size="small"
+          style="margin-bottom:8px;"
+        />
         <ul class="book-list">
           <li
             v-for="book in bookStore.bookList"
@@ -154,6 +172,7 @@
 <script setup>
 import { ref, computed, onMounted, watch } from 'vue'
 import { ElMessage } from 'element-plus'
+import { Refresh, Delete } from '@element-plus/icons-vue'
 import { useBookStore } from '../stores/bookStore'
 import { useWordStore } from '../stores/wordStore'
 import { lookupWord, dictSize } from '../utils/dictionary'
@@ -165,6 +184,8 @@ const wordStore = useWordStore()
 const importDialogRef = ref(null)
 const newBookName = ref('')
 const searchText = ref('')
+const refreshing = ref(false)
+const showZeroHint = ref(false)
 
 const addForm = ref({
   word: '', phonetic: '', mean: '', sentence: ''
@@ -205,6 +226,24 @@ const filteredWords = computed(() => {
   )
 })
 
+// 检测是否有词本词数明显不对（有选中词本但显示0词）
+watch([() => bookStore.currentBookId, () => bookStore.wordCounts], () => {
+  const id = bookStore.currentBookId
+  if (!id) { showZeroHint.value = false; return }
+  // 如果当前词本显示0词，但右侧单词列表有词，说明词数缓存过期
+  const count = bookStore.getWordCount(id)
+  const hasWords = wordStore.wordList.length > 0
+  showZeroHint.value = count === 0 && hasWords
+}, { immediate: true })
+
+async function refreshCounts() {
+  refreshing.value = true
+  await bookStore.loadWordCounts()
+  showZeroHint.value = false
+  ElMessage.success('词数已刷新')
+  refreshing.value = false
+}
+
 onMounted(async () => {
   if (!bookStore.bookList.length) await bookStore.loadBooks()
   if (bookStore.currentBookId) await wordStore.loadWords(bookStore.currentBookId)
@@ -236,11 +275,13 @@ async function handleAddWord() {
     ...addForm.value
   })
   addForm.value = { word: '', phonetic: '', mean: '', sentence: '' }
+  await bookStore.loadWordCounts() // 刷新词数
 }
 
 async function handleDeleteWord(id) {
   await wordStore.deleteWord(id)
   if (bookStore.currentBookId) await wordStore.loadWords(bookStore.currentBookId)
+  await bookStore.loadWordCounts() // 刷新词数
 }
 
 function openImport() {
