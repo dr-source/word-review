@@ -97,6 +97,6 @@ export const useBookStore = defineStore('book', () => {
 
   function selectBook(id) { currentBookId.value = id }
 
-  return { bookList, currentBookId, currentBook, loading, wordCounts, getWordCount,
+  return { bookList, currentBookId, currentBook, loading, wordCounts, getWordCount, updateWordCount,
     loadBooks, loadWordCounts, addBook, deleteBook, selectBook }
 })
