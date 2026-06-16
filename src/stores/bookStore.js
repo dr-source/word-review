@@ -20,11 +20,11 @@ export const useBookStore = defineStore('book', () => {
     return wordCounts.value[bookId] ?? 0
   }
 
-  /** 增/减某个词本的单词计数（实时更新，不依赖全量统计） */
-  function updateWordCount(bookId, delta) {
+  /** 增/减/设置 某个词本的单词计数 */
+  function updateWordCount(bookId, deltaOrValue, isSet = false) {
     wordCounts.value = {
       ...wordCounts.value,
-      [bookId]: (wordCounts.value[bookId] || 0) + delta
+      [bookId]: isSet ? deltaOrValue : (wordCounts.value[bookId] || 0) + deltaOrValue
     }
     saveCache()
   }

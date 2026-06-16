@@ -254,6 +254,10 @@ watch(() => bookStore.currentBookId, async (id) => {
 })
 
 function selectBook(book) {
+  // 切走前保存当前词本的词数
+  if (bookStore.currentBookId && book.id !== bookStore.currentBookId && wordStore.wordList.length > 0) {
+    bookStore.updateWordCount(bookStore.currentBookId, wordStore.wordList.length, true)
+  }
   bookStore.selectBook(book.id)
 }
 
