@@ -1,55 +1,54 @@
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
-import { supabase } from '../utils/supabase'
-import { ElMessage } from 'element-plus'
+import { getBookList, addBook as addBookUtil } from '../utils/word'
+import { Storage, DB_KEYS } from '../utils/storage'
 
 export const useBookStore = defineStore('book', () => {
   const bookList = ref([])
-  const currentBookId = ref(null)
-  const loading = ref(false)
+  const currentBookId = ref('')
 
   const currentBook = computed(() =>
-    bookList.value.find(b => b.id === currentBookId.value) || { id: null, name: '' }
+    bookList.value.find(b => b.id === currentBookId.value) || { id: '', name: '' }
   )
 
-  async function loadBooks() {
-    if (!supabase) { ElMessage.error('Supabase 未配置'); return }
-    loading.value = true
-    const { data, error } = await supabase.from('books').select('*').order('created_at')
-    if (error) { ElMessage.error('加载词本失败：' + error.message); loading.value = false; return }
-    bookList.value = data || []
+  function loadBooks() {
+    bookList.value = getBookList()
     if (bookList.value.length && !currentBookId.value) {
       currentBookId.value = bookList.value[0].id
     }
-    loading.value = false
   }
 
-  async function addBook(name) {
-    if (!supabase) { ElMessage.error('Supabase 未配置'); return }
-    const { data, error } = await supabase.from('books').insert({ name }).select().single()
-    if (error) { ElMessage.error('添加词本失败：' + error.message); return }
-    if (data) {
-      currentBookId.value = data.id
-      await loadBooks()
-    }
-    return data
+  function addBook(name) {
+    if (!name) return
+    const book = addBookUtil(name)
+    loadBooks()
+    currentBookId.value = book.id
+    return book
   }
 
-  async function deleteBook(id) {
-    if (!supabase) return
-    await supabase.from('words').delete().eq('book_id', id)
-    await supabase.from('books').delete().eq('id', id)
+  function deleteBook(id) {
+    let list = Storage.get(DB_KEYS.BOOK_LIST) || []
+    list = list.filter(b => b.id !== id)
+    Storage.set(DB_KEYS.BOOK_LIST, list)
+
+    let allWords = Storage.get(DB_KEYS.WORD_DATA) || []
+    allWords = allWords.filter(w => w.bookId !== id)
+    Storage.set(DB_KEYS.WORD_DATA, allWords)
+
+    const deletedIds = (Storage.get(DB_KEYS.WORD_DATA) || []).filter(w => w.bookId === id).map(w => w.id)
+    let wrong = Storage.get(DB_KEYS.WRONG_WORDS) || []
+    wrong = wrong.filter(wId => !deletedIds.includes(wId))
+    Storage.set(DB_KEYS.WRONG_WORDS, wrong)
+
     if (currentBookId.value === id) {
-      currentBookId.value = bookList.value.length > 1
-        ? bookList.value.find(b => b.id !== id)?.id || null
-        : null
+      currentBookId.value = list.length ? list[0].id : ''
     }
-    await loadBooks()
+    loadBooks()
   }
 
   function selectBook(id) {
     currentBookId.value = id
   }
 
-  return { bookList, currentBookId, currentBook, loading, loadBooks, addBook, deleteBook, selectBook }
+  return { bookList, currentBookId, currentBook, loadBooks, addBook, deleteBook, selectBook }
 })

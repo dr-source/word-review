@@ -1,134 +1,64 @@
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
-import { ElMessage } from 'element-plus'
-import { supabase, getPersonalProgress, savePersonalProgress, removePersonalProgress } from '../utils/supabase'
+import {
+  getWordsByBook, addWord as addWordUtil, delWord, updateWord,
+  wordRight, wordWrong, getReviewWords, getNewWordsCount
+} from '../utils/word'
 import { Storage, DB_KEYS } from '../utils/storage'
+import { useBookStore } from './bookStore'
 
 export const useWordStore = defineStore('word', () => {
   const wordList = ref([])
   const studyQueue = ref([])
   const currentStudyWord = ref(null)
   const showAnswer = ref(false)
-  const loading = ref(false)
-
-  // ---- 合并共享单词和个人进度 ----
-  function mergeWithProgress(dbWords) {
-    const progress = getPersonalProgress()
-    return (dbWords || []).map(w => ({
-      id: w.id,
-      bookId: w.book_id,
-      word: w.word,
-      phonetic: w.phonetic || '',
-      mean: w.mean || '',
-      sentence: w.sentence || '',
-      star: false,
-      note: '',
-      learnLevel: 0,
-      nextReview: 0,
-      createdAt: w.created_at,
-      // 叠加个人进度
-      ...(progress[w.id] || {})
-    }))
-  }
 
   // ---- Getters ----
   const reviewCount = computed(() => {
-    if (!wordList.value.length) return 0
-    const now = Date.now()
-    const review = wordList.value.filter(w => w.nextReview > 0 && w.nextReview <= now).length
-    const newWords = wordList.value.filter(w => w.learnLevel === 0).length
+    const bookId = useBookStore().currentBookId
+    if (!bookId) return 0
+    const review = getReviewWords(bookId).length
+    const newWords = getNewWordsCount(bookId)
     return review + newWords
   })
 
   const wrongWordList = computed(() => {
     const wrongIds = Storage.get(DB_KEYS.WRONG_WORDS) || []
-    return wordList.value.filter(item => wrongIds.includes(item.id))
+    const all = Storage.get(DB_KEYS.WORD_DATA) || []
+    return all.filter(item => wrongIds.includes(item.id))
   })
 
   // ---- Actions ----
-  async function loadWords(bookId) {
-    if (!supabase) { ElMessage.error('Supabase 未配置'); return }
-    if (!bookId) return
-    loading.value = true
-    const { data, error } = await supabase
-      .from('words')
-      .select('*')
-      .eq('book_id', bookId)
-      .order('created_at')
-    if (error) { ElMessage.error('加载单词失败：' + error.message); loading.value = false; return }
-    wordList.value = mergeWithProgress(data)
-    loading.value = false
+  function loadWords(bookId) {
+    wordList.value = getWordsByBook(bookId)
   }
 
-  async function addWord(data) {
-    if (!supabase) { ElMessage.error('Supabase 未配置'); return }
-    const { data: inserted, error } = await supabase
-      .from('words')
-      .insert({
-        book_id: data.bookId,
-        word: data.word,
-        phonetic: data.phonetic || '',
-        mean: data.mean || '',
-        sentence: data.sentence || ''
-      })
-      .select()
-      .single()
-    if (error) { ElMessage.error('添加单词失败：' + error.message); return }
-    if (inserted) {
-      savePersonalProgress(inserted.id, { learnLevel: 0, nextReview: 0, star: false, note: '' })
-      await loadWords(data.bookId)
-    }
+  function addWord(data) {
+    addWordUtil(data)
+    loadWords(data.bookId)
   }
 
-  async function deleteWord(id) {
-    if (!supabase) return
-    await supabase.from('words').delete().eq('id', id)
-    removePersonalProgress(id)
+  function deleteWord(id) {
+    delWord(id)
   }
 
-  async function editWord(id, data) {
-    if (!supabase) return
-    await supabase.from('words').update({
-      word: data.word,
-      phonetic: data.phonetic,
-      mean: data.mean,
-      sentence: data.sentence
-    }).eq('id', id)
+  function editWord(id, data) {
+    updateWord(id, data)
   }
 
   function markRight(id) {
-    trackDailyStudy()
-    const progress = getPersonalProgress()
-    const word = progress[id] || { learnLevel: 0, nextReview: 0 }
-    let level = (word.learnLevel || 0) + 1
-    if (level >= 7) level = 7
-    const intervals = [5, 30, 1440, 2880, 5760, 10080, 20160, 43200]
-    savePersonalProgress(id, {
-      learnLevel: level,
-      nextReview: Date.now() + intervals[level] * 60 * 1000
-    })
-    // 从错题本移除
-    let wrong = Storage.get(DB_KEYS.WRONG_WORDS) || []
-    wrong = wrong.filter(w => w !== id)
-    Storage.set(DB_KEYS.WRONG_WORDS, wrong)
+    wordRight(id)
   }
 
   function markWrong(id) {
-    trackDailyStudy()
-    savePersonalProgress(id, { learnLevel: 0, nextReview: Date.now() + 5 * 60 * 1000 })
-    let wrong = Storage.get(DB_KEYS.WRONG_WORDS) || []
-    if (!wrong.includes(id)) {
-      wrong.push(id)
-      Storage.set(DB_KEYS.WRONG_WORDS, wrong)
-    }
+    wordWrong(id)
   }
 
   // ---- Study Queue ----
   function initStudyQueue(bookId) {
-    const now = Date.now()
-    const review = wordList.value.filter(w => w.nextReview > 0 && w.nextReview <= now)
-    const newWords = wordList.value.filter(w => w.learnLevel === 0)
-    studyQueue.value = [...review, ...newWords].sort(() => Math.random() - 0.5)
+    const review = getReviewWords(bookId)
+    const all = getWordsByBook(bookId).filter(item => item.learnLevel === 0)
+    studyQueue.value = [...review, ...all]
     nextWord()
   }
 
@@ -139,33 +69,21 @@ export const useWordStore = defineStore('word', () => {
 
   function handleRight() {
     if (!currentStudyWord.value) return
-    markRight(currentStudyWord.value.id)
+    wordRight(currentStudyWord.value.id)
     nextWord()
   }
 
   function handleWrong() {
     if (!currentStudyWord.value) return
-    markWrong(currentStudyWord.value.id)
+    wordWrong(currentStudyWord.value.id)
     nextWord()
   }
 
   return {
-    wordList, studyQueue, currentStudyWord, showAnswer, loading,
+    wordList, studyQueue, currentStudyWord, showAnswer,
     reviewCount, wrongWordList,
     loadWords, addWord, deleteWord, editWord,
     markRight, markWrong,
     initStudyQueue, nextWord, handleRight, handleWrong
   }
 })
-
-/** 记录每日学习数 */
-let _dailyTick = false
-function trackDailyStudy() {
-  if (_dailyTick) return
-  _dailyTick = true
-  setTimeout(() => { _dailyTick = false }, 1000)
-  const record = Storage.get(DB_KEYS.LEARN_RECORD) || {}
-  const today = new Date().toISOString().slice(0, 10)
-  record[today] = (record[today] || 0) + 1
-  Storage.set(DB_KEYS.LEARN_RECORD, record)
-}

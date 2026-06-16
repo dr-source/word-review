@@ -11,51 +11,33 @@
       <div class="mean-display">{{ currentWord.mean }}</div>
       <p v-if="currentWord.phonetic" class="phonetic-hint">提示：{{ currentWord.phonetic }}</p>
       <p class="sentence-hint" v-if="currentWord.sentence">{{ currentWord.sentence }}</p>
-
       <div class="input-row">
-        <el-input
-          ref="inputRef"
-          v-model="userInput"
-          placeholder="输入英文单词..."
-          size="large"
-          :disabled="answered"
-          @keyup.enter="checkAnswer"
-        />
-        <el-button
-          type="primary"
-          size="large"
-          :disabled="!userInput || answered"
-          @click="checkAnswer"
-        >确认</el-button>
+        <el-input ref="inputRef" v-model="userInput" placeholder="输入英文单词..." size="large" :disabled="answered" @keyup.enter="checkAnswer" />
+        <el-button type="primary" size="large" :disabled="!userInput || answered" @click="checkAnswer">确认</el-button>
       </div>
-
       <div v-if="answered" class="spelling-result">
         <div :class="isCorrect ? 'result-correct' : 'result-wrong'">
           <span v-if="isCorrect">✅ 正确！</span>
           <span v-else>❌ 正确答案：<strong>{{ currentWord.word }}</strong></span>
         </div>
-        <el-button type="primary" @click="next" style="margin-top:12px;">
-          {{ currentIdx < totalCount - 1 ? '下一题' : '完成' }}
-        </el-button>
+        <el-button type="primary" @click="next" style="margin-top:12px;">{{ currentIdx < totalCount - 1 ? '下一题' : '完成' }}</el-button>
       </div>
     </div>
 
-    <el-empty v-if="!currentWord && !loading" description="拼写练习完成！">
+    <el-empty v-if="!currentWord" description="拼写练习完成！">
       <el-button type="primary" @click="$emit('done')">返回</el-button>
     </el-empty>
-    <el-empty v-if="loading" description="加载中..." />
   </div>
 </template>
 
 <script setup>
 import { ref, computed, watch, nextTick } from 'vue'
-import { useWordStore } from '../stores/wordStore'
+import { getWordsByBook } from '../utils/word'
 import { wordRight, wordWrong } from '../utils/word'
 import { useSpeech } from '../composables/useSpeech'
 
-const props = defineProps({ bookId: { type: Number, default: 0 } })
+const props = defineProps({ bookId: { type: String, default: '' } })
 const emit = defineEmits(['done'])
-const wordStore = useWordStore()
 const { speak } = useSpeech()
 
 const words = ref([])
@@ -64,7 +46,6 @@ const userInput = ref('')
 const answered = ref(false)
 const score = ref(0)
 const doneCount = ref(0)
-const loading = ref(false)
 const inputRef = ref(null)
 
 const totalCount = computed(() => words.value.length)
@@ -75,47 +56,25 @@ const isCorrect = computed(() => {
   return userInput.value.trim().toLowerCase() === currentWord.value.word.toLowerCase()
 })
 
-watch(() => props.bookId, async (id) => {
-  if (id) await init(id)
-}, { immediate: true })
+watch(() => props.bookId, (id) => { if (id) init(id) }, { immediate: true })
 
-async function init(bookId) {
-  loading.value = true
-  await wordStore.loadWords(bookId)
-  const all = wordStore.wordList.filter(w => w.mean)
-    .sort(() => Math.random() - 0.5)
-    .slice(0, 20)
-  words.value = all
-  currentIdx.value = 0
-  score.value = 0
-  doneCount.value = 0
-  userInput.value = ''
-  answered.value = false
-  loading.value = false
+function init(bookId) {
+  const all = getWordsByBook(bookId).filter(w => w.mean).sort(() => Math.random() - 0.5).slice(0, 20)
+  words.value = all; currentIdx.value = 0; score.value = 0; doneCount.value = 0
+  userInput.value = ''; answered.value = false
   nextTick(() => inputRef.value?.focus())
 }
 
 function checkAnswer() {
   if (!userInput.value || answered.value) return
-  answered.value = true
-  doneCount.value++
-
-  if (isCorrect.value) {
-    score.value++
-    wordRight(currentWord.value.id)
-    speak(currentWord.value.word)
-  } else {
-    wordWrong(currentWord.value.id)
-  }
+  answered.value = true; doneCount.value++
+  if (isCorrect.value) { score.value++; wordRight(currentWord.value.id); speak(currentWord.value.word) }
+  else wordWrong(currentWord.value.id)
 }
 
 function next() {
-  currentIdx.value++
-  userInput.value = ''
-  answered.value = false
-  if (currentWord.value) {
-    nextTick(() => inputRef.value?.focus())
-  }
+  currentIdx.value++; userInput.value = ''; answered.value = false
+  if (currentWord.value) nextTick(() => inputRef.value?.focus())
 }
 </script>
 

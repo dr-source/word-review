@@ -5,11 +5,10 @@ import 'element-plus/dist/index.css'
 import * as ElementPlusIconsVue from '@element-plus/icons-vue'
 import App from './App.vue'
 import router from './router'
-import { Storage, DB_KEYS } from './utils/storage'
+import { initDefaultData } from './utils/word'
 
-// 初始化 localStorage 的个人数据键
-if (!Storage.get(DB_KEYS.LEARN_RECORD)) Storage.set(DB_KEYS.LEARN_RECORD, {})
-if (!Storage.get(DB_KEYS.WRONG_WORDS)) Storage.set(DB_KEYS.WRONG_WORDS, [])
+// 初始化默认数据（示例词本 + 单词）
+initDefaultData()
 
 const app = createApp(App)
 
