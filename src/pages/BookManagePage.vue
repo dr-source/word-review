@@ -24,7 +24,7 @@
           >
             <div class="book-item">
               <span class="book-name">{{ book.name }}</span>
-              <span class="book-count">{{ wordCountByBook(book.id) }}词</span>
+              <span class="book-count">{{ bookStore.getWordCount(book.id) }}词</span>
               <el-popconfirm
                 title="删除后词本内所有单词也会被删除，确定吗？"
                 @confirm.stop="handleDeleteBook(book)"
@@ -162,7 +162,6 @@ import { ref, computed, onMounted, watch } from 'vue'
 import { ElMessage } from 'element-plus'
 import { useBookStore } from '../stores/bookStore'
 import { useWordStore } from '../stores/wordStore'
-import { getWordsByBook } from '../utils/word'
 import { lookupWord, dictSize } from '../utils/dictionary'
 import { Storage, DB_KEYS } from '../utils/storage'
 import { supabase, savePersonalProgress } from '../utils/supabase'
@@ -267,10 +266,6 @@ onMounted(async () => {
 watch(() => bookStore.currentBookId, async (id) => {
   if (id) await wordStore.loadWords(id)
 })
-
-function wordCountByBook(bookId) {
-  return getWordsByBook(bookId).length
-}
 
 function selectBook(book) {
   bookStore.selectBook(book.id)

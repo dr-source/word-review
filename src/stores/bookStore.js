@@ -1,15 +1,33 @@
 import { defineStore } from 'pinia'
-import { ref, computed } from 'vue'
+import { ref, computed, reactive } from 'vue'
 import { supabase } from '../utils/supabase'
 
 export const useBookStore = defineStore('book', () => {
   const bookList = ref([])
   const currentBookId = ref(null)
   const loading = ref(false)
+  const wordCounts = reactive({}) // { bookId: count }
 
   const currentBook = computed(() =>
     bookList.value.find(b => b.id === currentBookId.value) || { id: null, name: '' }
   )
+
+  function getWordCount(bookId) {
+    return wordCounts[bookId] || 0
+  }
+
+  async function loadWordCounts() {
+    if (!supabase) return
+    const { data, error } = await supabase
+      .from('words')
+      .select('book_id')
+    if (error) return
+    const counts = {}
+    for (const w of data || []) {
+      counts[w.book_id] = (counts[w.book_id] || 0) + 1
+    }
+    Object.assign(wordCounts, counts)
+  }
 
   async function loadBooks() {
     if (!supabase) return
@@ -18,6 +36,7 @@ export const useBookStore = defineStore('book', () => {
     if (error) throw error
     bookList.value = data || []
     if (bookList.value.length && !currentBookId.value) currentBookId.value = bookList.value[0].id
+    await loadWordCounts()
     loading.value = false
   }
 
@@ -42,5 +61,6 @@ export const useBookStore = defineStore('book', () => {
 
   function selectBook(id) { currentBookId.value = id }
 
-  return { bookList, currentBookId, currentBook, loading, loadBooks, addBook, deleteBook, selectBook }
+  return { bookList, currentBookId, currentBook, loading, wordCounts, getWordCount,
+    loadBooks, loadWordCounts, addBook, deleteBook, selectBook }
 })
