@@ -10,7 +10,7 @@
       </div>
       <el-progress :percentage="progressPercent" :stroke-width="6" :show-text="false" color="#4A6CF7" class="study-progress-bar" />
       <div class="flashcard-wrapper" @click="handleShowAnswer">
-        <div class="flashcard" :class="{ flipped: showAnswer }">
+        <div class="flashcard" :class="{ flipped: showAnswer, 'no-animate': noAnimation }">
           <div class="flashcard-inner">
             <div class="flashcard-front">
               <h1 class="word-text">{{ currentWord.word }}</h1>
@@ -73,6 +73,7 @@ const studiedCount = ref(0)
 const totalCount = ref(0)
 const ratingLocked = ref(false)
 const loading = ref(false)
+const noAnimation = ref(false)
 
 const progressPercent = computed(() => {
   if (!totalCount.value) return 0
@@ -107,7 +108,11 @@ function handleRating(type) {
   else if (type === 'hard') wordStore.markWrong(currentWord.value.id)
   else wordStore.markRight(currentWord.value.id)
   studiedCount.value++
-  setTimeout(() => { nextWord(); ratingLocked.value = false }, 200)
+  // 禁用动画，直接切到下一个单词的正面
+  noAnimation.value = true
+  nextWord()
+  // 重新启用动画（等待下一个点击翻卡）
+  setTimeout(() => { noAnimation.value = false; ratingLocked.value = false }, 300)
 }
 
 function handleKeydown(e) {
@@ -130,6 +135,7 @@ function handleKeydown(e) {
 .study-progress-bar { margin-bottom: 24px; }
 .flashcard-wrapper { perspective: 1200px; margin-bottom: 24px; cursor: pointer; }
 .flashcard { height: 280px; transition: transform 0.5s cubic-bezier(0.4,0,0.2,1); transform-style: preserve-3d; }
+.flashcard.no-animate { transition: none; }
 .flashcard.flipped { transform: rotateY(180deg); }
 .flashcard-inner { position: relative; width: 100%; height: 100%; transform-style: preserve-3d; }
 .flashcard-front, .flashcard-back {
