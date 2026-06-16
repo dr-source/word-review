@@ -3,6 +3,14 @@ import { ref, computed } from 'vue'
 import { supabase, getPersonalProgress, savePersonalProgress, removePersonalProgress } from '../utils/supabase'
 import { Storage, DB_KEYS } from '../utils/storage'
 
+/** 记录每日学习数 */
+function trackDailyStudy() {
+  const record = Storage.get(DB_KEYS.LEARN_RECORD) || {}
+  const today = new Date().toISOString().slice(0, 10)
+  record[today] = (record[today] || 0) + 1
+  Storage.set(DB_KEYS.LEARN_RECORD, record)
+}
+
 const CACHE_PREFIX = 'cache_words_'
 
 export const useWordStore = defineStore('word', () => {
@@ -130,6 +138,7 @@ export const useWordStore = defineStore('word', () => {
   }
 
   function markRight(id) {
+    trackDailyStudy()
     const progress = getPersonalProgress()
     const word = progress[id] || { learnLevel: 0 }
     let level = Math.min((word.learnLevel || 0) + 1, 7)
@@ -141,6 +150,7 @@ export const useWordStore = defineStore('word', () => {
   }
 
   function markWrong(id) {
+    trackDailyStudy()
     savePersonalProgress(id, { learnLevel: 0, nextReview: Date.now() + 5 * 60 * 1000 })
     let wrong = Storage.get(DB_KEYS.WRONG_WORDS) || []
     if (!wrong.includes(id)) { wrong.push(id); Storage.set(DB_KEYS.WRONG_WORDS, wrong) }
