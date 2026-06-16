@@ -1,19 +1,39 @@
 import { defineStore } from 'pinia'
-import { computed } from 'vue'
+import { computed, ref } from 'vue'
+import { supabase } from '../utils/supabase'
 import { Storage, DB_KEYS } from '../utils/storage'
-import { useWordStore } from './wordStore'
 
 export const useStatsStore = defineStore('stats', () => {
-  const wordStore = useWordStore()
+  const totalWords = ref(0)
+  const levelData = ref([]) // 8 levels
 
-  const totalWords = computed(() => {
-    const all = Storage.get(DB_KEYS.WORD_DATA) || []
-    return all.length
-  })
+  async function loadStats(bookId) {
+    if (!supabase) return
+    // 全部单词统计
+    let query = supabase.from('words').select('id')
+    if (bookId) query = query.eq('book_id', bookId)
+    const { count: total } = await query
+    totalWords.value = total || 0
+
+    // 各词本单词数（用于图表）
+    const { data: allWords } = await supabase.from('words').select('id, book_id')
+    const dist = Array.from({ length: 8 }, () => 0)
+    // 等级分布存在 localStorage（个人进度）
+    const progress = JSON.parse(localStorage.getItem('word_personal_progress') || '{}')
+    const counted = new Set()
+    for (const w of allWords || []) {
+      if (counted.has(w.id)) continue
+      counted.add(w.id)
+      const p = progress[w.id]
+      const level = p ? Math.min(p.learnLevel || 0, 7) : 0
+      dist[level]++
+    }
+    levelData.value = dist
+  }
 
   const learnedWords = computed(() => {
-    const all = Storage.get(DB_KEYS.WORD_DATA) || []
-    return all.filter(w => w.learnLevel > 0).length
+    // learnLevel > 0 的算已掌握
+    return levelData.value.slice(1).reduce((a, b) => a + b, 0)
   })
 
   const wrongWordsCount = computed(() => {
@@ -26,49 +46,31 @@ export const useStatsStore = defineStore('stats', () => {
     return Math.round((learnedWords.value / totalWords.value) * 100)
   })
 
-  /** 掌握度分布：每个 learnLevel 有多少词 */
-  const levelDistribution = computed(() => {
-    const all = Storage.get(DB_KEYS.WORD_DATA) || []
-    const dist = Array.from({ length: 8 }, () => 0)
-    all.forEach(w => {
-      const level = Math.min(w.learnLevel || 0, 7)
-      dist[level]++
-    })
-    return dist
-  })
+  const levelDistribution = computed(() => levelData.value)
 
-  /** 连续学习天数 */
   const streakDays = computed(() => {
     const record = Storage.get(DB_KEYS.LEARN_RECORD) || {}
     const dates = Object.keys(record).sort((a, b) => b.localeCompare(a))
     if (!dates.length) return 0
+    const today = new Date().toISOString().slice(0, 10)
+    const yesterday = new Date(Date.now() - 86400000).toISOString().slice(0, 10)
+    if (dates[0] !== today && dates[0] !== yesterday) return 0
     let streak = 1
-    const today = new Date()
-    const yesterday = new Date(today)
-    yesterday.setDate(yesterday.getDate() - 1)
-    const todayStr = today.toISOString().slice(0, 10)
-    const yesterdayStr = yesterday.toISOString().slice(0, 10)
-    // 今天或昨天有记录才算 streak 开始
-    if (dates[0] !== todayStr && dates[0] !== yesterdayStr) return 0
     for (let i = 1; i < dates.length; i++) {
-      const curr = new Date(dates[i - 1])
-      const prev = new Date(dates[i])
-      const diff = (curr - prev) / (1000 * 60 * 60 * 24)
+      const diff = (new Date(dates[i - 1]) - new Date(dates[i])) / 86400000
       if (diff === 1) streak++
       else break
     }
     return streak
   })
 
-  /** 今日学习数 */
   const todayLearned = computed(() => {
     const record = Storage.get(DB_KEYS.LEARN_RECORD) || {}
     const today = new Date().toISOString().slice(0, 10)
     return record[today] || 0
   })
 
-  return {
-    totalWords, learnedWords, wrongWordsCount, masteryRate,
-    levelDistribution, streakDays, todayLearned
-  }
+  return { totalWords, learnedWords, wrongWordsCount, masteryRate,
+    levelDistribution, streakDays, todayLearned,
+    loadStats }
 })

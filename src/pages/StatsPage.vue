@@ -144,7 +144,10 @@ const masteryChart = useChart('masteryChart', (canvas) => {
   })
 })
 
-onMounted(() => {
+onMounted(async () => {
+  const { useBookStore } = await import('../stores/bookStore')
+  const bookStore = useBookStore()
+  await stats.loadStats(bookStore.currentBookId)
   nextTick(() => {
     levelChart.render()
     masteryChart.render()

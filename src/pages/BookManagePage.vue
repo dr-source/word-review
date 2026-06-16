@@ -143,13 +143,7 @@
           >
             <el-button>📥 从 JSON 恢复</el-button>
           </el-upload>
-          <el-button v-if="hasOldData" type="warning" @click="migrateOldData" :loading="migrating">
-            🔄 迁移旧数据到云端
-          </el-button>
         </div>
-        <p v-if="hasOldData" style="margin-top:8px;font-size:12px;color:#e6a23c;">
-          检测到本地还有旧数据，迁移后所有人共享
-        </p>
       </el-card>
     </el-col>
   </el-row>
@@ -164,7 +158,6 @@ import { useBookStore } from '../stores/bookStore'
 import { useWordStore } from '../stores/wordStore'
 import { lookupWord, dictSize } from '../utils/dictionary'
 import { Storage, DB_KEYS } from '../utils/storage'
-import { supabase, savePersonalProgress } from '../utils/supabase'
 import ImportDialog from '../components/ImportDialog.vue'
 
 const bookStore = useBookStore()
@@ -177,52 +170,6 @@ const addForm = ref({
   word: '', phonetic: '', mean: '', sentence: ''
 })
 let lookupTimer = null
-
-// ---- 旧数据迁移到 Supabase ----
-const hasOldData = computed(() => {
-  if (!supabase) return false
-  const oldWords = Storage.get('word_all_data')
-  return oldWords && oldWords.length > 0
-})
-const migrating = ref(false)
-
-async function migrateOldData() {
-  if (!supabase || migrating.value) return
-  migrating.value = true
-  try {
-    const oldBooks = Storage.get(DB_KEYS.BOOK_LIST) || []
-    const oldWords = Storage.get('word_all_data') || []
-    const wrongWords = Storage.get(DB_KEYS.WRONG_WORDS) || []
-    const bookMap = {}
-    for (const b of oldBooks) {
-      const { data } = await supabase.from('books').insert({ name: b.name }).select().single()
-      if (data) bookMap[b.id] = data.id
-    }
-    let count = 0
-    for (const w of oldWords) {
-      const newBookId = bookMap[w.bookId]
-      if (!newBookId) continue
-      const { data } = await supabase.from('words').insert({
-        book_id: newBookId, word: w.word,
-        phonetic: w.phonetic || '', mean: w.mean || '', sentence: w.sentence || ''
-      }).select().single()
-      if (data) {
-        count++
-        savePersonalProgress(data.id, { learnLevel: w.learnLevel || 0, nextReview: w.nextReview || 0 })
-        if (wrongWords.includes(w.id)) {
-          const cur = Storage.get(DB_KEYS.WRONG_WORDS) || []
-          if (!cur.includes(data.id)) { cur.push(data.id); Storage.set(DB_KEYS.WRONG_WORDS, cur) }
-        }
-      }
-    }
-    ElMessage.success(`迁移完成！已导入 ${count} 个单词到云端`)
-    await bookStore.loadBooks()
-    if (bookStore.currentBookId) await wordStore.loadWords(bookStore.currentBookId)
-  } catch (err) {
-    ElMessage.error('迁移失败：' + err.message)
-  }
-  migrating.value = false
-}
 
 function handleWordInput(val) {
   if (addForm.value.phonetic || addForm.value.mean) return
