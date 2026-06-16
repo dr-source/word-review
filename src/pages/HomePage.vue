@@ -153,6 +153,8 @@ onMounted(async () => {
   if (bookStore.currentBookId) {
     await wordStore.loadWords(bookStore.currentBookId)
   }
+  // 加载统计数据
+  await stats.loadStats(bookStore.currentBookId)
 })
 
 function goStudy() { router.push('/study') }
