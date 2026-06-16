@@ -9,13 +9,13 @@ export const useStatsStore = defineStore('stats', () => {
 
   async function loadStats(bookId) {
     if (!supabase) return
-    // 全部单词统计
-    let query = supabase.from('words').select('id')
+    // 全部单词统计（需要显式请求 count）
+    let query = supabase.from('words').select('id', { count: 'exact', head: true })
     if (bookId) query = query.eq('book_id', bookId)
-    const { count: total } = await query
-    totalWords.value = total || 0
+    const { count } = await query
+    totalWords.value = count || 0
 
-    // 各词本单词数（用于图表）
+    // 单词等级分布（从个人进度 localStorage 读取）
     const { data: allWords } = await supabase.from('words').select('id, book_id')
     const dist = Array.from({ length: 8 }, () => 0)
     // 等级分布存在 localStorage（个人进度）
