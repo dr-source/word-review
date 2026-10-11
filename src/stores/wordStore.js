@@ -2,6 +2,7 @@ import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
 import { supabase, getPersonalProgress, savePersonalProgress, removePersonalProgress } from '../utils/supabase'
 import { Storage, DB_KEYS } from '../utils/storage'
+import { LocalStore } from '../utils/localStore'
 
 /** 记录每日学习数 */
 function trackDailyStudy() {
@@ -64,7 +65,7 @@ export const useWordStore = defineStore('word', () => {
   }
 
   async function loadWords(bookId) {
-    if (!supabase || !bookId) return
+    if (!bookId) return
     // 缓存命中：同词本不重复请求
     if (loadedBookId.value === bookId && wordList.value.length) return
     // 先显示缓存，再后台刷新
@@ -78,8 +79,16 @@ export const useWordStore = defineStore('word', () => {
   }
 
   async function loadWordsFromServer(bookId) {
-    if (!supabase || !bookId) return
+    if (!bookId) return
     loading.value = true
+    if (!supabase) {
+      const data = LocalStore.loadWords(bookId)
+      wordList.value = mergeWithProgress(data)
+      loadedBookId.value = bookId
+      saveCache(bookId, data)
+      loading.value = false
+      return
+    }
     const { data, error } = await supabase.from('words').select('*').eq('book_id', bookId).order('created_at')
     if (error) throw error
     const merged = mergeWithProgress(data)
@@ -90,8 +99,23 @@ export const useWordStore = defineStore('word', () => {
   }
 
   async function addWord(data) {
-    if (!supabase) return
+    if (!data.word) throw new Error('单词不能为空')
     loading.value = true
+    if (!supabase) {
+      const inserted = LocalStore.insertWord({
+        book_id: data.bookId,
+        word: data.word,
+        phonetic: data.phonetic || '',
+        mean: data.mean || '',
+        sentence: data.sentence || ''
+      })
+      savePersonalProgress(inserted.id, { learnLevel: 0, nextReview: 0 })
+      loadedBookId.value = null
+      localStorage.removeItem(CACHE_PREFIX + data.bookId)
+      await loadWordsFromServer(data.bookId)
+      loading.value = false
+      return inserted
+    }
     const { data: inserted, error } = await supabase.from('words').insert({
       book_id: data.bookId, word: data.word,
       phonetic: data.phonetic || '', mean: data.mean || '', sentence: data.sentence || ''
@@ -108,7 +132,7 @@ export const useWordStore = defineStore('word', () => {
 
   /** 批量插入单词（一次性提交，大幅提升导入速度） */
   async function batchAddWords(bookId, words) {
-    if (!supabase || !words.length) return { count: 0 }
+    if (!words.length) return { count: 0 }
     loading.value = true
     const rows = words.map(w => ({
       book_id: bookId,
@@ -117,6 +141,17 @@ export const useWordStore = defineStore('word', () => {
       mean: w.mean || '',
       sentence: w.sentence || ''
     }))
+    if (!supabase) {
+      const inserted = LocalStore.insertWords(rows)
+      for (const row of inserted) {
+        savePersonalProgress(row.id, { learnLevel: 0, nextReview: 0 })
+      }
+      loadedBookId.value = null
+      localStorage.removeItem(CACHE_PREFIX + bookId)
+      await loadWordsFromServer(bookId)
+      loading.value = false
+      return { count: inserted.length }
+    }
     const { data: inserted, error } = await supabase.from('words').insert(rows).select()
     if (error) throw error
     if (inserted && inserted.length) {
@@ -132,7 +167,12 @@ export const useWordStore = defineStore('word', () => {
   }
 
   async function deleteWord(id) {
-    if (!supabase) return
+    if (!supabase) {
+      LocalStore.deleteWord(id)
+      removePersonalProgress(id)
+      loadedBookId.value = null
+      return
+    }
     await supabase.from('words').delete().eq('id', id)
     removePersonalProgress(id)
     loadedBookId.value = null

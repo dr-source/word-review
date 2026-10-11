@@ -112,6 +112,7 @@
 <script setup>
 import { ref, computed, onMounted, watch } from 'vue'
 import { useRouter } from 'vue-router'
+import { ElMessage } from 'element-plus'
 import { useBookStore } from '../stores/bookStore'
 import { useWordStore } from '../stores/wordStore'
 import { useStatsStore } from '../stores/statsStore'
@@ -176,7 +177,13 @@ onMounted(async () => {
 })
 
 function goStudy() { router.push('/study') }
-function goBooks() { router.push('/books') }
+function goBooks() {
+  if (localStorage.getItem('word_review_admin') !== 'true') {
+    ElMessage.warning('管理员模式未开启：请快速点击顶部标题「单词复习」5 次')
+    return
+  }
+  router.push('/books')
+}
 
 async function switchHomeBook() {
   if (!tempBookId.value || tempBookId.value === bookStore.currentBookId) { showBookPicker.value = false; return }

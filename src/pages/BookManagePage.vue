@@ -69,6 +69,14 @@
     <!-- 右侧：单词管理 -->
     <el-col :xs="24" :sm="24" :md="16">
       <el-card header="添加单词">
+        <el-alert
+          v-if="localMode"
+          title="未配置 Supabase，当前为本地存储模式，数据仅保存在此浏览器中"
+          type="info"
+          :closable="false"
+          show-icon
+          style="margin-bottom:12px;"
+        />
         <el-form :model="addForm" label-width="60px" size="small">
           <el-row>
             <el-col :xs="24" :sm="8">
@@ -177,6 +185,7 @@ import { useBookStore } from '../stores/bookStore'
 import { useWordStore } from '../stores/wordStore'
 import { lookupWord, dictSize } from '../utils/dictionary'
 import { Storage, DB_KEYS } from '../utils/storage'
+import { isSupabaseReady } from '../utils/supabase'
 import ImportDialog from '../components/ImportDialog.vue'
 
 const bookStore = useBookStore()
@@ -186,6 +195,7 @@ const newBookName = ref('')
 const searchText = ref('')
 const refreshing = ref(false)
 const showZeroHint = ref(false)
+const localMode = ref(!isSupabaseReady)
 
 const addForm = ref({
   word: '', phonetic: '', mean: '', sentence: ''
@@ -267,19 +277,39 @@ async function handleDeleteBook(book) {
 }
 
 async function handleAddBook() {
-  if (!newBookName.value) return
-  await bookStore.addBook(newBookName.value)
-  newBookName.value = ''
+  if (!newBookName.value) {
+    ElMessage.warning('请输入词本名称')
+    return
+  }
+  try {
+    await bookStore.addBook(newBookName.value)
+    newBookName.value = ''
+    ElMessage.success('词本已添加')
+  } catch (e) {
+    ElMessage.error('添加词本失败：' + (e.message || '未知错误'))
+  }
 }
 
 async function handleAddWord() {
-  if (!addForm.value.word || !bookStore.currentBookId) return
-  await wordStore.addWord({
-    bookId: bookStore.currentBookId,
-    ...addForm.value
-  })
-  addForm.value = { word: '', phonetic: '', mean: '', sentence: '' }
-  bookStore.updateWordCount(bookStore.currentBookId, 1)
+  if (!addForm.value.word) {
+    ElMessage.warning('请输入单词')
+    return
+  }
+  if (!bookStore.currentBookId) {
+    ElMessage.warning('请先选择或添加词本')
+    return
+  }
+  try {
+    await wordStore.addWord({
+      bookId: bookStore.currentBookId,
+      ...addForm.value
+    })
+    addForm.value = { word: '', phonetic: '', mean: '', sentence: '' }
+    bookStore.updateWordCount(bookStore.currentBookId, 1)
+    ElMessage.success('单词已添加')
+  } catch (e) {
+    ElMessage.error('添加单词失败：' + (e.message || '未知错误'))
+  }
 }
 
 async function handleDeleteWord(id) {

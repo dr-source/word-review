@@ -1,0 +1,4130 @@
+[
+    {
+        "word":  "value",
+        "phonetic":  "ˈvæljuː",
+        "mean":  "n. 价值；面值 v. 估价，评价",
+        "sentence":  ""
+    },
+    {
+        "word":  "wear",
+        "phonetic":  "weə(r)",
+        "mean":  "v. 穿着，戴着",
+        "sentence":  ""
+    },
+    {
+        "word":  "different",
+        "phonetic":  "ˈdɪfrənt",
+        "mean":  "adj. 不同的；各种的",
+        "sentence":  ""
+    },
+    {
+        "word":  "write",
+        "phonetic":  "raɪt",
+        "mean":  "v. 书写；写作；写信",
+        "sentence":  ""
+    },
+    {
+        "word":  "important",
+        "phonetic":  "ɪmˈpɔːtnt",
+        "mean":  "adj. 重要的；有地位的",
+        "sentence":  ""
+    },
+    {
+        "word":  "plant",
+        "phonetic":  "plɑːnt",
+        "mean":  "n. 植物 v. 种植；安放",
+        "sentence":  ""
+    },
+    {
+        "word":  "poem",
+        "phonetic":  "ˈpəʊɪm",
+        "mean":  "n. 诗",
+        "sentence":  ""
+    },
+    {
+        "word":  "law",
+        "phonetic":  "lɔː",
+        "mean":  "n. 法律；法学；法则",
+        "sentence":  ""
+    },
+    {
+        "word":  "worry",
+        "phonetic":  "ˈwʌri",
+        "mean":  "v. 担心；烦恼 n. 担心；烦恼",
+        "sentence":  ""
+    },
+    {
+        "word":  "wait",
+        "phonetic":  "weɪt",
+        "mean":  "v. 等待；推迟 n. 等待",
+        "sentence":  ""
+    },
+    {
+        "word":  "international",
+        "phonetic":  "ˌɪntəˈnæʃnəl",
+        "mean":  "adj. 国际的",
+        "sentence":  ""
+    },
+    {
+        "word":  "follow",
+        "phonetic":  "ˈfɒləʊ",
+        "mean":  "v. 跟随；继承；采用 n. 跟随",
+        "sentence":  ""
+    },
+    {
+        "word":  "idea",
+        "phonetic":  "aɪˈdɪə",
+        "mean":  "n. 主意；计划；意见",
+        "sentence":  ""
+    },
+    {
+        "word":  "enjoy",
+        "phonetic":  "ɪnˈdʒɔɪ",
+        "mean":  "v. 喜欢；享受；玩得痛快",
+        "sentence":  ""
+    },
+    {
+        "word":  "planet",
+        "phonetic":  "ˈplænɪt",
+        "mean":  "n. 行星；地球",
+        "sentence":  ""
+    },
+    {
+        "word":  "subject",
+        "phonetic":  "ˈsʌbdʒɪkt",
+        "mean":  "n. 学科；主题；主语",
+        "sentence":  ""
+    },
+    {
+        "word":  "side",
+        "phonetic":  "saɪd",
+        "mean":  "n. 侧面；边缘 v. 支持",
+        "sentence":  ""
+    },
+    {
+        "word":  "hear",
+        "phonetic":  "hɪə(r)",
+        "mean":  "v. 听到；听说",
+        "sentence":  ""
+    },
+    {
+        "word":  "hand",
+        "phonetic":  "hænd",
+        "mean":  "n. 手；帮助 v. 递；分发",
+        "sentence":  ""
+    },
+    {
+        "word":  "meanwhile",
+        "phonetic":  "ˈmiːnwaɪl",
+        "mean":  "adv. 与此同时",
+        "sentence":  ""
+    },
+    {
+        "word":  "treat",
+        "phonetic":  "triːt",
+        "mean":  "v. 对待；治疗；款待",
+        "sentence":  ""
+    },
+    {
+        "word":  "busy",
+        "phonetic":  "ˈbɪzi",
+        "mean":  "adj. 忙碌的；占线的",
+        "sentence":  ""
+    },
+    {
+        "word":  "hope",
+        "phonetic":  "həʊp",
+        "mean":  "v. 希望 n. 希望",
+        "sentence":  ""
+    },
+    {
+        "word":  "accord",
+        "phonetic":  "əˈkɔːd",
+        "mean":  "v. 赋予；符合 n. 协议",
+        "sentence":  ""
+    },
+    {
+        "word":  "probably",
+        "phonetic":  "ˈprɒbəbli",
+        "mean":  "adv. 很可能；大概",
+        "sentence":  ""
+    },
+    {
+        "word":  "touch",
+        "phonetic":  "tʌtʃ",
+        "mean":  "v. 触碰；感动 n. 触摸",
+        "sentence":  ""
+    },
+    {
+        "word":  "spring",
+        "phonetic":  "sprɪŋ",
+        "mean":  "n. 春天；弹簧；泉水",
+        "sentence":  ""
+    },
+    {
+        "word":  "collect",
+        "phonetic":  "kəˈlekt",
+        "mean":  "v. 收集",
+        "sentence":  ""
+    },
+    {
+        "word":  "health",
+        "phonetic":  "helθ",
+        "mean":  "n. 健康；医疗",
+        "sentence":  ""
+    },
+    {
+        "word":  "paint",
+        "phonetic":  "peɪnt",
+        "mean":  "v. 绘画；上油漆 n. 油漆",
+        "sentence":  ""
+    },
+    {
+        "word":  "please",
+        "phonetic":  "pliːz",
+        "mean":  "adv. 请 v. 使满意",
+        "sentence":  ""
+    },
+    {
+        "word":  "volunteer",
+        "phonetic":  "ˌvɒlənˈtɪə(r)",
+        "mean":  "n. 志愿者 v. 自愿",
+        "sentence":  ""
+    },
+    {
+        "word":  "decide",
+        "phonetic":  "dɪˈsaɪd",
+        "mean":  "v. 决定；判决",
+        "sentence":  ""
+    },
+    {
+        "word":  "build",
+        "phonetic":  "bɪld",
+        "mean":  "v. 建造 n. 体型",
+        "sentence":  ""
+    },
+    {
+        "word":  "throw",
+        "phonetic":  "θrəʊ",
+        "mean":  "v. 投；扔",
+        "sentence":  ""
+    },
+    {
+        "word":  "stick",
+        "phonetic":  "stɪk",
+        "mean":  "v. 粘贴；坚持 n. 枝条",
+        "sentence":  ""
+    },
+    {
+        "word":  "wild",
+        "phonetic":  "waɪld",
+        "mean":  "adj. 野生的 n. 荒野",
+        "sentence":  ""
+    },
+    {
+        "word":  "yet",
+        "phonetic":  "jet",
+        "mean":  "adv. 还 conj. 然而",
+        "sentence":  ""
+    },
+    {
+        "word":  "museum",
+        "phonetic":  "mjuˈziːəm",
+        "mean":  "n. 博物馆",
+        "sentence":  ""
+    },
+    {
+        "word":  "another",
+        "phonetic":  "əˈnʌðə(r)",
+        "mean":  "adj. 另一个的",
+        "sentence":  ""
+    },
+    {
+        "word":  "during",
+        "phonetic":  "ˈdjʊərɪŋ",
+        "mean":  "prep. 在...期间",
+        "sentence":  ""
+    },
+    {
+        "word":  "finish",
+        "phonetic":  "ˈfɪnɪʃ",
+        "mean":  "v. 完成 n. 结尾",
+        "sentence":  ""
+    },
+    {
+        "word":  "last",
+        "phonetic":  "lɑːst",
+        "mean":  "adj. 最后的 v. 持续 adv. 上一次",
+        "sentence":  ""
+    },
+    {
+        "word":  "speed",
+        "phonetic":  "spiːd",
+        "mean":  "n. 速度 v. 加速",
+        "sentence":  ""
+    },
+    {
+        "word":  "enough",
+        "phonetic":  "ɪˈnʌf",
+        "mean":  "adv. 足够 adj. 充足的",
+        "sentence":  ""
+    },
+    {
+        "word":  "care",
+        "phonetic":  "keə(r)",
+        "mean":  "v. 关心；照顾 n. 照顾",
+        "sentence":  ""
+    },
+    {
+        "word":  "yard",
+        "phonetic":  "jɑːd",
+        "mean":  "n. 院子；码",
+        "sentence":  ""
+    },
+    {
+        "word":  "tie",
+        "phonetic":  "taɪ",
+        "mean":  "n. 领带；绳子 v. 系",
+        "sentence":  ""
+    },
+    {
+        "word":  "waste",
+        "phonetic":  "weɪst",
+        "mean":  "n. 浪费 v. 浪费 adj. 废弃的",
+        "sentence":  ""
+    },
+    {
+        "word":  "famous",
+        "phonetic":  "ˈfeɪməs",
+        "mean":  "adj. 著名的",
+        "sentence":  ""
+    },
+    {
+        "word":  "suggest",
+        "phonetic":  "səˈdʒest",
+        "mean":  "v. 建议；暗示",
+        "sentence":  ""
+    },
+    {
+        "word":  "help",
+        "phonetic":  "help",
+        "mean":  "n. v. 帮助",
+        "sentence":  ""
+    },
+    {
+        "word":  "believe",
+        "phonetic":  "bɪˈliːv",
+        "mean":  "v. 相信；认为",
+        "sentence":  ""
+    },
+    {
+        "word":  "power",
+        "phonetic":  "ˈpaʊə(r)",
+        "mean":  "n. 动力；力量",
+        "sentence":  ""
+    },
+    {
+        "word":  "excite",
+        "phonetic":  "ɪkˈsaɪt",
+        "mean":  "v. 使兴奋",
+        "sentence":  ""
+    },
+    {
+        "word":  "exam",
+        "phonetic":  "ɪɡˈzæm",
+        "mean":  "n. 考试",
+        "sentence":  ""
+    },
+    {
+        "word":  "spirit",
+        "phonetic":  "ˈspɪrɪt",
+        "mean":  "n. 精神；心灵",
+        "sentence":  ""
+    },
+    {
+        "word":  "happen",
+        "phonetic":  "ˈhæpən",
+        "mean":  "v. 发生；碰巧",
+        "sentence":  ""
+    },
+    {
+        "word":  "group",
+        "phonetic":  "ɡruːp",
+        "mean":  "n. 组；团体",
+        "sentence":  ""
+    },
+    {
+        "word":  "legend",
+        "phonetic":  "ˈledʒənd",
+        "mean":  "n. 传说",
+        "sentence":  ""
+    },
+    {
+        "word":  "colour",
+        "phonetic":  "ˈkʌlə(r)",
+        "mean":  "n. 颜色 v. 染色",
+        "sentence":  ""
+    },
+    {
+        "word":  "survive",
+        "phonetic":  "səˈvaɪv",
+        "mean":  "v. 幸存；存活",
+        "sentence":  ""
+    },
+    {
+        "word":  "require",
+        "phonetic":  "rɪˈkwaɪə(r)",
+        "mean":  "v. 要求；需要",
+        "sentence":  ""
+    },
+    {
+        "word":  "activity",
+        "phonetic":  "ækˈtɪvəti",
+        "mean":  "n. 活动",
+        "sentence":  ""
+    },
+    {
+        "word":  "search",
+        "phonetic":  "sɜːtʃ",
+        "mean":  "n. v. 搜寻",
+        "sentence":  ""
+    },
+    {
+        "word":  "transport",
+        "phonetic":  "ˈtrænspɔːt",
+        "mean":  "n. v. 运输",
+        "sentence":  ""
+    },
+    {
+        "word":  "choose",
+        "phonetic":  "tʃuːz",
+        "mean":  "v. 选择",
+        "sentence":  ""
+    },
+    {
+        "word":  "scare",
+        "phonetic":  "skeə(r)",
+        "mean":  "v. 惊吓 n. 恐慌",
+        "sentence":  ""
+    },
+    {
+        "word":  "dream",
+        "phonetic":  "driːm",
+        "mean":  "v. 梦想 n. 梦",
+        "sentence":  ""
+    },
+    {
+        "word":  "cause",
+        "phonetic":  "kɔːz",
+        "mean":  "v. 引起 n. 原因",
+        "sentence":  ""
+    },
+    {
+        "word":  "earth",
+        "phonetic":  "ɜːθ",
+        "mean":  "n. 地球；泥土",
+        "sentence":  ""
+    },
+    {
+        "word":  "example",
+        "phonetic":  "ɪɡˈzɑːmpl",
+        "mean":  "n. 例子；榜样",
+        "sentence":  ""
+    },
+    {
+        "word":  "danger",
+        "phonetic":  "ˈdeɪndʒə(r)",
+        "mean":  "n. 危险",
+        "sentence":  ""
+    },
+    {
+        "word":  "produce",
+        "phonetic":  "prəˈdjuːs",
+        "mean":  "v. 生产 n. 产品",
+        "sentence":  ""
+    },
+    {
+        "word":  "afraid",
+        "phonetic":  "əˈfreɪd",
+        "mean":  "adj. 害怕的",
+        "sentence":  ""
+    },
+    {
+        "word":  "information",
+        "phonetic":  "ˌɪnfəˈmeɪʃn",
+        "mean":  "n. 信息；资料",
+        "sentence":  ""
+    },
+    {
+        "word":  "prove",
+        "phonetic":  "pruːv",
+        "mean":  "v. 证明",
+        "sentence":  ""
+    },
+    {
+        "word":  "wealthy",
+        "phonetic":  "ˈwelθi",
+        "mean":  "adj. 富有的 n. 富人",
+        "sentence":  ""
+    },
+    {
+        "word":  "course",
+        "phonetic":  "kɔːs",
+        "mean":  "n. 课程；过程",
+        "sentence":  ""
+    },
+    {
+        "word":  "birth",
+        "phonetic":  "bɜːθ",
+        "mean":  "n. 出生",
+        "sentence":  ""
+    },
+    {
+        "word":  "close",
+        "phonetic":  "kləʊs",
+        "mean":  "adj. 亲密的 v. 关闭",
+        "sentence":  ""
+    },
+    {
+        "word":  "national",
+        "phonetic":  "ˈnæʃnəl",
+        "mean":  "adj. 国家的 n. 国民",
+        "sentence":  ""
+    },
+    {
+        "word":  "percent",
+        "phonetic":  "pəˈsent",
+        "mean":  "n. 百分比 adj. 百分之...的",
+        "sentence":  ""
+    },
+    {
+        "word":  "act",
+        "phonetic":  "ækt",
+        "mean":  "n. 行动 v. 行动；表演",
+        "sentence":  ""
+    },
+    {
+        "word":  "monitor",
+        "phonetic":  "ˈmɒnɪtə(r)",
+        "mean":  "n. 班长 v. 监视",
+        "sentence":  ""
+    },
+    {
+        "word":  "level",
+        "phonetic":  "ˈlevl",
+        "mean":  "n. 水平 adj. 水平的",
+        "sentence":  ""
+    },
+    {
+        "word":  "resume",
+        "phonetic":  "ˈrezjumeɪ",
+        "mean":  "n. 简历 v. 重新开始",
+        "sentence":  ""
+    },
+    {
+        "word":  "experience",
+        "phonetic":  "ɪkˈspɪəriəns",
+        "mean":  "n. 经验 v. 经历",
+        "sentence":  ""
+    },
+    {
+        "word":  "otherwise",
+        "phonetic":  "ˈʌðəwaɪz",
+        "mean":  "adv. 否则",
+        "sentence":  ""
+    },
+    {
+        "word":  "tolerance",
+        "phonetic":  "ˈtɒlərəns",
+        "mean":  "n. 容忍",
+        "sentence":  ""
+    },
+    {
+        "word":  "bring",
+        "phonetic":  "brɪŋ",
+        "mean":  "v. 带来",
+        "sentence":  ""
+    },
+    {
+        "word":  "project",
+        "phonetic":  "ˈprɒdʒekt",
+        "mean":  "n. 计划；项目",
+        "sentence":  ""
+    },
+    {
+        "word":  "website",
+        "phonetic":  "ˈwebsaɪt",
+        "mean":  "n. 网站",
+        "sentence":  ""
+    },
+    {
+        "word":  "exercise",
+        "phonetic":  "ˈeksəsaɪz",
+        "mean":  "n. 练习；运动 v. 锻炼",
+        "sentence":  ""
+    },
+    {
+        "word":  "necessary",
+        "phonetic":  "ˈnesəsəri",
+        "mean":  "adj. 必要的 n. 必需品",
+        "sentence":  ""
+    },
+    {
+        "word":  "advice",
+        "phonetic":  "ədˈvaɪs",
+        "mean":  "n. 劝告；建议",
+        "sentence":  ""
+    },
+    {
+        "word":  "heart",
+        "phonetic":  "hɑːt",
+        "mean":  "n. 心脏",
+        "sentence":  ""
+    },
+    {
+        "word":  "company",
+        "phonetic":  "ˈkʌmpəni",
+        "mean":  "n. 公司 v. 陪伴",
+        "sentence":  ""
+    },
+    {
+        "word":  "grow",
+        "phonetic":  "ɡrəʊ",
+        "mean":  "v. 种植；生长",
+        "sentence":  ""
+    },
+    {
+        "word":  "between",
+        "phonetic":  "bɪˈtwiːn",
+        "mean":  "prep. 在…… 之间",
+        "sentence":  ""
+    },
+    {
+        "word":  "set",
+        "phonetic":  "set",
+        "mean":  "v. 放置，安置 n. 一套；一副",
+        "sentence":  ""
+    },
+    {
+        "word":  "study",
+        "phonetic":  "ˈstʌdi",
+        "mean":  "v. 研究；学习 n. 书房；研究；学习",
+        "sentence":  ""
+    },
+    {
+        "word":  "position",
+        "phonetic":  "pəˈzɪʃn",
+        "mean":  "n. 位置；地位 v. 放置",
+        "sentence":  ""
+    },
+    {
+        "word":  "able",
+        "phonetic":  "ˈeɪbl",
+        "mean":  "adj. 能做到…… 的；可以…… 的",
+        "sentence":  ""
+    },
+    {
+        "word":  "interview",
+        "phonetic":  "ˈɪntəvjuː",
+        "mean":  "v. 采访；面试 n. 会见；面试；采访",
+        "sentence":  ""
+    },
+    {
+        "word":  "angry",
+        "phonetic":  "ˈæŋɡri",
+        "mean":  "adj. 生气的；愤怒的",
+        "sentence":  ""
+    },
+    {
+        "word":  "develop",
+        "phonetic":  "dɪˈveləp",
+        "mean":  "v. 发展；养成；开发；冲洗（胶片）",
+        "sentence":  ""
+    },
+    {
+        "word":  "farm",
+        "phonetic":  "fɑːm",
+        "mean":  "n. 农场；农田；耕种",
+        "sentence":  ""
+    },
+    {
+        "word":  "gift",
+        "phonetic":  "ɡɪft",
+        "mean":  "n. 礼物；天赋",
+        "sentence":  ""
+    },
+    {
+        "word":  "mouse",
+        "phonetic":  "maʊs",
+        "mean":  "n. 老鼠；鼠标",
+        "sentence":  ""
+    },
+    {
+        "word":  "allow",
+        "phonetic":  "əˈlaʊ",
+        "mean":  "v. 允许；准许",
+        "sentence":  ""
+    },
+    {
+        "word":  "remind",
+        "phonetic":  "rɪˈmaɪnd",
+        "mean":  "v. 使想起，使记起；提醒",
+        "sentence":  ""
+    },
+    {
+        "word":  "joke",
+        "phonetic":  "dʒəʊk",
+        "mean":  "n. 笑话；玩笑 v. 开玩笑",
+        "sentence":  ""
+    },
+    {
+        "word":  "environment",
+        "phonetic":  "ɪnˈvaɪrənmənt",
+        "mean":  "n. 环境；外界",
+        "sentence":  ""
+    },
+    {
+        "word":  "serve",
+        "phonetic":  "sɜːv",
+        "mean":  "v. 服务；招待",
+        "sentence":  ""
+    },
+    {
+        "word":  "through",
+        "phonetic":  "θruː",
+        "mean":  "prep. 穿过",
+        "sentence":  ""
+    },
+    {
+        "word":  "weather",
+        "phonetic":  "ˈweðə(r)",
+        "mean":  "n. 天气；气象",
+        "sentence":  ""
+    },
+    {
+        "word":  "mean",
+        "phonetic":  "miːn",
+        "mean":  "v 意思是；打算 adj 吝啬的",
+        "sentence":  ""
+    },
+    {
+        "word":  "symbol",
+        "phonetic":  "ˈsɪmbl",
+        "mean":  "n 象征；符号；标志",
+        "sentence":  ""
+    },
+    {
+        "word":  "forest",
+        "phonetic":  "ˈfɒrɪst",
+        "mean":  "n. 森林；丛林",
+        "sentence":  ""
+    },
+    {
+        "word":  "teenage",
+        "phonetic":  "ˈtiːneɪdʒ",
+        "mean":  "adj. 青少年的；十几岁的",
+        "sentence":  ""
+    },
+    {
+        "word":  "head",
+        "phonetic":  "hed",
+        "mean":  "n. 头部；领袖 adj. 首要的； v. 前进",
+        "sentence":  ""
+    },
+    {
+        "word":  "tower",
+        "phonetic":  "ˈtaʊə(r)",
+        "mean":  "n. 塔；高楼 v. 高耸；屹立；超越",
+        "sentence":  ""
+    },
+    {
+        "word":  "though",
+        "phonetic":  "ðəʊ",
+        "mean":  "conj. 虽然；尽管；然而；不过",
+        "sentence":  ""
+    },
+    {
+        "word":  "create",
+        "phonetic":  "kriˈeɪt",
+        "mean":  "v. 创造；创作；产生",
+        "sentence":  ""
+    },
+    {
+        "word":  "complete",
+        "phonetic":  "kəmˈpliːt",
+        "mean":  "adj. 完整的 v. 完成",
+        "sentence":  ""
+    },
+    {
+        "word":  "knock",
+        "phonetic":  "nɒk",
+        "mean":  "v. 敲击；互撞 n. 敲门声；敲击声",
+        "sentence":  ""
+    },
+    {
+        "word":  "population",
+        "phonetic":  "ˌpɒpjuˈleɪʃn",
+        "mean":  "n. 人口；居民",
+        "sentence":  ""
+    },
+    {
+        "word":  "educate",
+        "phonetic":  "ˈedjukeɪt",
+        "mean":  "v. 教育；训练；培养",
+        "sentence":  ""
+    },
+    {
+        "word":  "heavy",
+        "phonetic":  "ˈhevi",
+        "mean":  "adj. 沉重的；巨大的",
+        "sentence":  ""
+    },
+    {
+        "word":  "college",
+        "phonetic":  "ˈkɒlɪdʒ",
+        "mean":  "n. 学院；大学",
+        "sentence":  ""
+    },
+    {
+        "word":  "obey",
+        "phonetic":  "əˈbeɪ",
+        "mean":  "v. 服从；遵守",
+        "sentence":  ""
+    },
+    {
+        "word":  "recent",
+        "phonetic":  "ˈriːsnt",
+        "mean":  "adj. 近来的；新近的",
+        "sentence":  ""
+    },
+    {
+        "word":  "trade",
+        "phonetic":  "treɪd",
+        "mean":  "n. 贸易；行业； v. 做生意",
+        "sentence":  ""
+    },
+    {
+        "word":  "goal",
+        "phonetic":  "ɡəʊl",
+        "mean":  "n. 目标；进球得分",
+        "sentence":  ""
+    },
+    {
+        "word":  "include",
+        "phonetic":  "ɪnˈkluːd",
+        "mean":  "v. 包含，包括",
+        "sentence":  ""
+    },
+    {
+        "word":  "show",
+        "phonetic":  "ʃəʊ",
+        "mean":  "v. 表明；演示 n. 演出；展览会",
+        "sentence":  ""
+    },
+    {
+        "word":  "spare",
+        "phonetic":  "speə(r)",
+        "mean":  "adj. 闲置的；备用的",
+        "sentence":  ""
+    },
+    {
+        "word":  "dining",
+        "phonetic":  "ˈdaɪnɪŋ",
+        "mean":  "n. 吃饭，进餐；宴会",
+        "sentence":  ""
+    },
+    {
+        "word":  "festival",
+        "phonetic":  "ˈfestɪvl",
+        "mean":  "n. 节日",
+        "sentence":  ""
+    },
+    {
+        "word":  "operate",
+        "phonetic":  "ˈɒpəreɪt",
+        "mean":  "v. 运转；动手术",
+        "sentence":  ""
+    },
+    {
+        "word":  "review",
+        "phonetic":  "rɪˈvjuː",
+        "mean":  "v. 复习；复查 n. 评述；复习",
+        "sentence":  ""
+    },
+    {
+        "word":  "area",
+        "phonetic":  "ˈeəriə",
+        "mean":  "n. 地区；面积",
+        "sentence":  ""
+    },
+    {
+        "word":  "desert",
+        "phonetic":  "ˈdezət",
+        "mean":  "n. 沙漠 v. 抛弃",
+        "sentence":  ""
+    },
+    {
+        "word":  "smart",
+        "phonetic":  "smɑːt",
+        "mean":  "adj. 聪明的；整洁而漂亮的",
+        "sentence":  ""
+    },
+    {
+        "word":  "smoke",
+        "phonetic":  "sməʊk",
+        "mean":  "n. 烟 v. 吸（烟）；冒烟",
+        "sentence":  ""
+    },
+    {
+        "word":  "hurt",
+        "phonetic":  "hɜːt",
+        "mean":  "v. 受伤 n. 心灵创伤",
+        "sentence":  ""
+    },
+    {
+        "word":  "agree",
+        "phonetic":  "əˈɡriː",
+        "mean":  "v. 同意",
+        "sentence":  ""
+    },
+    {
+        "word":  "prefer",
+        "phonetic":  "prɪˈfɜː(r)",
+        "mean":  "v. 喜欢…… 多于……",
+        "sentence":  ""
+    },
+    {
+        "word":  "natural",
+        "phonetic":  "ˈnætʃrəl",
+        "mean":  "adj. 自然的；合理的",
+        "sentence":  ""
+    },
+    {
+        "word":  "upset",
+        "phonetic":  "ʌpˈset",
+        "mean":  "v 使烦恼；打乱 adj 难过的； 失望的",
+        "sentence":  ""
+    },
+    {
+        "word":  "program",
+        "phonetic":  "ˈprəʊɡræm",
+        "mean":  "n 计划；节目；程序 v 计划",
+        "sentence":  ""
+    },
+    {
+        "word":  "toilet",
+        "phonetic":  "ˈtɔɪlət",
+        "mean":  "n. 厕所",
+        "sentence":  ""
+    },
+    {
+        "word":  "warn",
+        "phonetic":  "wɔːn",
+        "mean":  "v. 提醒注意；警告",
+        "sentence":  ""
+    },
+    {
+        "word":  "invite",
+        "phonetic":  "ɪnˈvaɪt",
+        "mean":  "v. 邀请；请求",
+        "sentence":  ""
+    },
+    {
+        "word":  "join",
+        "phonetic":  "dʒɔɪn",
+        "mean":  "v. 参加；连接",
+        "sentence":  ""
+    },
+    {
+        "word":  "member",
+        "phonetic":  "ˈmembə(r)",
+        "mean":  "n. 成员；会员",
+        "sentence":  ""
+    },
+    {
+        "word":  "progress",
+        "phonetic":  "ˈprəʊɡres",
+        "mean":  "n. 进步；前进",
+        "sentence":  ""
+    },
+    {
+        "word":  "catch",
+        "phonetic":  "kætʃ",
+        "mean":  "v. 抓住；赶上；听清楚",
+        "sentence":  ""
+    },
+    {
+        "word":  "hold",
+        "phonetic":  "həʊld",
+        "mean":  "v. 举行；容纳；抓住",
+        "sentence":  ""
+    },
+    {
+        "word":  "reason",
+        "phonetic":  "ˈriːzn",
+        "mean":  "n. 原因",
+        "sentence":  ""
+    },
+    {
+        "word":  "die",
+        "phonetic":  "daɪ",
+        "mean":  "v. 死；消失",
+        "sentence":  ""
+    },
+    {
+        "word":  "novel",
+        "phonetic":  "ˈnɒvl",
+        "mean":  "n. 小说",
+        "sentence":  ""
+    },
+    {
+        "word":  "receive",
+        "phonetic":  "rɪˈsiːv",
+        "mean":  "v. 收到；接待",
+        "sentence":  ""
+    },
+    {
+        "word":  "save",
+        "phonetic":  "seɪv",
+        "mean":  "v. 救；保存；节约",
+        "sentence":  ""
+    },
+    {
+        "word":  "chance",
+        "phonetic":  "tʃɑːns",
+        "mean":  "n. 机会；碰巧",
+        "sentence":  ""
+    },
+    {
+        "word":  "club",
+        "phonetic":  "klʌb",
+        "mean":  "n. 俱乐部",
+        "sentence":  ""
+    },
+    {
+        "word":  "competition",
+        "phonetic":  "ˌkɒmpəˈtɪʃn",
+        "mean":  "n. 竞争；比赛",
+        "sentence":  ""
+    },
+    {
+        "word":  "stress",
+        "phonetic":  "stres",
+        "mean":  "n. 压力；重音 v. 强调",
+        "sentence":  ""
+    },
+    {
+        "word":  "dragon",
+        "phonetic":  "ˈdræɡən",
+        "mean":  "n. 龙",
+        "sentence":  ""
+    },
+    {
+        "word":  "encourage",
+        "phonetic":  "ɪnˈkʌrɪdʒ",
+        "mean":  "v. 鼓励；支持",
+        "sentence":  ""
+    },
+    {
+        "word":  "shake",
+        "phonetic":  "ʃeɪk",
+        "mean":  "v. 摇动；握手； n. 摇动；颤抖",
+        "sentence":  ""
+    },
+    {
+        "word":  "supply",
+        "phonetic":  "səˈplaɪ",
+        "mean":  "n. 供应量；补给 v. 供应；供给",
+        "sentence":  ""
+    },
+    {
+        "word":  "accident",
+        "phonetic":  "ˈæksɪdənt",
+        "mean":  "n. 事故；意外",
+        "sentence":  ""
+    },
+    {
+        "word":  "communicate",
+        "phonetic":  "kəˈmjuːnɪkeɪt",
+        "mean":  "v. 交流；传达",
+        "sentence":  ""
+    },
+    {
+        "word":  "culture",
+        "phonetic":  "ˈkʌltʃə(r)",
+        "mean":  "n. 文化；文明",
+        "sentence":  ""
+    },
+    {
+        "word":  "either",
+        "phonetic":  "ˈaɪðə(r)",
+        "mean":  "pron.（两者中的）任何一个 adv.（否）也",
+        "sentence":  ""
+    },
+    {
+        "word":  "space",
+        "phonetic":  "speɪs",
+        "mean":  "n. 空间；太空；空隙",
+        "sentence":  ""
+    },
+    {
+        "word":  "temple",
+        "phonetic":  "ˈtempl",
+        "mean":  "n. 庙宇，寺院",
+        "sentence":  ""
+    },
+    {
+        "word":  "bored",
+        "phonetic":  "bɔːd",
+        "mean":  "adj. 厌倦的；烦闷的",
+        "sentence":  ""
+    },
+    {
+        "word":  "grade",
+        "phonetic":  "ɡreɪd",
+        "mean":  "n. 年级；级别；成绩等级",
+        "sentence":  ""
+    },
+    {
+        "word":  "public",
+        "phonetic":  "ˈpʌblɪk",
+        "mean":  "adj. 公开的；大众的 n. 百姓",
+        "sentence":  ""
+    },
+    {
+        "word":  "common",
+        "phonetic":  "ˈkɒmən",
+        "mean":  "adj. 常见的；普通的",
+        "sentence":  ""
+    },
+    {
+        "word":  "knife",
+        "phonetic":  "naɪf",
+        "mean":  "n 刀",
+        "sentence":  ""
+    },
+    {
+        "word":  "leave",
+        "phonetic":  "liːv",
+        "mean":  "v 离开；遗忘；留下 n 假期",
+        "sentence":  ""
+    },
+    {
+        "word":  "person",
+        "phonetic":  "ˈpɜːsn",
+        "mean":  "n. 个人；人员",
+        "sentence":  ""
+    },
+    {
+        "word":  "translate",
+        "phonetic":  "trænzˈleɪt",
+        "mean":  "v. 翻译；转变",
+        "sentence":  ""
+    },
+    {
+        "word":  "count",
+        "phonetic":  "kaʊnt",
+        "mean":  "v. 数数；视为 n. 计数；总数",
+        "sentence":  ""
+    },
+    {
+        "word":  "pay",
+        "phonetic":  "peɪ",
+        "mean":  "v. 付费；付代价",
+        "sentence":  ""
+    },
+    {
+        "word":  "climb",
+        "phonetic":  "klaɪm",
+        "mean":  "v. 攀登；上升 n. 攀登",
+        "sentence":  ""
+    },
+    {
+        "word":  "control",
+        "phonetic":  "kənˈtrəʊl",
+        "mean":  "v. 指挥；控制 n. 管理权，控制权",
+        "sentence":  ""
+    },
+    {
+        "word":  "line",
+        "phonetic":  "laɪn",
+        "mean":  "n. 线；排 v. 沿…… 排成行",
+        "sentence":  ""
+    },
+    {
+        "word":  "scene",
+        "phonetic":  "siːn",
+        "mean":  "n. 现场；场面；景色",
+        "sentence":  ""
+    },
+    {
+        "word":  "sport",
+        "phonetic":  "spɔːt",
+        "mean":  "n. 体育运动",
+        "sentence":  ""
+    },
+    {
+        "word":  "truth",
+        "phonetic":  "truːθ",
+        "mean":  "n. 真相；真理",
+        "sentence":  ""
+    },
+    {
+        "word":  "honest",
+        "phonetic":  "ˈɒnɪst",
+        "mean":  "adj. 诚实的；老实的；真诚的",
+        "sentence":  ""
+    },
+    {
+        "word":  "expensive",
+        "phonetic":  "ɪkˈspensɪv",
+        "mean":  "adj. 昂贵的",
+        "sentence":  ""
+    },
+    {
+        "word":  "hardly",
+        "phonetic":  "ˈhɑːdli",
+        "mean":  "adv. 几乎不；几乎没有",
+        "sentence":  ""
+    },
+    {
+        "word":  "neighbourhood",
+        "phonetic":  "ˈneɪbəhʊd",
+        "mean":  "n. 居民区；街区",
+        "sentence":  ""
+    },
+    {
+        "word":  "print",
+        "phonetic":  "prɪnt",
+        "mean":  "v. 打印 n. 印刷；印记",
+        "sentence":  ""
+    },
+    {
+        "word":  "theatre",
+        "phonetic":  "ˈθiətə(r)",
+        "mean":  "n. 剧场； 电影院",
+        "sentence":  ""
+    },
+    {
+        "word":  "conditional",
+        "phonetic":  "kənˈdɪʃənl",
+        "mean":  "adj. 有条件的",
+        "sentence":  ""
+    },
+    {
+        "word":  "deal",
+        "phonetic":  "diːl",
+        "mean":  "v. 处理 n. 大量；协议",
+        "sentence":  ""
+    },
+    {
+        "word":  "nervous",
+        "phonetic":  "ˈnɜːvəs",
+        "mean":  "adj. 神经质的；紧张的；焦虑的",
+        "sentence":  ""
+    },
+    {
+        "word":  "purpose",
+        "phonetic":  "ˈpɜːpəs",
+        "mean":  "n. 目的",
+        "sentence":  ""
+    },
+    {
+        "word":  "shape",
+        "phonetic":  "ʃeɪp",
+        "mean":  "n. 形状；外形 v. 使成为…… 形状",
+        "sentence":  ""
+    },
+    {
+        "word":  "arm",
+        "phonetic":  "ɑːm",
+        "mean":  "n. 手臂；袖子 v. 武装",
+        "sentence":  ""
+    },
+    {
+        "word":  "attention",
+        "phonetic":  "əˈtenʃn",
+        "mean":  "n. 注意；兴趣",
+        "sentence":  ""
+    },
+    {
+        "word":  "break",
+        "phonetic":  "breɪk",
+        "mean":  "v. 弄坏；违犯；打断 n. 休息",
+        "sentence":  ""
+    },
+    {
+        "word":  "certain",
+        "phonetic":  "ˈsɜːtn",
+        "mean":  "adj. 确实的；确定的",
+        "sentence":  ""
+    },
+    {
+        "word":  "polite",
+        "phonetic":  "pəˈlaɪt",
+        "mean":  "adj. 有礼貌的；客套的",
+        "sentence":  ""
+    },
+    {
+        "word":  "alone",
+        "phonetic":  "əˈləʊn",
+        "mean":  "adj. 独自；寂寞 adv. 独自",
+        "sentence":  ""
+    },
+    {
+        "word":  "method",
+        "phonetic":  "ˈmeθəd",
+        "mean":  "n. 方法；条理",
+        "sentence":  ""
+    },
+    {
+        "word":  "skate",
+        "phonetic":  "skeɪt",
+        "mean":  "v. 滑冰",
+        "sentence":  ""
+    },
+    {
+        "word":  "instead",
+        "phonetic":  "ɪnˈsted",
+        "mean":  "adv. 代替；反而",
+        "sentence":  ""
+    },
+    {
+        "word":  "memory",
+        "phonetic":  "ˈmeməri",
+        "mean":  "n. 记忆力；记忆",
+        "sentence":  ""
+    },
+    {
+        "word":  "special",
+        "phonetic":  "ˈspeʃl",
+        "mean":  "adj 特别的；专用的",
+        "sentence":  ""
+    },
+    {
+        "word":  "celebrate",
+        "phonetic":  "ˈselɪbreɪt",
+        "mean":  "v 庆祝；赞美",
+        "sentence":  ""
+    },
+    {
+        "word":  "team",
+        "phonetic":  "tiːm",
+        "mean":  "n. 队，组 v. 使合作",
+        "sentence":  ""
+    },
+    {
+        "word":  "continue",
+        "phonetic":  "kənˈtɪnjuː",
+        "mean":  "v. 持续；持续做",
+        "sentence":  ""
+    },
+    {
+        "word":  "active",
+        "phonetic":  "ˈæktɪv",
+        "mean":  "adj. 活跃的",
+        "sentence":  ""
+    },
+    {
+        "word":  "century",
+        "phonetic":  "ˈsentʃəri",
+        "mean":  "n. 世纪；百年",
+        "sentence":  ""
+    },
+    {
+        "word":  "cost",
+        "phonetic":  "kɒst",
+        "mean":  "n. 费用 v. 需付费",
+        "sentence":  ""
+    },
+    {
+        "word":  "discuss",
+        "phonetic":  "dɪˈskʌs",
+        "mean":  "v. 讨论；论述",
+        "sentence":  ""
+    },
+    {
+        "word":  "across",
+        "phonetic":  "əˈkrɒs",
+        "mean":  "adv. 横过；在对面 prep. 从一边到另一边",
+        "sentence":  ""
+    },
+    {
+        "word":  "government",
+        "phonetic":  "ˈɡʌvənmənt",
+        "mean":  "n. 政府；政体",
+        "sentence":  ""
+    },
+    {
+        "word":  "pretend",
+        "phonetic":  "prɪˈtend",
+        "mean":  "v. 假装；装扮 adj. 假装的",
+        "sentence":  ""
+    },
+    {
+        "word":  "society",
+        "phonetic":  "səˈsaɪəti",
+        "mean":  "n. 社会；社团",
+        "sentence":  ""
+    },
+    {
+        "word":  "above",
+        "phonetic":  "əˈbʌv",
+        "mean":  "prep. 在…… 上面 adv. 在上面 adj. 上述的",
+        "sentence":  ""
+    },
+    {
+        "word":  "record",
+        "phonetic":  "ˈrekɔːd",
+        "mean":  "n. 记录；唱片 v. 记录；录制",
+        "sentence":  ""
+    },
+    {
+        "word":  "station",
+        "phonetic":  "ˈsteɪʃn",
+        "mean":  "n. 火车站；长途汽车站",
+        "sentence":  ""
+    },
+    {
+        "word":  "excuse",
+        "phonetic":  "ɪkˈskjuːs",
+        "mean":  "n. 借口；理由 v. 原谅",
+        "sentence":  ""
+    },
+    {
+        "word":  "tire",
+        "phonetic":  "ˈtaɪə(r)",
+        "mean":  "v. 使疲劳，疲倦 n. 轮胎",
+        "sentence":  ""
+    },
+    {
+        "word":  "fail",
+        "phonetic":  "feɪl",
+        "mean":  "v. 失败；未做 n. 不及格",
+        "sentence":  ""
+    },
+    {
+        "word":  "human",
+        "phonetic":  "ˈhjuːmən",
+        "mean":  "n. 人 adj. 人本性的；有人情味的",
+        "sentence":  ""
+    },
+    {
+        "word":  "mind",
+        "phonetic":  "maɪnd",
+        "mean":  "v. 介意 n. 头脑",
+        "sentence":  ""
+    },
+    {
+        "word":  "order",
+        "phonetic":  "ˈɔːdə(r)",
+        "mean":  "v. 命令；定购 n. 顺序；条理；命令；秩序",
+        "sentence":  ""
+    },
+    {
+        "word":  "silence",
+        "phonetic":  "ˈsaɪləns",
+        "mean":  "n. 寂静；沉默",
+        "sentence":  ""
+    },
+    {
+        "word":  "introduce",
+        "phonetic":  "ˌɪntrəˈdjuːs",
+        "mean":  "v. 把…… 介绍（给）",
+        "sentence":  ""
+    },
+    {
+        "word":  "plastic",
+        "phonetic":  "ˈplæstɪk",
+        "mean":  "n. 塑料 adj. 塑料的；整形的",
+        "sentence":  ""
+    },
+    {
+        "word":  "proper",
+        "phonetic":  "ˈprɒpə(r)",
+        "mean":  "adj. 恰当的；正确的",
+        "sentence":  ""
+    },
+    {
+        "word":  "sick",
+        "phonetic":  "sɪk",
+        "mean":  "adj. 生病的",
+        "sentence":  ""
+    },
+    {
+        "word":  "thought",
+        "phonetic":  "θɔːt",
+        "mean":  "n. 看法；思想",
+        "sentence":  ""
+    },
+    {
+        "word":  "cheap",
+        "phonetic":  "tʃiːp",
+        "mean":  "adj. 便宜的",
+        "sentence":  ""
+    },
+    {
+        "word":  "guide",
+        "phonetic":  "ɡaɪd",
+        "mean":  "n. 指南；导游 v. 指引；指导",
+        "sentence":  ""
+    },
+    {
+        "word":  "list",
+        "phonetic":  "lɪst",
+        "mean":  "n. 清单； 目录 v. 列 …… 清单",
+        "sentence":  ""
+    },
+    {
+        "word":  "process",
+        "phonetic":  "ˈprəʊses",
+        "mean":  "n. 过程 v. 加工",
+        "sentence":  ""
+    },
+    {
+        "word":  "ski",
+        "phonetic":  "skiː",
+        "mean":  "n. 滑雪板 v. 滑雪",
+        "sentence":  ""
+    },
+    {
+        "word":  "train",
+        "phonetic":  "treɪn",
+        "mean":  "n. 火车 v. 培训，训练",
+        "sentence":  ""
+    },
+    {
+        "word":  "borrow",
+        "phonetic":  "ˈbɒrəʊ",
+        "mean":  "v 借；引用",
+        "sentence":  ""
+    },
+    {
+        "word":  "express",
+        "phonetic":  "ɪkˈspres",
+        "mean":  "v 表达 n 快递服务",
+        "sentence":  ""
+    },
+    {
+        "word":  "fight",
+        "phonetic":  "faɪt",
+        "mean":  "v. 打仗；打架",
+        "sentence":  ""
+    },
+    {
+        "word":  "advantage",
+        "phonetic":  "ədˈvɑːntɪdʒ",
+        "mean":  "n. 优势；有利于",
+        "sentence":  ""
+    },
+    {
+        "word":  "electric",
+        "phonetic":  "ɪˈlektrɪk",
+        "mean":  "adj. 电的 n. 电",
+        "sentence":  ""
+    },
+    {
+        "word":  "confident",
+        "phonetic":  "ˈkɒnfɪdənt",
+        "mean":  "adj. 自信的；确信的",
+        "sentence":  ""
+    },
+    {
+        "word":  "language",
+        "phonetic":  "ˈlæŋɡwɪdʒ",
+        "mean":  "n. 语言",
+        "sentence":  ""
+    },
+    {
+        "word":  "expect",
+        "phonetic":  "ɪkˈspekt",
+        "mean":  "v. 预期；期望",
+        "sentence":  ""
+    },
+    {
+        "word":  "explain",
+        "phonetic":  "ɪkˈspleɪn",
+        "mean":  "v. 解释；说明",
+        "sentence":  ""
+    },
+    {
+        "word":  "realize",
+        "phonetic":  "ˈriːəlaɪz",
+        "mean":  "v. 意识到；实现",
+        "sentence":  ""
+    },
+    {
+        "word":  "respect",
+        "phonetic":  "rɪˈspekt",
+        "mean":  "v. 尊敬",
+        "sentence":  ""
+    },
+    {
+        "word":  "sightseeing",
+        "phonetic":  "ˈsaɪtsiːɪŋ",
+        "mean":  "n. 观光；游览",
+        "sentence":  ""
+    },
+    {
+        "word":  "stamp",
+        "phonetic":  "stæmp",
+        "mean":  "n. 邮票 v. 盖章；重踩",
+        "sentence":  ""
+    },
+    {
+        "word":  "spell",
+        "phonetic":  "spel",
+        "mean":  "v. 拼写",
+        "sentence":  ""
+    },
+    {
+        "word":  "beside",
+        "phonetic":  "bɪˈsaɪd",
+        "mean":  "prep. 在…… 旁边",
+        "sentence":  ""
+    },
+    {
+        "word":  "among",
+        "phonetic":  "əˈmʌŋ",
+        "mean":  "prep. 在…… 中",
+        "sentence":  ""
+    },
+    {
+        "word":  "brain",
+        "phonetic":  "breɪn",
+        "mean":  "n. 大脑；智力；聪明的人",
+        "sentence":  ""
+    },
+    {
+        "word":  "consider",
+        "phonetic":  "kənˈsɪdə(r)",
+        "mean":  "v. 仔细考虑；认为",
+        "sentence":  ""
+    },
+    {
+        "word":  "manage",
+        "phonetic":  "ˈmænɪdʒ",
+        "mean":  "v. 管理；控制",
+        "sentence":  ""
+    },
+    {
+        "word":  "material",
+        "phonetic":  "məˈtɪəriəl",
+        "mean":  "n. 材料；原料 adj. 物质的；重要的",
+        "sentence":  ""
+    },
+    {
+        "word":  "retire",
+        "phonetic":  "rɪˈtaɪə(r)",
+        "mean":  "v. 退休； （因伤）退出（比赛等）",
+        "sentence":  ""
+    },
+    {
+        "word":  "sting",
+        "phonetic":  "stɪŋ",
+        "mean":  "v. 叮；敲诈 n. 刺；叮伤",
+        "sentence":  ""
+    },
+    {
+        "word":  "accept",
+        "phonetic":  "əkˈsept",
+        "mean":  "v. 接受；同意",
+        "sentence":  ""
+    },
+    {
+        "word":  "direct",
+        "phonetic":  "dəˈrekt",
+        "mean":  "adj. 直接的；笔直的 v. 导演；指路",
+        "sentence":  ""
+    },
+    {
+        "word":  "own",
+        "phonetic":  "əʊn",
+        "mean":  "adj. 自己的 v. 拥有",
+        "sentence":  ""
+    },
+    {
+        "word":  "provide",
+        "phonetic":  "prəˈvaɪd",
+        "mean":  "v. 提供；给予",
+        "sentence":  ""
+    },
+    {
+        "word":  "suffer",
+        "phonetic":  "ˈsʌfə(r)",
+        "mean":  "v.(因疾病、痛苦、悲伤等）受苦；遭受；忍受",
+        "sentence":  ""
+    },
+    {
+        "word":  "bank",
+        "phonetic":  "bæŋk",
+        "mean":  "n. 银行；岸 v. 把（钱）存入银行；开账户",
+        "sentence":  ""
+    },
+    {
+        "word":  "butterfly",
+        "phonetic":  "ˈbʌtəflaɪ",
+        "mean":  "n. 蝴蝶；蝶泳",
+        "sentence":  ""
+    },
+    {
+        "word":  "check",
+        "phonetic":  "tʃek",
+        "mean":  "v. 检查",
+        "sentence":  ""
+    },
+    {
+        "word":  "jungle",
+        "phonetic":  "ˈdʒʌŋɡl",
+        "mean":  "n.（热带）丛林",
+        "sentence":  ""
+    },
+    {
+        "word":  "president",
+        "phonetic":  "ˈprezɪdənt",
+        "mean":  "n. 总统；主席",
+        "sentence":  ""
+    },
+    {
+        "word":  "chocolate",
+        "phonetic":  "ˈtʃɒklət",
+        "mean":  "n. 巧克力",
+        "sentence":  ""
+    },
+    {
+        "word":  "energy",
+        "phonetic":  "ˈenədʒi",
+        "mean":  "n 精力；能源",
+        "sentence":  ""
+    },
+    {
+        "word":  "form",
+        "phonetic":  "fɔːm",
+        "mean":  "n 表格；形式 v 形成；建立",
+        "sentence":  ""
+    },
+    {
+        "word":  "cartoon",
+        "phonetic":  "kɑːˈtuːn",
+        "mean":  "n. 动画片；漫画",
+        "sentence":  ""
+    },
+    {
+        "word":  "mention",
+        "phonetic":  "ˈmenʃn",
+        "mean":  "v. 提到；写到 n. 提及",
+        "sentence":  ""
+    },
+    {
+        "word":  "present",
+        "phonetic":  "ˈpreznt",
+        "mean":  "adj. 当前的； 出席的 n. 礼物； 目前 v. 提出；呈现",
+        "sentence":  ""
+    },
+    {
+        "word":  "reflect",
+        "phonetic":  "rɪˈflekt",
+        "mean":  "v. 反映；反射；表明",
+        "sentence":  ""
+    },
+    {
+        "word":  "state",
+        "phonetic":  "steɪt",
+        "mean":  "n. 状态；国家；州 v. 陈述；公布",
+        "sentence":  ""
+    },
+    {
+        "word":  "imagine",
+        "phonetic":  "ɪˈmædʒɪn",
+        "mean":  "v. 想象；认为",
+        "sentence":  ""
+    },
+    {
+        "word":  "attract",
+        "phonetic":  "əˈtrækt",
+        "mean":  "v. 吸引；引起",
+        "sentence":  ""
+    },
+    {
+        "word":  "breath",
+        "phonetic":  "breθ",
+        "mean":  "n. 呼吸",
+        "sentence":  ""
+    },
+    {
+        "word":  "choice",
+        "phonetic":  "tʃɔɪs",
+        "mean":  "n. 选择 adj. 优选的",
+        "sentence":  ""
+    },
+    {
+        "word":  "delicious",
+        "phonetic":  "dɪˈlɪʃəs",
+        "mean":  "adj. 美味的；令人愉快的",
+        "sentence":  ""
+    },
+    {
+        "word":  "design",
+        "phonetic":  "dɪˈzaɪn",
+        "mean":  "n. 设计；安排 v. 设计；计划",
+        "sentence":  ""
+    },
+    {
+        "word":  "invent",
+        "phonetic":  "ɪnˈvent",
+        "mean":  "v. 发明；创造",
+        "sentence":  ""
+    },
+    {
+        "word":  "prevent",
+        "phonetic":  "prɪˈvent",
+        "mean":  "v. 阻止；阻碍",
+        "sentence":  ""
+    },
+    {
+        "word":  "appear",
+        "phonetic":  "əˈpɪə(r)",
+        "mean":  "v. 显得；似乎；出现",
+        "sentence":  ""
+    },
+    {
+        "word":  "describe",
+        "phonetic":  "dɪˈskraɪb",
+        "mean":  "v. 描述；形容",
+        "sentence":  ""
+    },
+    {
+        "word":  "field",
+        "phonetic":  "fiːld",
+        "mean":  "n. 田地；领域",
+        "sentence":  ""
+    },
+    {
+        "word":  "land",
+        "phonetic":  "lænd",
+        "mean":  "n. 陆地；国家 v. 降落",
+        "sentence":  ""
+    },
+    {
+        "word":  "mark",
+        "phonetic":  "mɑːk",
+        "mean":  "v. 做标记；评分 n. 记号；成绩",
+        "sentence":  ""
+    },
+    {
+        "word":  "amaze",
+        "phonetic":  "əˈmeɪz",
+        "mean":  "v. 使惊奇；使惊愕",
+        "sentence":  ""
+    },
+    {
+        "word":  "popular",
+        "phonetic":  "ˈpɒpjələ(r)",
+        "mean":  "adj. 受欢迎的；普遍的",
+        "sentence":  ""
+    },
+    {
+        "word":  "regret",
+        "phonetic":  "rɪˈɡret",
+        "mean":  "v. 后悔；感到遗憾 n. 懊悔；遗憾",
+        "sentence":  ""
+    },
+    {
+        "word":  "temperature",
+        "phonetic":  "ˈtemprətʃə(r)",
+        "mean":  "n. 气温；体温",
+        "sentence":  ""
+    },
+    {
+        "word":  "against",
+        "phonetic":  "əˈɡenst",
+        "mean":  "prep. 反对；违反；倚靠",
+        "sentence":  ""
+    },
+    {
+        "word":  "hunt",
+        "phonetic":  "hʌnt",
+        "mean":  "v. 打猎；搜寻",
+        "sentence":  ""
+    },
+    {
+        "word":  "Internet",
+        "phonetic":  "ˈɪntənet",
+        "mean":  "n. 互联网",
+        "sentence":  ""
+    },
+    {
+        "word":  "notice",
+        "phonetic":  "ˈnəʊtɪs",
+        "mean":  "n. 通知；公告牌 v. 注意到",
+        "sentence":  ""
+    },
+    {
+        "word":  "comfortable",
+        "phonetic":  "ˈkʌmftəbl",
+        "mean":  "adj. 舒适的",
+        "sentence":  ""
+    },
+    {
+        "word":  "hate",
+        "phonetic":  "heɪt",
+        "mean":  "v. 讨厌；憎恨 n. 厌恶；所憎恨的人（或事物）",
+        "sentence":  ""
+    },
+    {
+        "word":  "perform",
+        "phonetic":  "pəˈfɔːm",
+        "mean":  "v. 执行；演出；运转",
+        "sentence":  ""
+    },
+    {
+        "word":  "reach",
+        "phonetic":  "riːtʃ",
+        "mean":  "v. 到达；伸手；够得着",
+        "sentence":  ""
+    },
+    {
+        "word":  "stay",
+        "phonetic":  "steɪ",
+        "mean":  "v. 停留；保持；暂住 n. 停留；逗留",
+        "sentence":  ""
+    },
+    {
+        "word":  "straight",
+        "phonetic":  "streɪt",
+        "mean":  "adv 笔直地；径直；直截了当地 adj 直的；直率的",
+        "sentence":  ""
+    },
+    {
+        "word":  "various",
+        "phonetic":  "ˈveəriəs",
+        "mean":  "adj 各种各样的；多姿多彩的",
+        "sentence":  ""
+    },
+    {
+        "word":  "bright",
+        "phonetic":  "braɪt",
+        "mean":  "adj. 明亮的；聪明的",
+        "sentence":  ""
+    },
+    {
+        "word":  "discover",
+        "phonetic":  "dɪˈskʌvə(r)",
+        "mean":  "v. 发现；查明",
+        "sentence":  ""
+    },
+    {
+        "word":  "risk",
+        "phonetic":  "rɪsk",
+        "mean":  "n. 危险；风险 v. 冒险做",
+        "sentence":  ""
+    },
+    {
+        "word":  "burn",
+        "phonetic":  "bɜːn",
+        "mean":  "v. 燃烧；发烫 n. 烧伤；烫伤",
+        "sentence":  ""
+    },
+    {
+        "word":  "reduce",
+        "phonetic":  "rɪˈdjuːs",
+        "mean":  "v. 减少；降低",
+        "sentence":  ""
+    },
+    {
+        "word":  "smooth",
+        "phonetic":  "smuːð",
+        "mean":  "adj. 光滑的；顺利的 v. 使光滑",
+        "sentence":  ""
+    },
+    {
+        "word":  "achieve",
+        "phonetic":  "əˈtʃiːv",
+        "mean":  "v. 达到；完成",
+        "sentence":  ""
+    },
+    {
+        "word":  "centre",
+        "phonetic":  "ˈsentə(r)",
+        "mean":  "n. 中心；中心区",
+        "sentence":  ""
+    },
+    {
+        "word":  "survey",
+        "phonetic":  "ˈsɜːveɪ",
+        "mean":  "v. 调查；勘测",
+        "sentence":  ""
+    },
+    {
+        "word":  "magazine",
+        "phonetic":  "ˌmæɡəˈziːn",
+        "mean":  "n. 杂志；期刊",
+        "sentence":  ""
+    },
+    {
+        "word":  "artist",
+        "phonetic":  "ˈɑːtɪst",
+        "mean":  "n. 艺术家；画家",
+        "sentence":  ""
+    },
+    {
+        "word":  "blood",
+        "phonetic":  "blʌd",
+        "mean":  "n. 血；血统",
+        "sentence":  ""
+    },
+    {
+        "word":  "heat",
+        "phonetic":  "hiːt",
+        "mean":  "n. 热；温度 v. 加热； （使）变暖",
+        "sentence":  ""
+    },
+    {
+        "word":  "shout",
+        "phonetic":  "ʃaʊt",
+        "mean":  "v. 大声说；喊叫 n. 呼喊；喊叫声",
+        "sentence":  ""
+    },
+    {
+        "word":  "tap",
+        "phonetic":  "tæp",
+        "mean":  "v. 轻敲 n. 水龙头；轻拍",
+        "sentence":  ""
+    },
+    {
+        "word":  "article",
+        "phonetic":  "ˈɑːtɪkl",
+        "mean":  "n. 文章；物品；冠词",
+        "sentence":  ""
+    },
+    {
+        "word":  "satisfy",
+        "phonetic":  "ˈsætɪsfaɪ",
+        "mean":  "v. 使满意；使确信",
+        "sentence":  ""
+    },
+    {
+        "word":  "trust",
+        "phonetic":  "trʌst",
+        "mean":  "v. 信任；希望 n. 信任；委托",
+        "sentence":  ""
+    },
+    {
+        "word":  "beach",
+        "phonetic":  "biːtʃ",
+        "mean":  "n. 海滩 v. 上岸",
+        "sentence":  ""
+    },
+    {
+        "word":  "daily",
+        "phonetic":  "ˈdeɪli",
+        "mean":  "adj. 日常的；按日的 n. 日报",
+        "sentence":  ""
+    },
+    {
+        "word":  "dirty",
+        "phonetic":  "ˈdɜːti",
+        "mean":  "adj. 肮脏的；卑鄙的 v. 弄脏；使变脏",
+        "sentence":  ""
+    },
+    {
+        "word":  "master",
+        "phonetic":  "ˈmɑːstə(r)",
+        "mean":  "n. 主人；大师；硕士 v. 掌握；控制",
+        "sentence":  ""
+    },
+    {
+        "word":  "represent",
+        "phonetic":  "ˌreprɪˈzent",
+        "mean":  "v. 代表；展示",
+        "sentence":  ""
+    },
+    {
+        "word":  "serious",
+        "phonetic":  "ˈsɪəriəs",
+        "mean":  "adj. 严重的；严肃的；认真的",
+        "sentence":  ""
+    },
+    {
+        "word":  "soil",
+        "phonetic":  "sɔɪl",
+        "mean":  "n. 土壤；国土",
+        "sentence":  ""
+    },
+    {
+        "word":  "adult",
+        "phonetic":  "ˈædʌlt",
+        "mean":  "n. 成年人 adj. 成年的；成熟的",
+        "sentence":  ""
+    },
+    {
+        "word":  "concert",
+        "phonetic":  "ˈkɒnsət",
+        "mean":  "n. 音乐会；演奏会",
+        "sentence":  ""
+    },
+    {
+        "word":  "eagle",
+        "phonetic":  "ˈiːɡl",
+        "mean":  "n. 鹰；雕",
+        "sentence":  ""
+    },
+    {
+        "word":  "hole",
+        "phonetic":  "həʊl",
+        "mean":  "n. 洞；裂口 v. 打洞",
+        "sentence":  ""
+    },
+    {
+        "word":  "place",
+        "phonetic":  "pleɪs",
+        "mean":  "n. 位置；地位 v. 放置；安顿",
+        "sentence":  ""
+    },
+    {
+        "word":  "sentence",
+        "phonetic":  "ˈsentəns",
+        "mean":  "n. 句子；判决 v. 判刑",
+        "sentence":  ""
+    },
+    {
+        "word":  "while",
+        "phonetic":  "waɪl",
+        "mean":  "conj 当 …… 的时候；然而 n 一段时间；一会儿",
+        "sentence":  ""
+    },
+    {
+        "word":  "magic",
+        "phonetic":  "ˈmædʒɪk",
+        "mean":  "n 魔法；巫术 adj 有魔力的；神奇的",
+        "sentence":  ""
+    },
+    {
+        "word":  "brave",
+        "phonetic":  "breɪv",
+        "mean":  "adj. 勇敢的；崭新的 v. 勇敢面对",
+        "sentence":  ""
+    },
+    {
+        "word":  "camp",
+        "phonetic":  "kæmp",
+        "mean":  "n. 营地；度假营；阵营 v. 宿营；野营",
+        "sentence":  ""
+    },
+    {
+        "word":  "cheer",
+        "phonetic":  "tʃɪə(r)",
+        "mean":  "n. 欢呼声；欢乐的气氛 v. 欢呼；鼓励",
+        "sentence":  ""
+    },
+    {
+        "word":  "event",
+        "phonetic":  "ɪˈvent",
+        "mean":  "n. 大事件； （体育运动的）比赛项目",
+        "sentence":  ""
+    },
+    {
+        "word":  "expert",
+        "phonetic":  "ˈekspɜːt",
+        "mean":  "n. 专家；能手 adj. 熟练的； 内行的",
+        "sentence":  ""
+    },
+    {
+        "word":  "hide",
+        "phonetic":  "haɪd",
+        "mean":  "v. 藏；隐瞒 n. 藏身处",
+        "sentence":  ""
+    },
+    {
+        "word":  "seed",
+        "phonetic":  "siːd",
+        "mean":  "n. 种子；种子选手 v. 结籽",
+        "sentence":  ""
+    },
+    {
+        "word":  "size",
+        "phonetic":  "saɪz",
+        "mean":  "n. 大小；尺码",
+        "sentence":  ""
+    },
+    {
+        "word":  "vegetable",
+        "phonetic":  "ˈvedʒtəbl",
+        "mean":  "n. 蔬菜；植物人",
+        "sentence":  ""
+    },
+    {
+        "word":  "depend",
+        "phonetic":  "dɪˈpend",
+        "mean":  "v. 依靠；信任",
+        "sentence":  ""
+    },
+    {
+        "word":  "avoid",
+        "phonetic":  "əˈvɔɪd",
+        "mean":  "v. 避免；回避",
+        "sentence":  ""
+    },
+    {
+        "word":  "behaviour",
+        "phonetic":  "bɪˈheɪvjə(r)",
+        "mean":  "n. 行为；态度；表现方式",
+        "sentence":  ""
+    },
+    {
+        "word":  "fill",
+        "phonetic":  "fɪl",
+        "mean":  "v.（使）充满；填补；满足",
+        "sentence":  ""
+    },
+    {
+        "word":  "affect",
+        "phonetic":  "əˈfekt",
+        "mean":  "v. 影响； （感情上）深深打动",
+        "sentence":  ""
+    },
+    {
+        "word":  "poison",
+        "phonetic":  "ˈpɔɪzn",
+        "mean":  "n. 毒药 v. 毒害",
+        "sentence":  ""
+    },
+    {
+        "word":  "responsible",
+        "phonetic":  "rɪˈspɒnsəbl",
+        "mean":  "adj. 有责任心的；承担责任的",
+        "sentence":  ""
+    },
+    {
+        "word":  "underground",
+        "phonetic":  "ˌʌndəˈɡraʊnd",
+        "mean":  "adj. 地下的；秘密的 adv. 在地下 n. 地铁",
+        "sentence":  ""
+    },
+    {
+        "word":  "actually",
+        "phonetic":  "ˈæktʃuəli",
+        "mean":  "adv. 事实上；竟然",
+        "sentence":  ""
+    },
+    {
+        "word":  "bridge",
+        "phonetic":  "brɪdʒ",
+        "mean":  "n. 桥；纽带；桥牌 v. 造桥",
+        "sentence":  ""
+    },
+    {
+        "word":  "capital",
+        "phonetic":  "ˈkæpɪtl",
+        "mean":  "n. 首都；省会；大写字母；资本 adj. 大写的",
+        "sentence":  ""
+    },
+    {
+        "word":  "customer",
+        "phonetic":  "ˈkʌstəmə(r)",
+        "mean":  "n. 顾客",
+        "sentence":  ""
+    },
+    {
+        "word":  "earthquake",
+        "phonetic":  "ˈɜːθkweɪk",
+        "mean":  "n. 地震",
+        "sentence":  ""
+    },
+    {
+        "word":  "influence",
+        "phonetic":  "ˈɪnfluəns",
+        "mean":  "n. 影响；控制力 v. 影响；对…… 起作用",
+        "sentence":  ""
+    },
+    {
+        "word":  "knowledge",
+        "phonetic":  "ˈnɒlɪdʒ",
+        "mean":  "n. 知识；学问",
+        "sentence":  ""
+    },
+    {
+        "word":  "message",
+        "phonetic":  "ˈmesɪdʒ",
+        "mean":  "n. 信息",
+        "sentence":  ""
+    },
+    {
+        "word":  "move",
+        "phonetic":  "muːv",
+        "mean":  "v. 移动；感动 n. 行动；搬迁",
+        "sentence":  ""
+    },
+    {
+        "word":  "protect",
+        "phonetic":  "prəˈtekt",
+        "mean":  "v. 保护",
+        "sentence":  ""
+    },
+    {
+        "word":  "raise",
+        "phonetic":  "reɪz",
+        "mean":  "v. 筹集；举起；增加",
+        "sentence":  ""
+    },
+    {
+        "word":  "wonder",
+        "phonetic":  "ˈwʌndə(r)",
+        "mean":  "v. 想知道 n. 好奇；奇迹",
+        "sentence":  ""
+    },
+    {
+        "word":  "ability",
+        "phonetic":  "əˈbɪləti",
+        "mean":  "n. 能力；才智",
+        "sentence":  ""
+    },
+    {
+        "word":  "fantastic",
+        "phonetic":  "fænˈtæstɪk",
+        "mean":  "adj. 极好的",
+        "sentence":  ""
+    },
+    {
+        "word":  "peace",
+        "phonetic":  "piːs",
+        "mean":  "n 和平；平静",
+        "sentence":  ""
+    },
+    {
+        "word":  "sorrow",
+        "phonetic":  "ˈsɒrəʊ",
+        "mean":  "n 悲伤 v 感到（或表示）悲伤",
+        "sentence":  ""
+    },
+    {
+        "word":  "succeed",
+        "phonetic":  "səkˈsiːd",
+        "mean":  "v. 成功；继承",
+        "sentence":  ""
+    },
+    {
+        "word":  "community",
+        "phonetic":  "kəˈmjuːnəti",
+        "mean":  "n. 社区；团体；社团",
+        "sentence":  ""
+    },
+    {
+        "word":  "lie",
+        "phonetic":  "laɪ",
+        "mean":  "v. 说谎；躺下；位于 n. 谎言",
+        "sentence":  ""
+    },
+    {
+        "word":  "plenty",
+        "phonetic":  "ˈplenti",
+        "mean":  "pron. 大量；众多 adv. 大量；非常 n. 富足；充裕",
+        "sentence":  ""
+    },
+    {
+        "word":  "possible",
+        "phonetic":  "ˈpɒsəbl",
+        "mean":  "adj. 可能的；合理的",
+        "sentence":  ""
+    },
+    {
+        "word":  "foreign",
+        "phonetic":  "ˈfɒrən",
+        "mean":  "adj. 外国的；外交的",
+        "sentence":  ""
+    },
+    {
+        "word":  "patience",
+        "phonetic":  "ˈpeɪʃns",
+        "mean":  "n. 耐心；毅力",
+        "sentence":  ""
+    },
+    {
+        "word":  "refer",
+        "phonetic":  "rɪˈfɜː(r)",
+        "mean":  "v. 提到；参考",
+        "sentence":  ""
+    },
+    {
+        "word":  "strong",
+        "phonetic":  "strɒŋ",
+        "mean":  "adj. 强壮的；强烈的",
+        "sentence":  ""
+    },
+    {
+        "word":  "beat",
+        "phonetic":  "biːt",
+        "mean":  "v. 打败；敲打；有规律地作响",
+        "sentence":  ""
+    },
+    {
+        "word":  "chemistry",
+        "phonetic":  "ˈkemɪstri",
+        "mean":  "n. 化学；化学性质",
+        "sentence":  ""
+    },
+    {
+        "word":  "conversation",
+        "phonetic":  "ˌkɒnvəˈseɪʃn",
+        "mean":  "n.（非正式）谈话；交谈",
+        "sentence":  ""
+    },
+    {
+        "word":  "dry",
+        "phonetic":  "draɪ",
+        "mean":  "adj. 干的；枯燥乏味的 v. 使变干；弄干",
+        "sentence":  ""
+    },
+    {
+        "word":  "habit",
+        "phonetic":  "ˈhæbɪt",
+        "mean":  "n. 习惯",
+        "sentence":  ""
+    },
+    {
+        "word":  "hurry",
+        "phonetic":  "ˈhʌri",
+        "mean":  "v. 匆忙；催促 n. 匆忙；赶快",
+        "sentence":  ""
+    },
+    {
+        "word":  "matter",
+        "phonetic":  "ˈmætə(r)",
+        "mean":  "n. 问题；事件 v. 要紧；有重大影响",
+        "sentence":  ""
+    },
+    {
+        "word":  "relax",
+        "phonetic":  "rɪˈlæks",
+        "mean":  "v. 放松；休息",
+        "sentence":  ""
+    },
+    {
+        "word":  "calm",
+        "phonetic":  "kɑːm",
+        "mean":  "adj. 镇静的；沉着的 v. 使平静；使镇定",
+        "sentence":  ""
+    },
+    {
+        "word":  "character",
+        "phonetic":  "ˈkærəktə(r)",
+        "mean":  "n. 性格；特点；角色",
+        "sentence":  ""
+    },
+    {
+        "word":  "crowd",
+        "phonetic":  "kraʊd",
+        "mean":  "n. 人群；观众 v. 拥挤；挤满",
+        "sentence":  ""
+    },
+    {
+        "word":  "pride",
+        "phonetic":  "praɪd",
+        "mean":  "n. 骄傲；自豪",
+        "sentence":  ""
+    },
+    {
+        "word":  "share",
+        "phonetic":  "ʃeə(r)",
+        "mean":  "v. 分享；分担",
+        "sentence":  ""
+    },
+    {
+        "word":  "young",
+        "phonetic":  "jʌŋ",
+        "mean":  "adj. 年轻的 n. 年轻人",
+        "sentence":  ""
+    },
+    {
+        "word":  "attitude",
+        "phonetic":  "ˈætɪtjuːd",
+        "mean":  "n. 态度；看法",
+        "sentence":  ""
+    },
+    {
+        "word":  "deadline",
+        "phonetic":  "ˈdedlaɪn",
+        "mean":  "n. 截止日期",
+        "sentence":  ""
+    },
+    {
+        "word":  "income",
+        "phonetic":  "ˈɪnkʌm",
+        "mean":  "n. 收入；所得",
+        "sentence":  ""
+    },
+    {
+        "word":  "increase",
+        "phonetic":  "ɪnˈkriːs",
+        "mean":  "v. 增加；加大 n. 增长；提高",
+        "sentence":  ""
+    },
+    {
+        "word":  "likely",
+        "phonetic":  "ˈlaɪkli",
+        "mean":  "adj. 很可能的 adv. 很可能；或许",
+        "sentence":  ""
+    },
+    {
+        "word":  "spend",
+        "phonetic":  "spend",
+        "mean":  "v. 度过；花费 n. 预算",
+        "sentence":  ""
+    },
+    {
+        "word":  "title",
+        "phonetic":  "ˈtaɪtl",
+        "mean":  "n. 标题；职称；称谓 v. 加标题于",
+        "sentence":  ""
+    },
+    {
+        "word":  "bottom",
+        "phonetic":  "ˈbɒtəm",
+        "mean":  "n. 底部；末端 adj. 底部的",
+        "sentence":  ""
+    },
+    {
+        "word":  "comedy",
+        "phonetic":  "ˈkɒmədi",
+        "mean":  "n 喜剧",
+        "sentence":  ""
+    },
+    {
+        "word":  "restaurant",
+        "phonetic":  "ˈrestrɒnt",
+        "mean":  "n 餐馆",
+        "sentence":  ""
+    },
+    {
+        "word":  "wise",
+        "phonetic":  "waɪz",
+        "mean":  "adj. 明智的",
+        "sentence":  ""
+    },
+    {
+        "word":  "machine",
+        "phonetic":  "məˈʃiːn",
+        "mean":  "n. 机械，机器",
+        "sentence":  ""
+    },
+    {
+        "word":  "address",
+        "phonetic":  "əˈdres",
+        "mean":  "n. 地址；演讲",
+        "sentence":  ""
+    },
+    {
+        "word":  "excellent",
+        "phonetic":  "ˈeksələnt",
+        "mean":  "adj. 卓越的；极好的",
+        "sentence":  ""
+    },
+    {
+        "word":  "host",
+        "phonetic":  "həʊst",
+        "mean":  "n. 主人；主持人 v. 主持；当主人招待",
+        "sentence":  ""
+    },
+    {
+        "word":  "intelligence",
+        "phonetic":  "ɪnˈtelɪdʒəns",
+        "mean":  "n. 智力",
+        "sentence":  ""
+    },
+    {
+        "word":  "joy",
+        "phonetic":  "dʒɔɪ",
+        "mean":  "n. 欢乐；高兴 v. 高兴；使快乐",
+        "sentence":  ""
+    },
+    {
+        "word":  "simple",
+        "phonetic":  "ˈsɪmpl",
+        "mean":  "adj. 简单的；单纯的",
+        "sentence":  ""
+    },
+    {
+        "word":  "square",
+        "phonetic":  "skweə(r)",
+        "mean":  "n. 广场；平方；正方形 adj. 平方的；正方的",
+        "sentence":  ""
+    },
+    {
+        "word":  "disappear",
+        "phonetic":  "ˌdɪsəˈpɪə(r)",
+        "mean":  "v. 消失；失踪",
+        "sentence":  ""
+    },
+    {
+        "word":  "distance",
+        "phonetic":  "ˈdɪstəns",
+        "mean":  "n. 距离；远方",
+        "sentence":  ""
+    },
+    {
+        "word":  "lay",
+        "phonetic":  "leɪ",
+        "mean":  "v. 下（蛋）；放置",
+        "sentence":  ""
+    },
+    {
+        "word":  "opposite",
+        "phonetic":  "ˈɒpəzɪt",
+        "mean":  "prep. 在…… 的对面 adj. 相反的 n. 对立面",
+        "sentence":  ""
+    },
+    {
+        "word":  "publish",
+        "phonetic":  "ˈpʌblɪʃ",
+        "mean":  "v. 出版；发表",
+        "sentence":  ""
+    },
+    {
+        "word":  "strict",
+        "phonetic":  "strɪkt",
+        "mean":  "adj. 严格的",
+        "sentence":  ""
+    },
+    {
+        "word":  "term",
+        "phonetic":  "tɜːm",
+        "mean":  "n. 学期；术语",
+        "sentence":  ""
+    },
+    {
+        "word":  "blind",
+        "phonetic":  "blaɪnd",
+        "mean":  "adj. 盲目的；瞎的",
+        "sentence":  ""
+    },
+    {
+        "word":  "complain",
+        "phonetic":  "kəmˈpleɪn",
+        "mean":  "v. 抱怨；控诉",
+        "sentence":  ""
+    },
+    {
+        "word":  "convenience",
+        "phonetic":  "kənˈviːniəns",
+        "mean":  "n. 便利； （英）公共厕所",
+        "sentence":  ""
+    },
+    {
+        "word":  "credit",
+        "phonetic":  "ˈkredɪt",
+        "mean":  "n. 信用；信誉",
+        "sentence":  ""
+    },
+    {
+        "word":  "harmful",
+        "phonetic":  "ˈhɑːmfl",
+        "mean":  "adj. 有害的",
+        "sentence":  ""
+    },
+    {
+        "word":  "leader",
+        "phonetic":  "ˈliːdə(r)",
+        "mean":  "n. 领导者；指挥者",
+        "sentence":  ""
+    },
+    {
+        "word":  "prize",
+        "phonetic":  "praɪz",
+        "mean":  "n. 奖品；奖赏",
+        "sentence":  ""
+    },
+    {
+        "word":  "speech",
+        "phonetic":  "spiːtʃ",
+        "mean":  "n. 演讲；讲话",
+        "sentence":  ""
+    },
+    {
+        "word":  "ancient",
+        "phonetic":  "ˈeɪnʃənt",
+        "mean":  "adj. 古代的；古老的",
+        "sentence":  ""
+    },
+    {
+        "word":  "belt",
+        "phonetic":  "belt",
+        "mean":  "n. 带；腰带 v. 用带子系住",
+        "sentence":  ""
+    },
+    {
+        "word":  "bet",
+        "phonetic":  "bet",
+        "mean":  "v. 打赌",
+        "sentence":  ""
+    },
+    {
+        "word":  "post",
+        "phonetic":  "pəʊst",
+        "mean":  "n. 邮件；岗位 v. 邮递；公布",
+        "sentence":  ""
+    },
+    {
+        "word":  "proud",
+        "phonetic":  "praʊd",
+        "mean":  "adj. 自豪的；得意的",
+        "sentence":  ""
+    },
+    {
+        "word":  "return",
+        "phonetic":  "rɪˈtɜːn",
+        "mean":  "v. 返回；报答 n. 返回；归还",
+        "sentence":  ""
+    },
+    {
+        "word":  "silly",
+        "phonetic":  "ˈsɪli",
+        "mean":  "adj. 愚蠢的 n. 傻瓜",
+        "sentence":  ""
+    },
+    {
+        "word":  "sort",
+        "phonetic":  "sɔːt",
+        "mean":  "n 种类 v 将…… 分类",
+        "sentence":  ""
+    },
+    {
+        "word":  "bath",
+        "phonetic":  "bɑːθ",
+        "mean":  "n 沐浴 v 洗澡",
+        "sentence":  ""
+    },
+    {
+        "word":  "circle",
+        "phonetic":  "ˈsɜːkl",
+        "mean":  "n. 循环；圆；圈子 v. 划圈",
+        "sentence":  ""
+    },
+    {
+        "word":  "correct",
+        "phonetic":  "kəˈrekt",
+        "mean":  "adj. 正确的 v. 改正",
+        "sentence":  ""
+    },
+    {
+        "word":  "date",
+        "phonetic":  "deɪt",
+        "mean":  "n. 日期；约会 v. 和…… 约会",
+        "sentence":  ""
+    },
+    {
+        "word":  "except",
+        "phonetic":  "ɪkˈsept",
+        "mean":  "prep. 除…… 之外",
+        "sentence":  ""
+    },
+    {
+        "word":  "experiment",
+        "phonetic":  "ɪkˈsperɪmənt",
+        "mean":  "n. 实验；尝试 v. 尝试；进行试验",
+        "sentence":  ""
+    },
+    {
+        "word":  "flight",
+        "phonetic":  "flaɪt",
+        "mean":  "n. 飞行；班机",
+        "sentence":  ""
+    },
+    {
+        "word":  "hometown",
+        "phonetic":  "ˈhəʊmtaʊn",
+        "mean":  "n. 家乡；故乡",
+        "sentence":  ""
+    },
+    {
+        "word":  "improve",
+        "phonetic":  "ɪmˈpruːv",
+        "mean":  "v. 改善；增加",
+        "sentence":  ""
+    },
+    {
+        "word":  "practice",
+        "phonetic":  "ˈpræktɪs",
+        "mean":  "n. 实践；练习",
+        "sentence":  ""
+    },
+    {
+        "word":  "saying",
+        "phonetic":  "ˈseɪɪŋ",
+        "mean":  "n. 话；谚语",
+        "sentence":  ""
+    },
+    {
+        "word":  "addict",
+        "phonetic":  "ˈædɪkt",
+        "mean":  "v. 使沉溺；使上瘾 n. 有瘾的人；入迷的人",
+        "sentence":  ""
+    },
+    {
+        "word":  "belief",
+        "phonetic":  "bɪˈliːf",
+        "mean":  "n. 相信；信赖；信仰",
+        "sentence":  ""
+    },
+    {
+        "word":  "immediately",
+        "phonetic":  "ɪˈmiːdiətli",
+        "mean":  "adv. 立即；直接地",
+        "sentence":  ""
+    },
+    {
+        "word":  "science",
+        "phonetic":  "ˈsaɪəns",
+        "mean":  "n. 科学；理科",
+        "sentence":  ""
+    },
+    {
+        "word":  "structure",
+        "phonetic":  "ˈstrʌktʃə(r)",
+        "mean":  "n. 结构；构造",
+        "sentence":  ""
+    },
+    {
+        "word":  "chat",
+        "phonetic":  "tʃæt",
+        "mean":  "v. 聊天；闲谈",
+        "sentence":  ""
+    },
+    {
+        "word":  "death",
+        "phonetic":  "deθ",
+        "mean":  "n. 死；死亡",
+        "sentence":  ""
+    },
+    {
+        "word":  "disable",
+        "phonetic":  "dɪsˈeɪbl",
+        "mean":  "v. 使失去能力；使残废",
+        "sentence":  ""
+    },
+    {
+        "word":  "disappoint",
+        "phonetic":  "ˌdɪsəˈpɔɪnt",
+        "mean":  "v. 使失望",
+        "sentence":  ""
+    },
+    {
+        "word":  "habitat",
+        "phonetic":  "ˈhæbɪtæt",
+        "mean":  "n. 栖息地；产地",
+        "sentence":  ""
+    },
+    {
+        "word":  "price",
+        "phonetic":  "praɪs",
+        "mean":  "n. 价格；代价",
+        "sentence":  ""
+    },
+    {
+        "word":  "promise",
+        "phonetic":  "ˈprɒmɪs",
+        "mean":  "v. 许诺；允诺",
+        "sentence":  ""
+    },
+    {
+        "word":  "relative",
+        "phonetic":  "ˈrelətɪv",
+        "mean":  "n. 亲戚；相关物 adj. 相对的；有关系的",
+        "sentence":  ""
+    },
+    {
+        "word":  "sunshine",
+        "phonetic":  "ˈsʌnʃaɪn",
+        "mean":  "n. 阳光",
+        "sentence":  ""
+    },
+    {
+        "word":  "terrible",
+        "phonetic":  "ˈterəbl",
+        "mean":  "adj. 可怕的；糟糕的",
+        "sentence":  ""
+    },
+    {
+        "word":  "thankful",
+        "phonetic":  "ˈθæŋkfl",
+        "mean":  "adj. 感谢的；欣慰的",
+        "sentence":  ""
+    },
+    {
+        "word":  "cheat",
+        "phonetic":  "tʃiːt",
+        "mean":  "v. 欺骗；作弊 n. 作弊；骗子",
+        "sentence":  ""
+    },
+    {
+        "word":  "surf",
+        "phonetic":  "sɜːf",
+        "mean":  "v. 冲浪；浏览 n. 海浪",
+        "sentence":  ""
+    },
+    {
+        "word":  "argue",
+        "phonetic":  "ˈɑːɡjuː",
+        "mean":  "v. 争论；辩论",
+        "sentence":  ""
+    },
+    {
+        "word":  "average",
+        "phonetic":  "ˈævərɪdʒ",
+        "mean":  "n. 平均；平均数 adj. 平均的；普通的",
+        "sentence":  ""
+    },
+    {
+        "word":  "season",
+        "phonetic":  "ˈsiːzn",
+        "mean":  "n. 季节；季",
+        "sentence":  ""
+    },
+    {
+        "word":  "talent",
+        "phonetic":  "ˈtælənt",
+        "mean":  "n 才能；天才",
+        "sentence":  ""
+    },
+    {
+        "word":  "task",
+        "phonetic":  "tɑːsk",
+        "mean":  "n 任务",
+        "sentence":  ""
+    },
+    {
+        "word":  "asleep",
+        "phonetic":  "əˈsliːp",
+        "mean":  "adj. 睡着的 adv. 熟睡地",
+        "sentence":  ""
+    },
+    {
+        "word":  "compare",
+        "phonetic":  "kəmˈpeə(r)",
+        "mean":  "v. 相比；比较 n. 比较",
+        "sentence":  ""
+    },
+    {
+        "word":  "damage",
+        "phonetic":  "ˈdæmɪdʒ",
+        "mean":  "v. 损害；损毁",
+        "sentence":  ""
+    },
+    {
+        "word":  "disease",
+        "phonetic":  "dɪˈziːz",
+        "mean":  "n. 病；弊病",
+        "sentence":  ""
+    },
+    {
+        "word":  "hobby",
+        "phonetic":  "ˈhɒbi",
+        "mean":  "n. 嗜好；业余爱好",
+        "sentence":  ""
+    },
+    {
+        "word":  "journey",
+        "phonetic":  "ˈdʒɜːni",
+        "mean":  "n. 旅行；行程 v. 旅行",
+        "sentence":  ""
+    },
+    {
+        "word":  "point",
+        "phonetic":  "pɔɪnt",
+        "mean":  "n. 要点；得分 v. 指向",
+        "sentence":  ""
+    },
+    {
+        "word":  "regard",
+        "phonetic":  "rɪˈɡɑːd",
+        "mean":  "v. 考虑；看待；把…… 看作",
+        "sentence":  ""
+    },
+    {
+        "word":  "stand",
+        "phonetic":  "stænd",
+        "mean":  "v. 站立；忍受",
+        "sentence":  ""
+    },
+    {
+        "word":  "treasure",
+        "phonetic":  "ˈtreʒə(r)",
+        "mean":  "n. 财富；财宝 v. 珍爱；珍藏",
+        "sentence":  ""
+    },
+    {
+        "word":  "work",
+        "phonetic":  "wɜːk",
+        "mean":  "v. 工作 n. 作品；著作",
+        "sentence":  ""
+    },
+    {
+        "word":  "abroad",
+        "phonetic":  "əˈbrɔːd",
+        "mean":  "adv. 在国外；到海外 adj. 往国外的",
+        "sentence":  ""
+    },
+    {
+        "word":  "connect",
+        "phonetic":  "kəˈnekt",
+        "mean":  "v. 连接；连结；联合",
+        "sentence":  ""
+    },
+    {
+        "word":  "drug",
+        "phonetic":  "drʌɡ",
+        "mean":  "n. 药；毒品",
+        "sentence":  ""
+    },
+    {
+        "word":  "exchange",
+        "phonetic":  "ɪksˈtʃeɪndʒ",
+        "mean":  "v. 交换；兑换",
+        "sentence":  ""
+    },
+    {
+        "word":  "medicine",
+        "phonetic":  "ˈmedsn",
+        "mean":  "n. 药；医学",
+        "sentence":  ""
+    },
+    {
+        "word":  "opinion",
+        "phonetic":  "əˈpɪnjən",
+        "mean":  "n. 意见；主张",
+        "sentence":  ""
+    },
+    {
+        "word":  "report",
+        "phonetic":  "rɪˈpɔːt",
+        "mean":  "n. 报告；报道；成绩单 v. 报告",
+        "sentence":  ""
+    },
+    {
+        "word":  "rule",
+        "phonetic":  "ruːl",
+        "mean":  "n. 规则 v. 统治；规定",
+        "sentence":  ""
+    },
+    {
+        "word":  "soldier",
+        "phonetic":  "ˈsəʊldʒə(r)",
+        "mean":  "n. 军人",
+        "sentence":  ""
+    },
+    {
+        "word":  "strength",
+        "phonetic":  "streŋθ",
+        "mean":  "n. 力量；力气",
+        "sentence":  ""
+    },
+    {
+        "word":  "way",
+        "phonetic":  "weɪ",
+        "mean":  "n. 方法；道路",
+        "sentence":  ""
+    },
+    {
+        "word":  "wide",
+        "phonetic":  "waɪd",
+        "mean":  "adj. 广泛的；宽的",
+        "sentence":  ""
+    },
+    {
+        "word":  "afford",
+        "phonetic":  "əˈfɔːd",
+        "mean":  "v. 买得起",
+        "sentence":  ""
+    },
+    {
+        "word":  "champion",
+        "phonetic":  "ˈtʃæmpiən",
+        "mean":  "n. 冠军 v. 为…… 而斗争",
+        "sentence":  ""
+    },
+    {
+        "word":  "destroy",
+        "phonetic":  "dɪˈstrɔɪ",
+        "mean":  "v. 破坏；毁坏",
+        "sentence":  ""
+    },
+    {
+        "word":  "height",
+        "phonetic":  "haɪt",
+        "mean":  "n. 高度；身高",
+        "sentence":  ""
+    },
+    {
+        "word":  "illness",
+        "phonetic":  "ˈɪlnəs",
+        "mean":  "n. 疾病；病",
+        "sentence":  ""
+    },
+    {
+        "word":  "similar",
+        "phonetic":  "ˈsɪmələ(r)",
+        "mean":  "adj. 相似的 n. 类似物",
+        "sentence":  ""
+    },
+    {
+        "word":  "skin",
+        "phonetic":  "skɪn",
+        "mean":  "n. 皮肤",
+        "sentence":  ""
+    },
+    {
+        "word":  "smell",
+        "phonetic":  "smel",
+        "mean":  "v. 嗅，闻 n. 气味，嗅觉",
+        "sentence":  ""
+    },
+    {
+        "word":  "stomach",
+        "phonetic":  "ˈstʌmək",
+        "mean":  "n 胃；腹部",
+        "sentence":  ""
+    },
+    {
+        "word":  "travel",
+        "phonetic":  "ˈtrævl",
+        "mean":  "v 旅行 n 旅行；游历",
+        "sentence":  ""
+    },
+    {
+        "word":  "add",
+        "phonetic":  "æd",
+        "mean":  "v. 增加；计算…… 总和",
+        "sentence":  ""
+    },
+    {
+        "word":  "ahead",
+        "phonetic":  "əˈhed",
+        "mean":  "adj. 在前的；领先的 adv. 向前地；提前地",
+        "sentence":  ""
+    },
+    {
+        "word":  "attend",
+        "phonetic":  "əˈtend",
+        "mean":  "v. 出席；上（大学等）；照料",
+        "sentence":  ""
+    },
+    {
+        "word":  "belong",
+        "phonetic":  "bɪˈlɒŋ",
+        "mean":  "v. 属于",
+        "sentence":  ""
+    },
+    {
+        "word":  "coach",
+        "phonetic":  "kəʊtʃ",
+        "mean":  "n. 教练；长途汽车 v. 训练；指导",
+        "sentence":  ""
+    },
+    {
+        "word":  "cute",
+        "phonetic":  "kjuːt",
+        "mean":  "adj. 可爱的；漂亮的",
+        "sentence":  ""
+    },
+    {
+        "word":  "engineer",
+        "phonetic":  "ˌendʒɪˈnɪə(r)",
+        "mean":  "n. 工程师 v. 密谋策划；设计",
+        "sentence":  ""
+    },
+    {
+        "word":  "instructor",
+        "phonetic":  "ɪnˈstrʌktə(r)",
+        "mean":  "n. 指导者；讲师",
+        "sentence":  ""
+    },
+    {
+        "word":  "mad",
+        "phonetic":  "mæd",
+        "mean":  "adj. 疯狂的；着迷的",
+        "sentence":  ""
+    },
+    {
+        "word":  "province",
+        "phonetic":  "ˈprɒvɪns",
+        "mean":  "n. 省；领域",
+        "sentence":  ""
+    },
+    {
+        "word":  "soft",
+        "phonetic":  "sɒft",
+        "mean":  "adj. 软的；温柔的",
+        "sentence":  ""
+    },
+    {
+        "word":  "together",
+        "phonetic":  "təˈɡeðə(r)",
+        "mean":  "adv. 一起；总共",
+        "sentence":  ""
+    },
+    {
+        "word":  "audience",
+        "phonetic":  "ˈɔːdiəns",
+        "mean":  "n. 观众；听众；读者",
+        "sentence":  ""
+    },
+    {
+        "word":  "awful",
+        "phonetic":  "ˈɔːfl",
+        "mean":  "adj. 很坏的；极讨厌的",
+        "sentence":  ""
+    },
+    {
+        "word":  "basic",
+        "phonetic":  "ˈbeɪsɪk",
+        "mean":  "adj. 基本的；初级的",
+        "sentence":  ""
+    },
+    {
+        "word":  "bury",
+        "phonetic":  "ˈberi",
+        "mean":  "v. 埋葬",
+        "sentence":  ""
+    },
+    {
+        "word":  "challenge",
+        "phonetic":  "ˈtʃælɪndʒ",
+        "mean":  "n. 挑战；质疑 v. 向（某人）挑战；质疑",
+        "sentence":  ""
+    },
+    {
+        "word":  "contact",
+        "phonetic":  "ˈkɒntækt",
+        "mean":  "v. 联系；接触",
+        "sentence":  ""
+    },
+    {
+        "word":  "couple",
+        "phonetic":  "ˈkʌpl",
+        "mean":  "n. 一对；两个人",
+        "sentence":  ""
+    },
+    {
+        "word":  "crazy",
+        "phonetic":  "ˈkreɪzi",
+        "mean":  "adj. 疯狂的；生气的",
+        "sentence":  ""
+    },
+    {
+        "word":  "doubt",
+        "phonetic":  "daʊt",
+        "mean":  "n. 疑惑 v. 怀疑",
+        "sentence":  ""
+    },
+    {
+        "word":  "exhibition",
+        "phonetic":  "ˌeksɪˈbɪʃn",
+        "mean":  "n. 展览，展览品；表演，表现",
+        "sentence":  ""
+    },
+    {
+        "word":  "manner",
+        "phonetic":  "ˈmænə(r)",
+        "mean":  "n. 方法；礼貌；礼仪",
+        "sentence":  ""
+    },
+    {
+        "word":  "marry",
+        "phonetic":  "ˈmæri",
+        "mean":  "v. 结婚；嫁；娶",
+        "sentence":  ""
+    },
+    {
+        "word":  "million",
+        "phonetic":  "ˈmɪljən",
+        "mean":  "n. 一百万；大量",
+        "sentence":  ""
+    },
+    {
+        "word":  "pollute",
+        "phonetic":  "pəˈluːt",
+        "mean":  "v. 污染，弄脏",
+        "sentence":  ""
+    },
+    {
+        "word":  "research",
+        "phonetic":  "rɪˈsɜːtʃ",
+        "mean":  "n. 研究；调查",
+        "sentence":  ""
+    },
+    {
+        "word":  "skill",
+        "phonetic":  "skɪl",
+        "mean":  "n. 技巧；本领",
+        "sentence":  ""
+    },
+    {
+        "word":  "university",
+        "phonetic":  "ˌjuːnɪˈvɜːsəti",
+        "mean":  "n.（综合性）大学",
+        "sentence":  ""
+    },
+    {
+        "word":  "vacation",
+        "phonetic":  "vəˈkeɪʃn",
+        "mean":  "n. 假期",
+        "sentence":  ""
+    },
+    {
+        "word":  "associate",
+        "phonetic":  "əˈsəʊsieɪt",
+        "mean":  "v. 联系；（与…… ）混在一起",
+        "sentence":  ""
+    },
+    {
+        "word":  "cancer",
+        "phonetic":  "ˈkænsə(r)",
+        "mean":  "n 癌症； （社会）毒瘤",
+        "sentence":  ""
+    },
+    {
+        "word":  "church",
+        "phonetic":  "tʃɜːtʃ",
+        "mean":  "n 教堂；礼拜（仪式）",
+        "sentence":  ""
+    },
+    {
+        "word":  "climate",
+        "phonetic":  "ˈklaɪmət",
+        "mean":  "n. 气候",
+        "sentence":  ""
+    },
+    {
+        "word":  "digital",
+        "phonetic":  "ˈdɪdʒɪtl",
+        "mean":  "adj. 数码的，数字式的",
+        "sentence":  ""
+    },
+    {
+        "word":  "enter",
+        "phonetic":  "ˈentə(r)",
+        "mean":  "v. 进来；开始从事",
+        "sentence":  ""
+    },
+    {
+        "word":  "graduate",
+        "phonetic":  "ˈɡrædʒueɪt",
+        "mean":  "v. 毕业，获得（学位） n. 毕业生",
+        "sentence":  ""
+    },
+    {
+        "word":  "interest",
+        "phonetic":  "ˈɪntrəst",
+        "mean":  "n. 兴趣 v. 使感兴趣",
+        "sentence":  ""
+    },
+    {
+        "word":  "lesson",
+        "phonetic":  "ˈlesn",
+        "mean":  "n. 一节课；经验；教训",
+        "sentence":  ""
+    },
+    {
+        "word":  "mountain",
+        "phonetic":  "ˈmaʊntən",
+        "mean":  "n. 高山；山脉",
+        "sentence":  ""
+    },
+    {
+        "word":  "ocean",
+        "phonetic":  "ˈəʊʃn",
+        "mean":  "n. 海洋",
+        "sentence":  ""
+    },
+    {
+        "word":  "stop",
+        "phonetic":  "stɒp",
+        "mean":  "v. 停止；阻止 n. 公交车站",
+        "sentence":  ""
+    },
+    {
+        "word":  "strange",
+        "phonetic":  "streɪndʒ",
+        "mean":  "adj. 奇怪的；陌生的",
+        "sentence":  ""
+    },
+    {
+        "word":  "balance",
+        "phonetic":  "ˈbæləns",
+        "mean":  "n. 平衡；均势",
+        "sentence":  ""
+    },
+    {
+        "word":  "bow",
+        "phonetic":  "baʊ",
+        "mean":  "v. 鞠躬；点头； （使）弯曲 n. 鞠躬；弯腰行礼",
+        "sentence":  ""
+    },
+    {
+        "word":  "career",
+        "phonetic":  "kəˈrɪə(r)",
+        "mean":  "n. 职业；事业；生涯",
+        "sentence":  ""
+    },
+    {
+        "word":  "deliver",
+        "phonetic":  "dɪˈlɪvə(r)",
+        "mean":  "v. 递送；传送；发布",
+        "sentence":  ""
+    },
+    {
+        "word":  "inform",
+        "phonetic":  "ɪnˈfɔːm",
+        "mean":  "v. 通知；通告",
+        "sentence":  ""
+    },
+    {
+        "word":  "painful",
+        "phonetic":  "ˈpeɪnfl",
+        "mean":  "adj. 令人疼痛的；令人痛苦的",
+        "sentence":  ""
+    },
+    {
+        "word":  "private",
+        "phonetic":  "ˈpraɪvət",
+        "mean":  "adj. 私有的的，私人的",
+        "sentence":  ""
+    },
+    {
+        "word":  "regular",
+        "phonetic":  "ˈreɡjələ(r)",
+        "mean":  "adj. 规则的，有规律的；频繁的",
+        "sentence":  ""
+    },
+    {
+        "word":  "relationship",
+        "phonetic":  "rɪˈleɪʃnʃɪp",
+        "mean":  "n. 关系；联系（注：原单词拼写 “realationship” 修正为 “relationship”）",
+        "sentence":  ""
+    },
+    {
+        "word":  "rescue",
+        "phonetic":  "ˈreskjuː",
+        "mean":  "v. 营救 n. 获救，救援",
+        "sentence":  ""
+    },
+    {
+        "word":  "aim",
+        "phonetic":  "eɪm",
+        "mean":  "n. 目标，目的 v. 目的是",
+        "sentence":  ""
+    },
+    {
+        "word":  "apply",
+        "phonetic":  "əˈplaɪ",
+        "mean":  "v. 申请；应用",
+        "sentence":  ""
+    },
+    {
+        "word":  "cure",
+        "phonetic":  "kjʊə(r)",
+        "mean":  "v. 治愈 n. 治疗",
+        "sentence":  ""
+    },
+    {
+        "word":  "judge",
+        "phonetic":  "dʒʌdʒ",
+        "mean":  "v. 判断，断定 n. 法官",
+        "sentence":  ""
+    },
+    {
+        "word":  "monster",
+        "phonetic":  "ˈmɒnstə(r)",
+        "mean":  "n. 怪物，怪兽；庞然大物",
+        "sentence":  ""
+    },
+    {
+        "word":  "organization",
+        "phonetic":  "ˌɔːɡənaɪˈzeɪʃn",
+        "mean":  "n. 组织；团体；机构",
+        "sentence":  ""
+    },
+    {
+        "word":  "race",
+        "phonetic":  "reɪs",
+        "mean":  "n. 赛跑，速度竞赛；竞争",
+        "sentence":  ""
+    },
+    {
+        "word":  "solve",
+        "phonetic":  "sɒlv",
+        "mean":  "v. 解决，处理",
+        "sentence":  ""
+    },
+    {
+        "word":  "battery",
+        "phonetic":  "ˈbætri",
+        "mean":  "n. 电池；一群",
+        "sentence":  ""
+    },
+    {
+        "word":  "blow",
+        "phonetic":  "bləʊ",
+        "mean":  "v. 吹；刮动；吹奏",
+        "sentence":  ""
+    },
+    {
+        "word":  "board",
+        "phonetic":  "bɔːd",
+        "mean":  "n. 板，木板 v. 上船（或火车、飞机、汽车）",
+        "sentence":  ""
+    },
+    {
+        "word":  "candle",
+        "phonetic":  "ˈkændl",
+        "mean":  "n 蜡烛",
+        "sentence":  ""
+    },
+    {
+        "word":  "conclusion",
+        "phonetic":  "kənˈkluːʒn",
+        "mean":  "n 结论，推论；结果",
+        "sentence":  ""
+    },
+    {
+        "word":  "infer",
+        "phonetic":  "ɪnˈfɜː(r)",
+        "mean":  "v. 推断，推论",
+        "sentence":  ""
+    },
+    {
+        "word":  "resource",
+        "phonetic":  "rɪˈsɔːs",
+        "mean":  "n. 资源；财力；资料",
+        "sentence":  ""
+    },
+    {
+        "word":  "step",
+        "phonetic":  "step",
+        "mean":  "n. 步骤；台阶 v. 踩，行走",
+        "sentence":  ""
+    },
+    {
+        "word":  "brush",
+        "phonetic":  "brʌʃ",
+        "mean":  "n. 刷子；灌木丛 v. 刷净",
+        "sentence":  ""
+    },
+    {
+        "word":  "congratulation",
+        "phonetic":  "kənˌɡrætʃuˈleɪʃn",
+        "mean":  "n. 祝贺；贺词",
+        "sentence":  ""
+    },
+    {
+        "word":  "detail",
+        "phonetic":  "ˈdiːteɪl",
+        "mean":  "n. 细节；琐事；详情",
+        "sentence":  ""
+    },
+    {
+        "word":  "effort",
+        "phonetic":  "ˈefət",
+        "mean":  "n. 努力；尽力；费力的事",
+        "sentence":  ""
+    },
+    {
+        "word":  "embarrass",
+        "phonetic":  "ɪmˈbærəs",
+        "mean":  "v. 使尴尬；使窘迫；使陷入困境",
+        "sentence":  ""
+    },
+    {
+        "word":  "lazy",
+        "phonetic":  "ˈleɪzi",
+        "mean":  "adj. 懒惰的；马虎的",
+        "sentence":  ""
+    },
+    {
+        "word":  "praise",
+        "phonetic":  "preɪz",
+        "mean":  "v. 赞扬；称赞 n. 赞美",
+        "sentence":  ""
+    },
+    {
+        "word":  "prepare",
+        "phonetic":  "prɪˈpeə(r)",
+        "mean":  "v. 准备",
+        "sentence":  ""
+    },
+    {
+        "word":  "style",
+        "phonetic":  "staɪl",
+        "mean":  "n. 方式；款式",
+        "sentence":  ""
+    },
+    {
+        "word":  "support",
+        "phonetic":  "səˈpɔːt",
+        "mean":  "v. 支持；鼓励 n. 支撑；赞助",
+        "sentence":  ""
+    },
+    {
+        "word":  "uniform",
+        "phonetic":  "ˈjuːnɪfɔːm",
+        "mean":  "n. 制服；校服",
+        "sentence":  ""
+    },
+    {
+        "word":  "apologize",
+        "phonetic":  "əˈpɒlədʒaɪz",
+        "mean":  "v. 道歉",
+        "sentence":  ""
+    },
+    {
+        "word":  "band",
+        "phonetic":  "bænd",
+        "mean":  "n. 乐队；带子",
+        "sentence":  ""
+    },
+    {
+        "word":  "burden",
+        "phonetic":  "ˈbɜːdn",
+        "mean":  "n.（义务、责任等的）重担；负担",
+        "sentence":  ""
+    },
+    {
+        "word":  "ceremony",
+        "phonetic":  "ˈserəməni",
+        "mean":  "n. 典礼；仪式",
+        "sentence":  ""
+    },
+    {
+        "word":  "coast",
+        "phonetic":  "kəʊst",
+        "mean":  "n. 海岸；海滨",
+        "sentence":  ""
+    },
+    {
+        "word":  "condition",
+        "phonetic":  "kənˈdɪʃn",
+        "mean":  "n. 状况，状态；环境，条件",
+        "sentence":  ""
+    },
+    {
+        "word":  "desperate",
+        "phonetic":  "ˈdespərət",
+        "mean":  "adj. 不顾一切的；绝望的",
+        "sentence":  ""
+    },
+    {
+        "word":  "display",
+        "phonetic":  "dɪˈspleɪ",
+        "mean":  "v. 陈列；展览",
+        "sentence":  ""
+    },
+    {
+        "word":  "harvest",
+        "phonetic":  "ˈhɑːvɪst",
+        "mean":  "n. 收割；收获",
+        "sentence":  ""
+    },
+    {
+        "word":  "result",
+        "phonetic":  "rɪˈzʌlt",
+        "mean":  "n. 结果，后果 v. 导致",
+        "sentence":  ""
+    },
+    {
+        "word":  "spread",
+        "phonetic":  "spred",
+        "mean":  "v. 传播；扩展",
+        "sentence":  ""
+    },
+    {
+        "word":  "store",
+        "phonetic":  "stɔː(r)",
+        "mean":  "v. 储存，贮藏 n. 商店；店铺",
+        "sentence":  ""
+    },
+    {
+        "word":  "type",
+        "phonetic":  "taɪp",
+        "mean":  "n. 类型；特征 v. 打字",
+        "sentence":  ""
+    },
+    {
+        "word":  "alive",
+        "phonetic":  "əˈlaɪv",
+        "mean":  "adj. 活着的",
+        "sentence":  ""
+    },
+    {
+        "word":  "annoy",
+        "phonetic":  "əˈnɔɪ",
+        "mean":  "v. 打扰；惹恼",
+        "sentence":  ""
+    },
+    {
+        "word":  "beyond",
+        "phonetic":  "bɪˈjɒnd",
+        "mean":  "prep. 超过；越过 adv. 在远处",
+        "sentence":  ""
+    },
+    {
+        "word":  "bush",
+        "phonetic":  "bʊʃ",
+        "mean":  "n. 灌木丛",
+        "sentence":  ""
+    },
+    {
+        "word":  "classical",
+        "phonetic":  "ˈklæsɪkl",
+        "mean":  "adj 古典的；经典的",
+        "sentence":  ""
+    },
+    {
+        "word":  "contest",
+        "phonetic":  "ˈkɒntest",
+        "mean":  "v 竞争；争辩 n 比赛",
+        "sentence":  ""
+    },
+    {
+        "word":  "depress",
+        "phonetic":  "dɪˈpres",
+        "mean":  "v. 使沮丧，使丧气",
+        "sentence":  ""
+    },
+    {
+        "word":  "earn",
+        "phonetic":  "ɜːn",
+        "mean":  "v. 获得，挣得；赚得",
+        "sentence":  ""
+    },
+    {
+        "word":  "equip",
+        "phonetic":  "ɪˈkwɪp",
+        "mean":  "v. 装备；配备；提供",
+        "sentence":  ""
+    },
+    {
+        "word":  "honor",
+        "phonetic":  "ˈɒnə(r)",
+        "mean":  "n. 荣誉 v. 给…… 以荣誉；尊敬",
+        "sentence":  ""
+    },
+    {
+        "word":  "suppose",
+        "phonetic":  "səˈpəʊz",
+        "mean":  "v. 假定；猜想；推测",
+        "sentence":  ""
+    },
+    {
+        "word":  "taste",
+        "phonetic":  "teɪst",
+        "mean":  "v. 尝起来 n. 味道， 口味",
+        "sentence":  ""
+    },
+    {
+        "word":  "traffic",
+        "phonetic":  "ˈtræfɪk",
+        "mean":  "n. 交通；贸易；运输",
+        "sentence":  ""
+    },
+    {
+        "word":  "weigh",
+        "phonetic":  "weɪ",
+        "mean":  "v. 称…… 的重量；权衡；考虑",
+        "sentence":  ""
+    },
+    {
+        "word":  "astronaut",
+        "phonetic":  "ˈæstrənɔːt",
+        "mean":  "n. 宇航员；太空人",
+        "sentence":  ""
+    },
+    {
+        "word":  "decorate",
+        "phonetic":  "ˈdekəreɪt",
+        "mean":  "v. 装饰；布置",
+        "sentence":  ""
+    },
+    {
+        "word":  "dish",
+        "phonetic":  "dɪʃ",
+        "mean":  "n. 碗，盘；一道菜",
+        "sentence":  ""
+    },
+    {
+        "word":  "double",
+        "phonetic":  "ˈdʌbl",
+        "mean":  "adj. 双倍的；双重的 n. 两倍；双份",
+        "sentence":  ""
+    },
+    {
+        "word":  "entertainment",
+        "phonetic":  "ˌentəˈteɪnmənt",
+        "mean":  "n. 娱乐；文娱节目",
+        "sentence":  ""
+    },
+    {
+        "word":  "profession",
+        "phonetic":  "prəˈfeʃn",
+        "mean":  "n. 职业；同行",
+        "sentence":  ""
+    },
+    {
+        "word":  "score",
+        "phonetic":  "skɔː(r)",
+        "mean":  "n. 分数，得分 v. 得分",
+        "sentence":  ""
+    },
+    {
+        "word":  "sound",
+        "phonetic":  "saʊnd",
+        "mean":  "v. 听起来 n. 声音",
+        "sentence":  ""
+    },
+    {
+        "word":  "underline",
+        "phonetic":  "ˌʌndəˈlaɪn",
+        "mean":  "v. 在 …… 下画线；强调",
+        "sentence":  ""
+    },
+    {
+        "word":  "aid",
+        "phonetic":  "eɪd",
+        "mean":  "v. 帮助；援助",
+        "sentence":  ""
+    },
+    {
+        "word":  "amount",
+        "phonetic":  "əˈmaʊnt",
+        "mean":  "n. 数量；金额 v. 总计；合计",
+        "sentence":  ""
+    },
+    {
+        "word":  "amusement",
+        "phonetic":  "əˈmjuːzmənt",
+        "mean":  "n. 娱乐活动；可笑，愉悦",
+        "sentence":  ""
+    },
+    {
+        "word":  "blame",
+        "phonetic":  "bleɪm",
+        "mean":  "v. 责备 n. 责备；坏事或错事的责任",
+        "sentence":  ""
+    },
+    {
+        "word":  "case",
+        "phonetic":  "keɪs",
+        "mean":  "n. 情况；实例；箱",
+        "sentence":  ""
+    },
+    {
+        "word":  "cash",
+        "phonetic":  "kæʃ",
+        "mean":  "n. 现金",
+        "sentence":  ""
+    },
+    {
+        "word":  "download",
+        "phonetic":  "ˌdaʊnˈləʊd",
+        "mean":  "v. 下载",
+        "sentence":  ""
+    },
+    {
+        "word":  "refuse",
+        "phonetic":  "rɪˈfjuːz",
+        "mean":  "v. 拒绝",
+        "sentence":  ""
+    },
+    {
+        "word":  "reply",
+        "phonetic":  "rɪˈplaɪ",
+        "mean":  "v. 回复，答复",
+        "sentence":  ""
+    },
+    {
+        "word":  "roommate",
+        "phonetic":  "ˈruːmmeɪt",
+        "mean":  "n. 室友（注：原单词拼写 “roomate” 修正为 “roommate”）",
+        "sentence":  ""
+    },
+    {
+        "word":  "sweep",
+        "phonetic":  "swiːp",
+        "mean":  "v. 扫除；打扫",
+        "sentence":  ""
+    },
+    {
+        "word":  "technology",
+        "phonetic":  "tekˈnɒlədʒi",
+        "mean":  "n. 科技；工业技术",
+        "sentence":  ""
+    },
+    {
+        "word":  "tourist",
+        "phonetic":  "ˈtʊərɪst",
+        "mean":  "n. 旅行者；观光者",
+        "sentence":  ""
+    },
+    {
+        "word":  "admire",
+        "phonetic":  "ədˈmaɪə(r)",
+        "mean":  "v. 钦佩；赞美",
+        "sentence":  ""
+    },
+    {
+        "word":  "calendar",
+        "phonetic":  "ˈkæləndə(r)",
+        "mean":  "n 日历，日程表",
+        "sentence":  ""
+    },
+    {
+        "word":  "confuse",
+        "phonetic":  "kənˈfjuːz",
+        "mean":  "v 使混乱；使困惑",
+        "sentence":  ""
+    },
+    {
+        "word":  "dare",
+        "phonetic":  "deə(r)",
+        "mean":  "v. 挑战；不惧；胆敢",
+        "sentence":  ""
+    },
+    {
+        "word":  "digest",
+        "phonetic":  "daɪˈdʒest",
+        "mean":  "v. 消化；领悟；理解",
+        "sentence":  ""
+    },
+    {
+        "word":  "discourage",
+        "phonetic":  "dɪsˈkʌrɪdʒ",
+        "mean":  "v. 使气馁，使沮丧",
+        "sentence":  ""
+    },
+    {
+        "word":  "injury",
+        "phonetic":  "ˈɪndʒəri",
+        "mean":  "n. 伤害；受伤处",
+        "sentence":  ""
+    },
+    {
+        "word":  "match",
+        "phonetic":  "mætʃ",
+        "mean":  "v. 使相配 n. 比赛；火柴",
+        "sentence":  ""
+    },
+    {
+        "word":  "repair",
+        "phonetic":  "rɪˈpeə(r)",
+        "mean":  "v. 修复，恢复；修理",
+        "sentence":  ""
+    },
+    {
+        "word":  "trouble",
+        "phonetic":  "ˈtrʌbl",
+        "mean":  "v. 麻烦，烦恼",
+        "sentence":  ""
+    },
+    {
+        "word":  "award",
+        "phonetic":  "əˈwɔːd",
+        "mean":  "v. 授予 n. 奖品",
+        "sentence":  ""
+    },
+    {
+        "word":  "charge",
+        "phonetic":  "tʃɑːdʒ",
+        "mean":  "v. 充电；控诉 n. 责任；费用",
+        "sentence":  ""
+    },
+    {
+        "word":  "curious",
+        "phonetic":  "ˈkjʊəriəs",
+        "mean":  "adj. 好奇的",
+        "sentence":  ""
+    },
+    {
+        "word":  "differ",
+        "phonetic":  "ˈdɪfə(r)",
+        "mean":  "v. 使…… 不同",
+        "sentence":  ""
+    },
+    {
+        "word":  "hang",
+        "phonetic":  "hæŋ",
+        "mean":  "v. 悬，挂；垂下",
+        "sentence":  ""
+    },
+    {
+        "word":  "harbour",
+        "phonetic":  "ˈhɑːbə(r)",
+        "mean":  "n. 海港",
+        "sentence":  ""
+    },
+    {
+        "word":  "anxious",
+        "phonetic":  "ˈæŋkʃəs",
+        "mean":  "adj. 焦虑的，忧虑的；渴望的",
+        "sentence":  ""
+    },
+    {
+        "word":  "appreciate",
+        "phonetic":  "əˈpriːʃieɪt",
+        "mean":  "v. 欣赏；重视；感激",
+        "sentence":  ""
+    },
+    {
+        "word":  "arrangement",
+        "phonetic":  "əˈreɪndʒmənt",
+        "mean":  "n. 安排；筹备；约定",
+        "sentence":  ""
+    },
+    {
+        "word":  "background",
+        "phonetic":  "ˈbækɡraʊnd",
+        "mean":  "n. 背景",
+        "sentence":  ""
+    },
+    {
+        "word":  "visit",
+        "phonetic":  "ˈvɪzɪt",
+        "mean":  "v. 访问；拜访；参观",
+        "sentence":  ""
+    },
+    {
+        "word":  "aloud",
+        "phonetic":  "əˈlaʊd",
+        "mean":  "adv. 出声地；大声地",
+        "sentence":  ""
+    },
+    {
+        "word":  "benefit",
+        "phonetic":  "ˈbenɪfɪt",
+        "mean":  "n. 优势；益处 v. 使受益",
+        "sentence":  ""
+    },
+    {
+        "word":  "composition",
+        "phonetic":  "ˌkɒmpəˈzɪʃn",
+        "mean":  "n. 作文； （音乐、艺术、诗歌）作品",
+        "sentence":  ""
+    },
+    {
+        "word":  "concentrate",
+        "phonetic":  "ˈkɒnsntreɪt",
+        "mean":  "v. 集中（注意力），聚精会神；使…… 集中",
+        "sentence":  ""
+    },
+    {
+        "word":  "escape",
+        "phonetic":  "ɪˈskeɪp",
+        "mean":  "v. 逃跑；摆脱 n. 逃脱；逃避",
+        "sentence":  ""
+    },
+    {
+        "word":  "humorous",
+        "phonetic":  "ˈhjuːmərəs",
+        "mean":  "adj. 滑稽有趣的；有幽默感的",
+        "sentence":  ""
+    },
+    {
+        "word":  "remain",
+        "phonetic":  "rɪˈmeɪn",
+        "mean":  "v. 仍然是；剩余；遗留",
+        "sentence":  ""
+    },
+    {
+        "word":  "system",
+        "phonetic":  "ˈsɪstəm",
+        "mean":  "n.（思想或理论）体系，制度；系统",
+        "sentence":  ""
+    },
+    {
+        "word":  "shame",
+        "phonetic":  "ʃeɪm",
+        "mean":  "n. 羞耻，羞愧；遗憾",
+        "sentence":  ""
+    },
+    {
+        "word":  "available",
+        "phonetic":  "əˈveɪləbl",
+        "mean":  "adj. 可获得的，可用的；有空的",
+        "sentence":  ""
+    },
+    {
+        "word":  "command",
+        "phonetic":  "kəˈmɑːnd",
+        "mean":  "n. 命令 v. 命令；指挥",
+        "sentence":  ""
+    },
+    {
+        "word":  "degree",
+        "phonetic":  "dɪˈɡriː",
+        "mean":  "n.（温度、角度）度数；程度；学位",
+        "sentence":  ""
+    },
+    {
+        "word":  "dig",
+        "phonetic":  "dɪɡ",
+        "mean":  "v. 挖；掘（地）",
+        "sentence":  ""
+    },
+    {
+        "word":  "disaster",
+        "phonetic":  "dɪˈzɑːstə(r)",
+        "mean":  "n 灾难；灾祸",
+        "sentence":  ""
+    },
+    {
+        "word":  "main",
+        "phonetic":  "meɪn",
+        "mean":  "adj 主要的；最重要的",
+        "sentence":  ""
+    },
+    {
+        "word":  "note",
+        "phonetic":  "nəʊt",
+        "mean":  "n. 笔记；纸币",
+        "sentence":  ""
+    },
+    {
+        "word":  "traditional",
+        "phonetic":  "trəˈdɪʃənl",
+        "mean":  "adj. 传统的；习俗的",
+        "sentence":  ""
+    },
+    {
+        "word":  "use",
+        "phonetic":  "juːz",
+        "mean":  "v. 使用；利用 n. 使用",
+        "sentence":  ""
+    },
+    {
+        "word":  "impress",
+        "phonetic":  "ɪmˈpres",
+        "mean":  "v. 给…… 留下深刻的印象；使钦佩",
+        "sentence":  ""
+    },
+    {
+        "word":  "insist",
+        "phonetic":  "ɪnˈsɪst",
+        "mean":  "v. 坚决要求；坚持",
+        "sentence":  ""
+    },
+    {
+        "word":  "positive",
+        "phonetic":  "ˈpɒzətɪv",
+        "mean":  "adj. 自信的；积极乐观的",
+        "sentence":  ""
+    },
+    {
+        "word":  "surprise",
+        "phonetic":  "səˈpraɪz",
+        "mean":  "n. 惊奇，惊讶 v. 使惊奇；使诧异",
+        "sentence":  ""
+    },
+    {
+        "word":  "switch",
+        "phonetic":  "swɪtʃ",
+        "mean":  "n.（电路的）开关 v.（使）改变，转变",
+        "sentence":  ""
+    }
+]

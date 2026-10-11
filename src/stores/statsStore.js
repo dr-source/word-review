@@ -2,13 +2,30 @@ import { defineStore } from 'pinia'
 import { computed, ref } from 'vue'
 import { supabase } from '../utils/supabase'
 import { Storage, DB_KEYS } from '../utils/storage'
+import { LocalStore } from '../utils/localStore'
 
 export const useStatsStore = defineStore('stats', () => {
   const totalWords = ref(0)
   const levelData = ref([]) // 8 levels
 
   async function loadStats(bookId) {
-    if (!supabase) return
+    if (!supabase) {
+      const allWords = LocalStore.loadAllWords()
+      const bookWords = bookId ? allWords.filter(w => w.book_id === bookId) : allWords
+      totalWords.value = bookWords.length
+      const progress = JSON.parse(localStorage.getItem('word_personal_progress') || '{}')
+      const dist = Array.from({ length: 8 }, () => 0)
+      const counted = new Set()
+      for (const w of allWords) {
+        if (counted.has(w.id)) continue
+        counted.add(w.id)
+        const p = progress[w.id]
+        const level = p ? Math.min(p.learnLevel || 0, 7) : 0
+        dist[level]++
+      }
+      levelData.value = dist
+      return
+    }
     // 全部单词统计（需要显式请求 count）
     let query = supabase.from('words').select('id', { count: 'exact', head: true })
     if (bookId) query = query.eq('book_id', bookId)

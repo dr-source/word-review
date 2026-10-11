@@ -1,6 +1,7 @@
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
 import { supabase } from '../utils/supabase'
+import { LocalStore } from '../utils/localStore'
 
 const CACHE_KEY = 'cache_books'
 const COUNTS_KEY = 'cache_word_counts'
@@ -51,7 +52,14 @@ export const useBookStore = defineStore('book', () => {
 
   /** 全量统计（只在首次加载时使用） */
   async function loadWordCounts() {
-    if (!supabase) return
+    if (!supabase) {
+      const counts = {}
+      for (const w of LocalStore.loadAllWords()) {
+        counts[w.book_id] = (counts[w.book_id] || 0) + 1
+      }
+      wordCounts.value = counts
+      return
+    }
     const { data, error } = await supabase.from('words').select('book_id')
     if (error) return
     const counts = {}
@@ -60,12 +68,20 @@ export const useBookStore = defineStore('book', () => {
   }
 
   async function loadBooks(force = false) {
-    if (!supabase) return
     // 先恢复缓存，立即显示
     if (!loaded) restoreCache()
     if (loaded && !force) return
 
     loading.value = true
+    if (!supabase) {
+      bookList.value = LocalStore.loadBooks()
+      if (bookList.value.length && !currentBookId.value) currentBookId.value = bookList.value[0].id
+      await loadWordCounts()
+      saveCache()
+      loaded = true
+      loading.value = false
+      return
+    }
     const { data, error } = await supabase.from('books').select('*').order('created_at')
     if (error) throw error
     bookList.value = data || []
@@ -77,7 +93,13 @@ export const useBookStore = defineStore('book', () => {
   }
 
   async function addBook(name) {
-    if (!supabase) return
+    if (!supabase) {
+      const book = LocalStore.insertBook(name)
+      currentBookId.value = book.id
+      loaded = false
+      await loadBooks(true)
+      return book
+    }
     const { data, error } = await supabase.from('books').insert({ name }).select().single()
     if (error) throw error
     if (data) { currentBookId.value = data.id; loaded = false; await loadBooks(true) }
@@ -85,7 +107,16 @@ export const useBookStore = defineStore('book', () => {
   }
 
   async function deleteBook(id) {
-    if (!supabase) return
+    if (!supabase) {
+      LocalStore.deleteBook(id)
+      if (currentBookId.value === id) {
+        currentBookId.value = bookList.value.length > 1
+          ? bookList.value.find(b => b.id !== id)?.id || null : null
+      }
+      loaded = false
+      await loadBooks(true)
+      return
+    }
     await supabase.from('words').delete().eq('book_id', id)
     await supabase.from('books').delete().eq('id', id)
     if (currentBookId.value === id) {
