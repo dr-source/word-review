@@ -70,8 +70,13 @@ const MIME = {
   '.ico': 'image/x-icon', '.woff': 'font/woff', '.woff2': 'font/woff2',
   '.ttf': 'font/ttf', '.map': 'application/json'
 }
+// 生产构建在 CI 上把 base 设为 /word-review/（见 vite.config.js），静态服务要跟着挂同一个前缀，
+// 否则资源请求全部 404 回落到 index.html，页面白屏
+const indexHtml = fs.readFileSync(path.join(DIST, 'index.html'), 'utf8')
+const BASE_PATH = (indexHtml.match(/(?:src|href)="(\/[^"]*?)\/assets\//) || [, ''])[1]
 const server = http.createServer((req, res) => {
   let rel = decodeURIComponent(new URL(req.url, 'http://x').pathname)
+  if (BASE_PATH && rel.startsWith(`${BASE_PATH}/`)) rel = rel.slice(BASE_PATH.length)
   let file = path.join(DIST, rel)
   if (!path.resolve(file).startsWith(path.resolve(DIST))) {
     res.writeHead(403); res.end('forbidden'); return
@@ -83,7 +88,7 @@ const server = http.createServer((req, res) => {
 const BASE = await new Promise(resolve => {
   server.listen(0, '127.0.0.1', () => resolve(`http://127.0.0.1:${server.address().port}`))
 })
-console.log(`静态服务 ${BASE} → ${DIST}`)
+console.log(`静态服务 ${BASE}${BASE_PATH}/ → ${DIST}${BASE_PATH ? `（base ${BASE_PATH}/）` : ''}`)
 
 // ---------------------------------------------------------------- 浏览器启动
 fs.rmSync(PROFILE, { recursive: true, force: true })
