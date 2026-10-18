@@ -53,6 +53,13 @@ npm run serve    # 本地预览构建结果
 - 至少保留一名学生；删除学生时其全部记录一并清除
 - 档案页会列出每名学生的今日已学、累计掌握、掌握率、错题数、连续天数，方便对比
 
+### 🔄 同一台电脑开多个标签页
+
+- 两个标签页同时开着同一个学生也能用：一边背词，另一边通过 `storage` 事件自动跟上进度和今日任务，不需要刷新
+- 今日任务**以后写入者为准**，不会互相覆盖成两份不同的任务
+- 切换 / 新建学生属于档案级变化，其他标签页会整页重载，避免读到上一个学生的数据
+- 正在背的这一轮队列（顺序和你已经看到的词）不会被其他标签页打断，只同步计数和任务本身
+
 ### 📅 每日任务（三种模式抽查内容一致）
 
 - 进入「开始背诵」时自动生成当天任务，默认 **33 词**，可在 5～100 之间调整
@@ -79,7 +86,7 @@ npm run serve    # 本地预览构建结果
    - **2 - 模糊**：等级不升，30 分钟后复习
    - **3 - 认识**：提升等级，按艾宾浩斯曲线安排下次复习
 3. 答"不认识 / 模糊"的词会被插回当天队列，同一轮里再练一次
-4. 支持 **左右滑动**（手机）或 **键盘快捷键**（桌面）
+4. 手机上支持手势：答案还没显示时，左右上下滑都只是**翻面**；答案显示后，**右滑=认识**、**左滑=不认识**、**下滑=模糊**，上滑不评分。桌面用键盘快捷键（1 / 2 / 3 / 空格）
 
 ### 选择题模式
 
@@ -148,6 +155,19 @@ npm run build     # 构建
 npm run serve     # 本地预览（需 Node.js）
 ```
 
+### 自测
+
+```bash
+npm run test:logic   # 逻辑自测：状态层 / 存储 / 每日任务 / 跨标签页同步（Node 环境，秒级）
+npm run test:e2e     # 端到端自测：先 build，再用无头 Chrome/Edge 真点页面
+npm test             # 两个都跑
+```
+
+- 逻辑自测在 Node 里用内存版 `localStorage` 模拟浏览器，覆盖取词、评分、错题、迁移、学生隔离、多标签页写入收敛
+- 端到端自测自带静态服务器，用 CDP 真点真滑：三种模式同源、错题本、统计刷新、学生切换与隔离、双标签页同步、移动端触屏滑动
+- 找不到浏览器时用 `CHROME_BIN=/path/to/chrome npm run test:e2e` 指定
+- 两个自测都在 CI（`.github/workflows/test.yml`）里跑，push / PR 都会执行
+
 ### 技术栈
 
 | 技术 | 用途 |
@@ -163,11 +183,19 @@ npm run serve     # 本地预览（需 Node.js）
 
 ```
 src/
-  App.vue          # 布局壳
+  App.vue          # 布局壳（含跨标签页同步监听）
   router/          # 路由
   stores/          # 状态管理（word / book / stats / student / auth）
   pages/           # 页面（含 StudentsPage 学生档案）
   components/      # 组件
-  composables/     # 组合式函数
-  utils/           # 工具（profile.js：学生档案与按学生隔离的本地存储）
+  composables/     # 组合式函数（useTouchSwipe.js：翻卡触屏手势）
+  utils/           # 工具（profile.js：学生档案与按学生隔离的本地存储；sync.js：跨标签页 key 判定与监听）
+tests/
+  logic.test.mjs     # 逻辑自测（Node + 内存 localStorage）
+  build-logic.mjs    # 把逻辑自测打成单文件（Vite 处理 src/ 的 import）
+  browser.test.mjs   # 端到端自测（无头浏览器 + CDP）
+  env.mjs            # 逻辑自测的浏览器环境替身
+.github/workflows/
+  deploy.yml       # push main 后构建并发布 gh-pages
+  test.yml         # 逻辑 + 端到端自测
 ```

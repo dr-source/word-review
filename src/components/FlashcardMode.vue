@@ -11,7 +11,13 @@
         <span class="queue-hint" v-if="queue.length">还剩 {{ queue.length }} 词</span>
       </div>
       <el-progress :percentage="progressPercent" :stroke-width="6" :show-text="false" color="#4A6CF7" class="study-progress-bar" />
-      <div class="flashcard-wrapper" @click="handleShowAnswer">
+      <div
+        class="flashcard-wrapper"
+        @click="handleShowAnswer"
+        @touchstart.passive="swipe.onTouchStart"
+        @touchmove.passive="swipe.onTouchMove"
+        @touchend.passive="swipe.onTouchEnd"
+      >
         <div class="flashcard" :class="{ flipped: showAnswer, 'no-animate': noAnimation }">
           <div class="flashcard-inner">
             <div class="flashcard-front">
@@ -64,11 +70,20 @@ import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { useWordStore } from '../stores/wordStore'
 import { useSpeech } from '../composables/useSpeech'
+import { useTouchSwipe } from '../composables/useTouchSwipe'
 
 const props = defineProps({ bookId: { type: [Number, String], default: 0 } })
 const router = useRouter()
 const wordStore = useWordStore()
 const { speak } = useSpeech()
+
+// 手机端手势：右滑认识、左滑不认识、下滑模糊、上滑翻面
+const swipe = useTouchSwipe({
+  onSwipeRight: () => swipeRate('good'),
+  onSwipeLeft: () => swipeRate('again'),
+  onSwipeDown: () => swipeRate('hard'),
+  onSwipeUp: () => { if (!showAnswer.value) revealAnswer() }
+})
 
 const queue = ref([])
 const currentWord = ref(null)
@@ -126,7 +141,20 @@ function nextWord() {
   showAnswer.value = false
   currentWord.value = queue.value.shift() || null
 }
-function handleShowAnswer() { showAnswer.value = true }
+function revealAnswer() {
+  showAnswer.value = true
+}
+function handleShowAnswer() {
+  // 滑动结束后浏览器还会补一个 click，忽略掉，避免刚切到下一个词就自动翻面
+  if (swipe.justSwiped()) return
+  revealAnswer()
+}
+
+/** 滑动评价：答案还没显示时只翻面，防止滑一下就被误评分 */
+function swipeRate(type) {
+  if (!showAnswer.value) { revealAnswer(); return }
+  handleRating(type)
+}
 
 function handleRating(type) {
   const word = currentWord.value
@@ -176,7 +204,7 @@ function handleKeydown(e) {
 .progress-text { font-size: 12px; color: var(--color-text-muted); background: #F1F5F9; padding: 2px 8px; border-radius: 9999px; }
 .queue-hint { font-size: 12px; color: var(--color-text-muted); }
 .study-progress-bar { margin-bottom: 24px; }
-.flashcard-wrapper { perspective: 1200px; margin-bottom: 24px; cursor: pointer; }
+.flashcard-wrapper { perspective: 1200px; margin-bottom: 24px; cursor: pointer; touch-action: pan-y; }
 .flashcard { height: 280px; transition: transform 0.5s cubic-bezier(0.4,0,0.2,1); transform-style: preserve-3d; }
 .flashcard.no-animate { transition: none; }
 .flashcard.flipped { transform: rotateY(180deg); }

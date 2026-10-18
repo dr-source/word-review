@@ -44,6 +44,11 @@ export const useStatsStore = defineStore('stats', () => {
     version.value++
   }
 
+  /** 别的标签页改了数据：递增版本号让统计项重算（本地没有词本时用） */
+  function bumpVersion() {
+    version.value++
+  }
+
   const learnedWords = computed(() => levelData.value.slice(1).reduce((a, b) => a + b, 0))
 
   const wrongWordsCount = computed(() => {
@@ -161,6 +166,6 @@ export const useStatsStore = defineStore('stats', () => {
     levelDistribution, streakDays, todayLearned,
     todayUnique, taskSize, taskDoneRate, newRemaining,
     topWrongWords, analysisReport, studentName, loadedBookId,
-    loadStats
+    loadStats, bumpVersion
   }
 })

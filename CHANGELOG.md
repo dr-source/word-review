@@ -21,7 +21,9 @@
 | ✅ 批量导入 | 支持 Excel / CSV / TXT，自动识别列名 |
 | ✅ 数据导出 | JSON 格式备份和恢复 |
 | ✅ 管理员模式 | 单词管理默认隐藏，5 次点击标题解锁 |
-| ✅ 响应式布局 | 手机底部导航、平板/桌面侧栏、触摸手势 |
+| ✅ 响应式布局 | 手机底部导航、平板/桌面侧栏、翻卡触屏手势（答案显示后右滑认识 / 左滑不认识 / 下滑模糊） |
+| ✅ 多标签页同步 | 同一台电脑开多个标签页，进度与今日任务以 `storage` 事件同步，今日任务以后写入者为准 |
+| ✅ 自动自测 | 逻辑自测 + 端到端自测（无头浏览器真点真滑）都在仓库里，push / PR 由 CI 执行 |
 | ✅ 本地缓存 | localStorage 缓存，首次加载后秒开 |
 | ✅ PWA 支持 | 可添加到手机主屏幕（manifest.json） |
 
@@ -105,6 +107,21 @@
 新增文件：`src/utils/profile.js`、`src/stores/studentStore.js`、`src/pages/StudentsPage.vue`
 改动文件：`wordStore / bookStore / statsStore`、`FlashcardMode / QuizMode / SpellingMode`、`StudyPage / HomePage / StatsPage / WrongBookPage`、`AppSidebar / App.vue`、`main.js / router/index.js`、`storage.js / supabase.js / word.js`
 
+### Phase 7：并发与触屏收尾（本轮）
+
+| 问题 | 修复 |
+|------|------|
+| 同一学生开两个标签页时，今日任务可能互相覆盖 | `ensureDailyTask` 写完立即回读，内存里始终是存储里的那一份；新增 `src/utils/sync.js` 监听 `storage` 事件，`App.vue` 收到别的标签页写入后调 `wordStore.syncFromStorage()`（进度 + 今日任务 + 每日任务量/乱序）与 `statsStore` 重算，今日任务**以后写入者为准**；学生档案键变化则整页重载，避免读到上一名学生的数据；正在背的这一轮队列不被打断 |
+| 触屏滑动只是"文档里说有"，实际没有生效 | `useTouchSwipe` 重写为 `touchstart/touchmove/touchend` 三段判定（阈值 50px，方向需占优 1.2 倍，手势超过 1s 不计），绑到 `.flashcard-wrapper`；**答案未显示时四个方向都只翻面**，答案显示后右滑=认识、左滑=不认识、下滑=模糊、上滑不评分；`touchend` 后浏览器补发的 `click` 用 `justSwiped()` 吞掉，不会切到下一张就自动翻面 |
+| 自测脚本在仓库外的临时目录，长期容易丢失 | 自测搬进 `tests/`：`logic.test.mjs`（逻辑，Node + 内存 localStorage）、`browser.test.mjs`（端到端，无头浏览器 + CDP 真点真滑，自带静态服务器）、`env.mjs` / `build-logic.mjs`（环境替身与打包）；新增 `npm run test:logic / test:e2e / test`；新增 `.github/workflows/test.yml`，push 与 PR 都跑 |
+
+自测覆盖：逻辑自测 131 条断言（含「跨标签页：以后写入者为准，不丢更新」14 条），端到端自测 90 条断言（含双标签页同步 13 条、移动端触屏滑动 15 条 + 控制台无 error）。
+
+修复的隐藏 bug：`useTouchSwipe` 在 `touchend` 里先把「刚滑动过」时间戳写好再触发回调，而 `onSwipeUp` 走的 `handleShowAnswer` 一进来就被这个时间戳拦掉，导致**上滑永远不翻面**；现在翻面与「忽略补发的 click」两条路径分开。
+
+新增文件：`src/utils/sync.js`、`tests/env.mjs`、`tests/build-logic.mjs`、`tests/logic.test.mjs`、`tests/browser.test.mjs`、`.github/workflows/test.yml`
+改动文件：`App.vue`、`FlashcardMode.vue`、`useTouchSwipe.js`、`wordStore.js`、`statsStore.js`、`profile.js`、`package.json`、`.gitignore`、`README.md`、`CHANGELOG.md`
+
 ---
 
 ## 技术栈
@@ -150,13 +167,22 @@ src/
   composables/
     useChart.js            # Chart.js 生命周期
     useSpeech.js           # TTS 封装
-    useTouchSwipe.js       # 触摸手势
+    useTouchSwipe.js       # 触摸手势（翻卡左右 / 上下滑动）
   utils/
     profile.js             # 学生档案 + 按学生隔离的本地存储（wr_<学生id>_*）
+    sync.js                # 跨标签页：存储键判定 + storage 事件监听
     supabase.js            # Supabase 客户端
     storage.js             # localStorage 封装 + 艾宾浩斯间隔常量
     word.js                # 单词数据工具
     dictionary.js          # 内置词典（300 词）
   styles/
     variables.css          # 设计系统变量
+tests/
+  logic.test.mjs           # 逻辑自测（Node + 内存 localStorage，131 条断言）
+  build-logic.mjs          # 把逻辑自测打包成单文件（Vite 处理 src/ 的 import）
+  browser.test.mjs         # 端到端自测（无头 Chrome/Edge + CDP，90 条断言）
+  env.mjs                  # 逻辑自测的浏览器环境替身
+.github/workflows/
+  deploy.yml               # push main 后构建并发布 gh-pages
+  test.yml                 # 逻辑 + 端到端自测
 ```

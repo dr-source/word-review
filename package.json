@@ -8,7 +8,10 @@
     "build": "vite build",
     "preview": "vite preview",
     "serve": "node server.cjs",
-    "dist": "npm run build && npm run serve"
+    "dist": "npm run build && npm run serve",
+    "test": "npm run test:logic && npm run test:e2e",
+    "test:logic": "node tests/build-logic.mjs && node tests/.out/logic.mjs",
+    "test:e2e": "npm run build && node tests/browser.test.mjs"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.108.2",

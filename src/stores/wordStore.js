@@ -311,8 +311,26 @@ export const useWordStore = defineStore('word', () => {
     }
     const next = { date, ids, size: dailySize.value, bookId: book }
     saveTask(book, next)
-    task.value = next
-    return next
+    // 两个标签页同时生成时，以后写入的那个为准：两边都回读一次，保证拿到的是同一份任务
+    task.value = getTasks()[book] || next
+    return task.value
+  }
+
+  /**
+   * 别的标签页改了本学生的数据后，把内存快照对齐到 localStorage。
+   * 今日任务以后写入的为准（可能与本地正在背的队列不同，队列不动，避免打断当前一轮）。
+   */
+  function syncFromStorage() {
+    if (loadedBookId.value) applyProgress()
+    refreshToday()
+    const book = task.value?.bookId || loadedBookId.value
+    if (book) {
+      const cached = getTasks()[book]
+      task.value = cached && cached.date === todayStr() ? cached : null
+    }
+    const latest = getSettings()
+    dailySize.value = latest.dailySize
+    shuffleMode.value = latest.shuffle
   }
 
   function regenerateTask(bookId) {
@@ -359,11 +377,11 @@ export const useWordStore = defineStore('word', () => {
 
   return {
     wordList, rawWords, studyQueue, currentStudyWord, showAnswer, loading, studyFilter,
-    dailySize, shuffleMode, task, taskWords, taskSize, taskDoneCount,
+    dailySize, shuffleMode, task, taskWords, taskSize, taskDoneCount, studiedIds,
     reviewCount, wrongWordList,
     loadWords, addWord, batchAddWords, deleteWord,
     markRight, markHard, markWrong,
-    ensureDailyTask, regenerateTask, setDailySize, setShuffle,
+    ensureDailyTask, regenerateTask, syncFromStorage, setDailySize, setShuffle,
     initStudyQueue, nextWord, handleRight, handleWrong
   }
 })

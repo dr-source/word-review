@@ -2,8 +2,8 @@
 // 命名空间：wr_<学生id>_<数据名>
 import { EBBINGHAUS } from './storage'
 
-const STUDENTS_KEY = 'word_review_students'
-const CURRENT_KEY = 'word_review_current_student'
+export const STUDENTS_KEY = 'word_review_students'
+export const CURRENT_KEY = 'word_review_current_student'
 const DEFAULT_STUDENT_NAME = '默认学生'
 
 /** 旧版本全局数据，首次运行并入“默认学生” */

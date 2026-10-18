@@ -29,13 +29,34 @@
 </template>
 
 <script setup>
-import { computed } from 'vue'
+import { computed, onMounted, onUnmounted } from 'vue'
 import { useRoute } from 'vue-router'
 import { useAuthStore } from './stores/authStore'
+import { useWordStore } from './stores/wordStore'
+import { useStatsStore } from './stores/statsStore'
+import { isStudentListKey, onCrossTabChange } from './utils/sync'
 import AppSidebar from './components/AppSidebar.vue'
 
 const route = useRoute()
 const auth = useAuthStore()
+const wordStore = useWordStore()
+const statsStore = useStatsStore()
+
+// 其它标签页写入本学生数据时同步到当前页；学生档案本身变了就整页重载，
+// 否则两边的“当前学生”会不一致，写进去的记录会串到别人档案里
+let stopSync = null
+onMounted(() => {
+  stopSync = onCrossTabChange(async (key) => {
+    if (isStudentListKey(key)) {
+      window.location.reload()
+      return
+    }
+    wordStore.syncFromStorage()
+    if (statsStore.loadedBookId) await statsStore.loadStats(statsStore.loadedBookId)
+    else statsStore.bumpVersion()
+  })
+})
+onUnmounted(() => { if (stopSync) stopSync() })
 
 const allMobileMenu = [
   { path: '/', label: '首页', icon: 'House' },

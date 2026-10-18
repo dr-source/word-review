@@ -1,72 +1,69 @@
-import { onMounted, onUnmounted, ref } from 'vue'
+import { ref } from 'vue'
 
 /**
- * 触摸手势检测 composable
- * @param {string|HTMLElement} el - 元素选择器或 ref
- * @param {Object} handlers - { onSwipeLeft, onSwipeRight, onSwipeUp, onSwipeDown }
- * @param {number} threshold - 最小滑动距离（px），默认 50
+ * 触摸滑动手势
+ * 直接把返回的三个处理函数绑到模板上（@touchstart / @touchmove / @touchend），
+ * 这样卡片是 v-if 渲染出来的也能绑上，不像 querySelector 那样取不到元素。
+ *
+ * @param {Object} handlers { onSwipeLeft, onSwipeRight, onSwipeUp, onSwipeDown }
+ * @param {Object} options { threshold 最小距离(px), maxDuration 最长手势时长(ms) }
  */
-export function useTouchSwipe(el, handlers = {}, threshold = 50) {
-  let startX = 0
-  let startY = 0
-  let startTime = 0
-  let targetEl = null
+export function useTouchSwipe(handlers = {}, options = {}) {
+  const threshold = options.threshold ?? 50
+  const maxDuration = options.maxDuration ?? 1000
 
-  function getElement() {
-    if (typeof el === 'string') {
-      return document.querySelector(el)
-    }
-    return el
-  }
+  let start = null
+  let last = null
+  // 最近一次滑动的时间戳，用来忽略浏览器在 touchend 之后补发的 click
+  const swipedAt = ref(0)
 
-  function handleTouchStart(e) {
-    if (e.touches.length !== 1) return
-    startX = e.touches[0].clientX
-    startY = e.touches[0].clientY
-    startTime = Date.now()
-  }
-
-  function handleTouchEnd(e) {
-    if (!startX || !startY) return
-    const dx = e.changedTouches[0].clientX - startX
-    const dy = e.changedTouches[0].clientY - startY
-    const elapsed = Date.now() - startTime
-
-    // 超过 300ms 不算滑动手势
-    if (elapsed > 300) {
-      startX = startY = 0
+  function onTouchStart(event) {
+    const touch = event.touches?.[0]
+    if (event.touches?.length !== 1 || !touch) {
+      start = null
+      last = null
       return
     }
-
-    const absDx = Math.abs(dx)
-    const absDy = Math.abs(dy)
-
-    // 水平滑动
-    if (absDx > threshold && absDx > absDy * 1.5) {
-      if (dx > 0) handlers.onSwipeRight?.()
-      else handlers.onSwipeLeft?.()
-    }
-    // 垂直滑动
-    else if (absDy > threshold && absDy > absDx * 1.5) {
-      if (dy > 0) handlers.onSwipeDown?.()
-      else handlers.onSwipeUp?.()
-    }
-
-    startX = startY = 0
+    start = { x: touch.clientX, y: touch.clientY, at: Date.now() }
+    last = { x: touch.clientX, y: touch.clientY }
   }
 
-  onMounted(() => {
-    targetEl = getElement()
-    if (targetEl) {
-      targetEl.addEventListener('touchstart', handleTouchStart, { passive: true })
-      targetEl.addEventListener('touchend', handleTouchEnd, { passive: true })
-    }
-  })
+  function onTouchMove(event) {
+    const touch = event.touches?.[0]
+    if (touch) last = { x: touch.clientX, y: touch.clientY }
+  }
 
-  onUnmounted(() => {
-    if (targetEl) {
-      targetEl.removeEventListener('touchstart', handleTouchStart)
-      targetEl.removeEventListener('touchend', handleTouchEnd)
+  function onTouchEnd(event) {
+    const from = start
+    start = null
+    if (!from) return
+    const touch = event.changedTouches?.[0]
+    const to = touch ? { x: touch.clientX, y: touch.clientY } : last
+    last = null
+    if (!to) return
+
+    if (Date.now() - from.at > maxDuration) return
+
+    const dx = to.x - from.x
+    const dy = to.y - from.y
+    const absX = Math.abs(dx)
+    const absY = Math.abs(dy)
+
+    let fired = null
+    if (absX > threshold && absX > absY * 1.2) {
+      fired = dx > 0 ? handlers.onSwipeRight : handlers.onSwipeLeft
+    } else if (absY > threshold && absY > absX * 1.2) {
+      fired = dy > 0 ? handlers.onSwipeDown : handlers.onSwipeUp
     }
-  })
+    if (!fired) return
+    swipedAt.value = Date.now()
+    fired()
+  }
+
+  /** 滑动刚结束时浏览器还会补一个 click，用它判断是否需要忽略 */
+  function justSwiped(window = 400) {
+    return Date.now() - swipedAt.value < window
+  }
+
+  return { onTouchStart, onTouchMove, onTouchEnd, justSwiped }
 }
