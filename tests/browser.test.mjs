@@ -36,6 +36,16 @@ const CHROME = findChrome()
 const PORT = Number(process.env.E2E_PORT || 9333)
 const PROFILE = path.join(os.tmpdir(), `word-review-e2e-${process.pid}`)
 const SCRATCH = path.join(os.tmpdir(), `word-review-e2e-${process.pid}.png`)
+const CHROME_LOG = path.join(os.tmpdir(), `word-review-e2e-${process.pid}.chrome.log`)
+
+function tail(file, chars = 3000) {
+  try {
+    const text = fs.readFileSync(file, 'utf8')
+    return text.length > chars ? '…' + text.slice(-chars) : text
+  } catch (e) {
+    return `（读不到 ${file}：${e.message}）`
+  }
+}
 
 let pass = 0
 const failures = []
@@ -85,24 +95,15 @@ const args = [
   'about:blank'
 ]
 if (process.platform === 'linux') args.unshift('--no-sandbox', '--disable-dev-shm-usage')
-const proc = spawn(CHROME, args, { stdio: 'ignore' })
-
-async function versionInfo() {
-  for (let i = 0; i < 120; i++) {
-    try {
-      const r = await fetch(`http://127.0.0.1:${PORT}/json/version`)
-      if (r.ok) return r.json()
-    } catch {}
-    await sleep(250)
-  }
-  throw new Error(`${CHROME} 调试端口未就绪`)
-}
-
-const info = await versionInfo()
-console.log(`浏览器 ${info.Browser}`)
+const chromeOut = fs.openSync(CHROME_LOG, 'w')
+const proc = spawn(CHROME, args, { stdio: ['ignore', chromeOut, chromeOut] })
+let chromeExit = null
+proc.on('error', err => { chromeExit = `启动失败：${err.message}` })
+proc.on('exit', (code, signal) => { chromeExit = `退出码 ${code}，信号 ${signal}` })
 
 function cleanup() {
   try { proc.kill() } catch {}
+  try { fs.closeSync(chromeOut) } catch {}
   try { server.close() } catch {}
   try { fs.rmSync(PROFILE, { recursive: true, force: true }) } catch {}
 }
@@ -113,6 +114,21 @@ for (const ev of ['uncaughtException', 'unhandledRejection']) {
     process.exit(1)
   })
 }
+
+async function versionInfo() {
+  for (let i = 0; i < 120; i++) {
+    if (chromeExit) throw new Error(`${CHROME} ${chromeExit}，Chrome 自己的日志：\n${tail(CHROME_LOG)}`)
+    try {
+      const r = await fetch(`http://127.0.0.1:${PORT}/json/version`)
+      if (r.ok) return r.json()
+    } catch {}
+    await sleep(250)
+  }
+  throw new Error(`${CHROME} 调试端口 ${PORT} 30 秒内未就绪，Chrome 自己的日志：\n${tail(CHROME_LOG)}`)
+}
+
+const info = await versionInfo()
+console.log(`浏览器 ${info.Browser}`)
 
 // ---------------------------------------------------------------- CDP 客户端
 function wsConnect(url) {
