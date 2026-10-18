@@ -226,7 +226,18 @@ async function waitForIn(sid, expression, label, timeout = 15000) {
     } catch (e) { lastErr = e.message }
     await sleep(120)
   }
-  throw new Error(`等待超时：${label}${lastErr ? '（' + lastErr + '）' : ''}`)
+  let dump = ''
+  try {
+    const body = await evaluateIn(sid, `(document.body?.innerText || '').replace(/\\s+/g, ' ').slice(0, 400)`)
+    const app = await evaluateIn(sid, `(document.querySelector('#app')?.innerHTML || '').slice(0, 400)`)
+    dump = `\n页面文本：${body || '（空）'}\n#app：${app || '（空）'}`
+  } catch (e) {
+    dump = `\n取 DOM 也失败：${e.message}`
+  }
+  const errors = consoleErrors.length
+    ? `\n控制台错误：\n${consoleErrors.slice(-10).join('\n')}`
+    : '\n控制台无错误'
+  throw new Error(`等待超时：${label}（${timeout}ms）${lastErr ? '（' + lastErr + '）' : ''}${dump}${errors}`)
 }
 const waitFor = (expression, label, timeout = 15000) => waitForIn(S, expression, label, timeout)
 
