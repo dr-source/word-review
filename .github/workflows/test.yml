@@ -21,8 +21,6 @@ jobs:
   e2e:
     name: 浏览器端到端自测
     runs-on: ubuntu-latest
-    permissions:
-      contents: write
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -35,7 +33,7 @@ jobs:
         run: |
           set -o pipefail
           npm run test:e2e 2>&1 | tee "$RUNNER_TEMP/e2e.log"
-      # 日志正文匿名读不到，失败时把尾部写进 job summary（可通过 Checks API 读取）
+      # 失败时把日志尾部贴进 job summary，排队/失败原因一眼可见，不必翻整段日志
       - if: failure()
         name: 失败时贴出自测日志尾部
         run: |
@@ -51,17 +49,3 @@ jobs:
           name: e2e-screenshot
           path: ${{ runner.temp }}/word-review-e2e-*.png
           if-no-files-found: ignore
-      # 临时排障：ci-logs 分支可匿名读取，方便在拿不到 job 日志时看失败原因（修好后可删）
-      - if: failure()
-        name: 把自测日志推到 ci-logs 分支
-        env:
-          TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          mkdir -p "$RUNNER_TEMP/ci-log"
-          cp "$RUNNER_TEMP/e2e.log" "$RUNNER_TEMP/ci-log/e2e.log"
-          cd "$RUNNER_TEMP/ci-log"
-          git init -q
-          git checkout -q -b ci-logs
-          git add e2e.log
-          git -c user.name=ci -c user.email=ci@local commit -q -m "e2e log run ${GITHUB_RUN_ID}"
-          git push -q -f "https://x-access-token:$TOKEN@github.com/$GITHUB_REPOSITORY.git" ci-logs
