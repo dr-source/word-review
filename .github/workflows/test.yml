@@ -13,7 +13,7 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: 22
           cache: npm
       - run: npm ci
       - run: npm run test:logic
@@ -25,11 +25,24 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: 22
           cache: npm
       - run: npm ci
       # ubuntu-latest 自带 google-chrome，tests/browser.test.mjs 会自动探测
-      - run: npm run test:e2e
+      - name: 运行浏览器自测
+        run: |
+          set -o pipefail
+          npm run test:e2e 2>&1 | tee "$RUNNER_TEMP/e2e.log"
+      # 日志正文匿名读不到，失败时把尾部写进 job summary（可通过 Checks API 读取）
+      - if: failure()
+        name: 失败时贴出自测日志尾部
+        run: |
+          {
+            echo '### 浏览器自测失败，日志尾部'
+            echo '```text'
+            tail -c 6000 "$RUNNER_TEMP/e2e.log"
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
       - if: failure()
         uses: actions/upload-artifact@v4
         with:

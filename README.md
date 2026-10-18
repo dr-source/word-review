@@ -166,7 +166,8 @@ npm test             # 两个都跑
 - 逻辑自测在 Node 里用内存版 `localStorage` 模拟浏览器，覆盖取词、评分、错题、迁移、学生隔离、多标签页写入收敛
 - 端到端自测自带静态服务器，用 CDP 真点真滑：三种模式同源、错题本、统计刷新、学生切换与隔离、双标签页同步、移动端触屏滑动
 - 找不到浏览器时用 `CHROME_BIN=/path/to/chrome npm run test:e2e` 指定
-- 两个自测都在 CI（`.github/workflows/test.yml`）里跑，push / PR 都会执行
+- 两者都要求 **Node 22+**（端到端自测用 Node 内置 `WebSocket` 直连 CDP，Node 20 没有；版本过低会直接报错退出）
+- 两个自测都在 CI（`.github/workflows/test.yml`，Ubuntu + Node 22 + 自带 Chrome）里跑，push / PR 都会执行；失败时会把日志尾部写进 job summary 并上传截图
 
 ### 技术栈
 

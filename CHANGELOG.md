@@ -119,6 +119,8 @@
 
 修复的隐藏 bug：`useTouchSwipe` 在 `touchend` 里先把「刚滑动过」时间戳写好再触发回调，而 `onSwipeUp` 走的 `handleShowAnswer` 一进来就被这个时间戳拦掉，导致**上滑永远不翻面**；现在翻面与「忽略补发的 click」两条路径分开。
 
+自测环境要求 **Node 22+**：端到端自测用 Node 内置 `WebSocket` 直连 CDP，Node 20 没有这个全局对象（CI 首次运行就是因此失败，现已把 `test.yml` 固定到 Node 22，并在脚本开头加版本守卫，版本过低时直接给出明确提示而不是 `WebSocket is not defined`）。CI 里失败时会把自测日志尾部写进 job summary 并上传截图，便于排查。
+
 新增文件：`src/utils/sync.js`、`tests/env.mjs`、`tests/build-logic.mjs`、`tests/logic.test.mjs`、`tests/browser.test.mjs`、`.github/workflows/test.yml`
 改动文件：`App.vue`、`FlashcardMode.vue`、`useTouchSwipe.js`、`wordStore.js`、`statsStore.js`、`profile.js`、`package.json`、`.gitignore`、`README.md`、`CHANGELOG.md`
 

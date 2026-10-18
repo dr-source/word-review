@@ -7,6 +7,11 @@ import path from 'node:path'
 import http from 'node:http'
 import { fileURLToPath } from 'node:url'
 
+if (typeof WebSocket === 'undefined') {
+  console.error(`端到端自测需要 Node 22+（内置 WebSocket），当前是 ${process.version}`)
+  process.exit(1)
+}
+
 const here = path.dirname(fileURLToPath(import.meta.url))
 const DIST = path.resolve(here, '..', 'dist')
 
