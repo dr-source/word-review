@@ -31,7 +31,7 @@
         <el-table-column prop="wrongCount" label="错误次数" width="90" align="center" />
         <el-table-column label="最近错误" width="110" align="center">
           <template #default="{ row }">
-            {{ row.lastWrongAt ? new Date(row.lastWrongAt).toLocaleDateString() : '-' }}
+            {{ row.lastWrongAt ? new Date(row.lastWrongAt).toLocaleDateString('zh-CN') : '-' }}
           </template>
         </el-table-column>
         <el-table-column label="操作" width="100" align="center">

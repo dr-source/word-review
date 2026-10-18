@@ -121,6 +121,8 @@
 
 自测环境要求 **Node 22+**：端到端自测用 Node 内置 `WebSocket` 直连 CDP，Node 20 没有这个全局对象（CI 首次运行就是因此失败，现已把 `test.yml` 固定到 Node 22，并在脚本开头加版本守卫，版本过低时直接给出明确提示而不是 `WebSocket is not defined`）。CI 里失败时会把自测日志尾部写进 job summary 并上传截图，便于排查。
 
+CI 排障另外暴露两处真问题：① `vite.config.js` 在 CI 上把 `base` 设成 `/word-review/`，而自测自带静态服务器挂在根路径，线上那份构建跑自测就会白屏——服务器现在从 `dist/index.html` 自动识别 base 前缀并挂在同一路径下；② 错题本与统计页的「最近错误」用不带 locale 的 `toLocaleDateString()`，在 en 环境浏览器里显示成 `10/18/2026`，现固定按 `zh-CN` 显示。
+
 新增文件：`src/utils/sync.js`、`tests/env.mjs`、`tests/build-logic.mjs`、`tests/logic.test.mjs`、`tests/browser.test.mjs`、`.github/workflows/test.yml`
 改动文件：`App.vue`、`FlashcardMode.vue`、`useTouchSwipe.js`、`wordStore.js`、`statsStore.js`、`profile.js`、`package.json`、`.gitignore`、`README.md`、`CHANGELOG.md`
 

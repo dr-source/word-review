@@ -77,7 +77,7 @@
         <el-table-column prop="mean" label="释义" min-width="180" />
         <el-table-column prop="count" label="错误次数" width="90" align="center" />
         <el-table-column label="最近错误" width="110" align="center">
-          <template #default="{ row }">{{ row.lastAt ? new Date(row.lastAt).toLocaleDateString() : '-' }}</template>
+          <template #default="{ row }">{{ row.lastAt ? new Date(row.lastAt).toLocaleDateString('zh-CN') : '-' }}</template>
         </el-table-column>
       </el-table>
     </el-card>
