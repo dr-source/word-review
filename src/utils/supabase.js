@@ -20,21 +20,3 @@ if (supabaseUrl && supabaseAnonKey && !isPlaceholder(supabaseUrl) && !isPlacehol
 export const supabase = client
 export const isSupabaseReady = clientReady
 
-/** 个人学习进度 key（localStorage） */
-const PROGRESS_KEY = 'word_personal_progress'
-
-export function getPersonalProgress() {
-  try { return JSON.parse(localStorage.getItem(PROGRESS_KEY) || '{}') } catch { return {} }
-}
-
-export function savePersonalProgress(wordId, data) {
-  const progress = getPersonalProgress()
-  progress[wordId] = { ...(progress[wordId] || {}), ...data }
-  localStorage.setItem(PROGRESS_KEY, JSON.stringify(progress))
-}
-
-export function removePersonalProgress(wordId) {
-  const progress = getPersonalProgress()
-  delete progress[wordId]
-  localStorage.setItem(PROGRESS_KEY, JSON.stringify(progress))
-}

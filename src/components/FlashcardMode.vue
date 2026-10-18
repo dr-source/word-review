@@ -3,10 +3,12 @@
     <div v-if="currentWord" class="study-container">
       <div class="study-header">
         <div class="progress-info">
-          <span class="progress-badge">{{ studiedCount }}/{{ totalCount }}</span>
+          <span class="progress-badge">今日任务 {{ studiedCount }}/{{ totalCount }}</span>
           <span class="progress-text" v-if="currentWord.learnLevel === 0">新词</span>
           <span class="progress-text" v-else>复习</span>
+          <span class="progress-text" v-if="wordStore.shuffleMode">乱序</span>
         </div>
+        <span class="queue-hint" v-if="queue.length">还剩 {{ queue.length }} 词</span>
       </div>
       <el-progress :percentage="progressPercent" :stroke-width="6" :show-text="false" color="#4A6CF7" class="study-progress-bar" />
       <div class="flashcard-wrapper" @click="handleShowAnswer">
@@ -34,7 +36,7 @@
         <transition name="slide-up">
           <div v-if="showAnswer" class="rating-buttons">
             <el-button class="rating-btn rating-again" :disabled="ratingLocked" @click="handleRating('again')">
-              <span class="rating-key">1</span><span class="rating-text">不认识</span><span class="rating-desc">5分钟</span>
+              <span class="rating-key">1</span><span class="rating-text">不认识</span><span class="rating-desc">稍后再出现</span>
             </el-button>
             <el-button class="rating-btn rating-hard" :disabled="ratingLocked" @click="handleRating('hard')">
               <span class="rating-key">2</span><span class="rating-text">模糊</span><span class="rating-desc">降低等级</span>
@@ -47,8 +49,12 @@
       </div>
     </div>
     <el-empty v-else-if="loading" description="加载中..." />
-    <el-empty v-else description="当前词本暂无待背诵单词">
-      <el-button type="primary" @click="router.push('/books')">去添加单词</el-button>
+    <el-empty v-else-if="totalCount > 0" description="今日任务已全部完成 🎉">
+      <el-button type="primary" @click="restart">再背一遍</el-button>
+    </el-empty>
+    <el-empty v-else description="今天还没有待背的单词">
+      <el-button type="primary" @click="restart">生成今日任务</el-button>
+      <el-button @click="router.push('/books')">去添加单词</el-button>
     </el-empty>
   </div>
 </template>
@@ -57,16 +63,14 @@
 import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { useWordStore } from '../stores/wordStore'
-import { useBookStore } from '../stores/bookStore'
 import { useSpeech } from '../composables/useSpeech'
 
-const props = defineProps({ bookId: { type: Number, default: 0 } })
+const props = defineProps({ bookId: { type: [Number, String], default: 0 } })
 const router = useRouter()
 const wordStore = useWordStore()
-const bookStore = useBookStore()
 const { speak } = useSpeech()
 
-const studyQueue = ref([])
+const queue = ref([])
 const currentWord = ref(null)
 const showAnswer = ref(false)
 const studiedCount = ref(0)
@@ -74,10 +78,12 @@ const totalCount = ref(0)
 const ratingLocked = ref(false)
 const loading = ref(false)
 const noAnimation = ref(false)
+let seenIds = new Set()
+let requeued = new Set()
 
 const progressPercent = computed(() => {
   if (!totalCount.value) return 0
-  return Math.round((studiedCount.value / totalCount.value) * 100)
+  return Math.min(100, Math.round((studiedCount.value / totalCount.value) * 100))
 })
 
 watch(() => props.bookId, async (id) => { if (id) await startStudy() }, { immediate: true })
@@ -88,31 +94,67 @@ async function startStudy() {
   if (!props.bookId) return
   loading.value = true
   await wordStore.loadWords(props.bookId)
-  wordStore.initStudyQueue(props.bookId)
+
+  // 错题本“开始复习”进来时只背错题，否则背当天任务
+  const onlyWrong = wordStore.studyFilter === 'wrong'
+  wordStore.studyFilter = ''
+  let source
+  if (onlyWrong) {
+    source = wordStore.wordList.filter(w => w.wrong)
+  } else {
+    wordStore.ensureDailyTask(props.bookId)
+    source = wordStore.taskWords
+  }
+
+  queue.value = source.map(w => ({ ...w }))
+  totalCount.value = queue.value.length
   studiedCount.value = 0
-  totalCount.value = wordStore.studyQueue.length
-  loading.value = false
+  seenIds = new Set()
+  requeued = new Set()
+  noAnimation.value = true
   nextWord()
+  loading.value = false
+  setTimeout(() => { noAnimation.value = false }, 120)
+}
+
+function restart() {
+  if (!totalCount.value) wordStore.regenerateTask(props.bookId)
+  startStudy()
 }
 
 function nextWord() {
   showAnswer.value = false
-  currentWord.value = wordStore.studyQueue.shift() || null
+  currentWord.value = queue.value.shift() || null
 }
 function handleShowAnswer() { showAnswer.value = true }
 
 function handleRating(type) {
-  if (ratingLocked.value || !currentWord.value) return
+  const word = currentWord.value
+  if (ratingLocked.value || !word) return
   ratingLocked.value = true
-  if (type === 'again') wordStore.markWrong(currentWord.value.id)
-  else if (type === 'hard') wordStore.markWrong(currentWord.value.id)
-  else wordStore.markRight(currentWord.value.id)
-  studiedCount.value++
+
+  if (type === 'again') wordStore.markWrong(word.id)
+  else if (type === 'hard') wordStore.markHard(word.id)
+  else wordStore.markRight(word.id)
+
+  if (!seenIds.has(word.id)) {
+    seenIds.add(word.id)
+    studiedCount.value = Math.min(totalCount.value, studiedCount.value + 1)
+  }
+
+  // 不认识的词插到第 4 个（后面第 3 个之后），模糊的词插到第 9 个，
+  // 每个词只重排一次，避免无限循环；顺序与任务保持一致。
+  if (type !== 'good' && !requeued.has(word.id)) {
+    requeued.add(word.id)
+    const offset = type === 'again' ? 3 : 8
+    const pos = Math.min(offset, queue.value.length)
+    queue.value.splice(pos, 0, word)
+  }
+
   // 禁用动画，直接切到下一个单词的正面
   noAnimation.value = true
   nextWord()
-  // 重新启用动画（等待下一个点击翻卡）
-  setTimeout(() => { noAnimation.value = false; ratingLocked.value = false }, 300)
+  setTimeout(() => { noAnimation.value = false; ratingLocked.value = false }, 250)
 }
 
 function handleKeydown(e) {
@@ -128,10 +170,11 @@ function handleKeydown(e) {
 <style scoped>
 .flashcard-mode { width: 100%; }
 .study-container { width: 100%; }
-.study-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
-.progress-info { display: flex; align-items: center; gap: 8px; }
+.study-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; gap: 8px; flex-wrap: wrap; }
+.progress-info { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
 .progress-badge { font-size: 14px; font-weight: 600; color: var(--color-text); }
 .progress-text { font-size: 12px; color: var(--color-text-muted); background: #F1F5F9; padding: 2px 8px; border-radius: 9999px; }
+.queue-hint { font-size: 12px; color: var(--color-text-muted); }
 .study-progress-bar { margin-bottom: 24px; }
 .flashcard-wrapper { perspective: 1200px; margin-bottom: 24px; cursor: pointer; }
 .flashcard { height: 280px; transition: transform 0.5s cubic-bezier(0.4,0,0.2,1); transform-style: preserve-3d; }

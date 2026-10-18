@@ -5,7 +5,7 @@
         <div class="wrong-header">
           <span>
             <el-icon style="vertical-align: middle; margin-right: 6px;"><Warning /></el-icon>
-            错题本
+            错题本 · {{ studentStore.currentName }}
           </span>
           <el-tag v-if="wordStore.wrongWordList.length" type="danger" effect="plain">
             {{ wordStore.wrongWordList.length }} 个待复习
@@ -28,6 +28,12 @@
         </el-table-column>
         <el-table-column prop="phonetic" label="音标" width="140" />
         <el-table-column prop="mean" label="释义" min-width="200" />
+        <el-table-column prop="wrongCount" label="错误次数" width="90" align="center" />
+        <el-table-column label="最近错误" width="110" align="center">
+          <template #default="{ row }">
+            {{ row.lastWrongAt ? new Date(row.lastWrongAt).toLocaleDateString() : '-' }}
+          </template>
+        </el-table-column>
         <el-table-column label="操作" width="100" align="center">
           <template #default="{ row }">
             <el-button size="small" circle @click="speakWord(row.word)">
@@ -61,10 +67,12 @@
 <script setup>
 import { useRouter } from 'vue-router'
 import { useWordStore } from '../stores/wordStore'
+import { useStudentStore } from '../stores/studentStore'
 import { useSpeech } from '../composables/useSpeech'
 
 const router = useRouter()
 const wordStore = useWordStore()
+const studentStore = useStudentStore()
 const { speak } = useSpeech()
 
 function speakWord(text) { speak(text) }

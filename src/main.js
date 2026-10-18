@@ -6,9 +6,12 @@ import * as ElementPlusIconsVue from '@element-plus/icons-vue'
 import App from './App.vue'
 import router from './router'
 import { initDefaultData } from './utils/word'
+import { ensureDefaultStudent } from './utils/profile'
 
 // 初始化默认数据（示例词本 + 单词）
 initDefaultData()
+// 确保存在当前学生档案：所有 store 读取数据前必须先就绪
+ensureDefaultStudent()
 
 const app = createApp(App)
 

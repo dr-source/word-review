@@ -3,9 +3,12 @@
     <!-- 欢迎区域 -->
     <div class="welcome-section">
       <div class="welcome-text">
-        <h1 class="greeting">📚 今天想学点什么？</h1>
-        <p class="subtitle" style="cursor:pointer;" @click="showBookPicker = true">
-          当前词本：<strong>{{ bookStore.currentBook.name || '暂无' }}</strong> ✏️
+        <h1 class="greeting">📚 {{ studentStore.currentName }}，今天想学点什么？</h1>
+        <p class="subtitle">
+          当前词本：<strong style="cursor:pointer;" @click="showBookPicker = true">{{ bookStore.currentBook.name || '暂无' }}</strong> ✏️
+        </p>
+        <p class="subtitle student-line" @click="router.push('/students')">
+          学生档案：<strong>{{ studentStore.currentName }}</strong> · 点击切换
         </p>
       </div>
       <div class="progress-ring">
@@ -22,11 +25,29 @@
             transform="rotate(-90, 60, 60)"
             class="ring-progress"
           />
-          <text x="60" y="52" text-anchor="middle" class="ring-number">{{ stats.todayLearned }}</text>
-          <text x="60" y="72" text-anchor="middle" class="ring-label">今日学过</text>
+          <text x="60" y="52" text-anchor="middle" class="ring-number">{{ stats.todayUnique }}</text>
+          <text x="60" y="72" text-anchor="middle" class="ring-label">今日已学</text>
         </svg>
       </div>
     </div>
+
+    <!-- 今日任务进度 -->
+    <el-card shadow="hover" class="task-card">
+      <div class="task-card-inner">
+        <div>
+          <div class="task-title">今日任务</div>
+          <div class="task-desc">
+            每天 {{ wordStore.dailySize }} 词 · {{ wordStore.shuffleMode ? '乱序抽查' : '顺序抽查' }} ·
+            翻卡 / 选择 / 拼写同一批词
+          </div>
+        </div>
+        <div class="task-right">
+          <span class="task-count">{{ wordStore.taskDoneCount }}/{{ wordStore.taskSize }}</span>
+          <el-button type="primary" size="small" @click="goStudy">去背诵</el-button>
+        </div>
+      </div>
+      <el-progress :percentage="taskPercent" :stroke-width="6" :show-text="false" color="#4A6CF7" />
+    </el-card>
 
     <!-- 统计卡片网格 -->
     <el-row :gutter="16" class="stats-grid">
@@ -110,26 +131,33 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted, watch } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
 import { useBookStore } from '../stores/bookStore'
 import { useWordStore } from '../stores/wordStore'
 import { useStatsStore } from '../stores/statsStore'
+import { useStudentStore } from '../stores/studentStore'
 
 const router = useRouter()
 const bookStore = useBookStore()
 const wordStore = useWordStore()
 const stats = useStatsStore()
+const studentStore = useStudentStore()
 const showBookPicker = ref(false)
 const tempBookId = ref(null)
 
 const RING_CIRCUMFERENCE = 2 * Math.PI * 54
-const DAILY_GOAL = 20
 
 const ringOffset = computed(() => {
-  const progress = Math.min(stats.todayLearned / DAILY_GOAL, 1)
+  const goal = wordStore.dailySize || 20
+  const progress = Math.min(stats.todayUnique / goal, 1)
   return RING_CIRCUMFERENCE * (1 - progress)
+})
+
+const taskPercent = computed(() => {
+  if (!wordStore.taskSize) return 0
+  return Math.min(100, Math.round((wordStore.taskDoneCount / wordStore.taskSize) * 100))
 })
 
 const statCards = computed(() => [
@@ -171,6 +199,7 @@ onMounted(async () => {
   if (!bookStore.bookList.length) await bookStore.loadBooks()
   if (bookStore.currentBookId) {
     await wordStore.loadWords(bookStore.currentBookId)
+    wordStore.ensureDailyTask(bookStore.currentBookId)
   }
   // 加载统计数据
   await stats.loadStats(bookStore.currentBookId)
@@ -189,6 +218,7 @@ async function switchHomeBook() {
   if (!tempBookId.value || tempBookId.value === bookStore.currentBookId) { showBookPicker.value = false; return }
   bookStore.selectBook(tempBookId.value)
   await wordStore.loadWords(tempBookId.value)
+  wordStore.ensureDailyTask(tempBookId.value)
   await stats.loadStats(tempBookId.value)
   showBookPicker.value = false
 }
@@ -221,6 +251,14 @@ async function switchHomeBook() {
 .subtitle strong {
   color: var(--color-primary);
 }
+.student-line {
+  font-size: 13px;
+  cursor: pointer;
+  margin-top: 2px;
+}
+.student-line:hover strong {
+  text-decoration: underline;
+}
 
 /* 进度圆环 */
 .ring-svg {
@@ -238,6 +276,38 @@ async function switchHomeBook() {
 .ring-label {
   font-size: 11px;
   fill: var(--color-text-muted);
+}
+
+/* 今日任务 */
+.task-card {
+  margin-bottom: 16px;
+}
+.task-card-inner {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 10px;
+}
+.task-title {
+  font-size: 15px;
+  font-weight: 600;
+  margin-bottom: 2px;
+}
+.task-desc {
+  font-size: 12px;
+  color: var(--color-text-muted);
+}
+.task-right {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-shrink: 0;
+}
+.task-count {
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--color-primary);
 }
 
 /* 统计卡片 */
@@ -365,5 +435,6 @@ async function switchHomeBook() {
   .stat-value { font-size: 18px; }
   .action-card-content { gap: 10px; }
   .level-label { width: 60px; font-size: 12px; }
+  .task-card-inner { flex-direction: column; align-items: flex-start; }
 }
 </style>

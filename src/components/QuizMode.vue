@@ -2,13 +2,13 @@
   <div class="quiz-mode">
     <div class="quiz-header">
       <span class="mode-badge">📝 选择题</span>
-      <span class="quiz-progress">{{ doneCount }}/{{ totalCount }}</span>
+      <span class="quiz-progress">今日任务 {{ doneCount }}/{{ totalCount }}</span>
     </div>
     <el-progress :percentage="progressPct" :stroke-width="6" :show-text="false" color="#F59E0B" />
 
     <div class="quiz-card" v-if="currentWord">
       <h2 class="quiz-word">{{ currentWord.word }}</h2>
-      <p class="quiz-hint">选择正确的释义</p>
+      <p class="quiz-hint">看英文，选择正确的中文释义</p>
       <div class="quiz-options">
         <el-button v-for="(opt, i) in options" :key="i" class="quiz-option" :class="optionClass(i)" :disabled="answered" @click="handleSelect(i)">
           <span class="option-letter">{{ ['A','B','C','D'][i] }}</span>
@@ -21,11 +21,16 @@
         <p :class="isCorrect ? 'feedback-correct' : 'feedback-wrong'">
           {{ isCorrect ? '🎉 回答正确！' : '😅 正确答案是：' + currentWord.mean }}
         </p>
+        <p v-if="!isCorrect" class="feedback-retry">这个词本轮最后会再出现一次</p>
         <el-button type="primary" @click="next" style="margin-top:8px;">下一题</el-button>
       </div>
     </div>
 
-    <el-empty v-if="!currentWord" description="答题完成！">
+    <el-empty v-else-if="loading" description="加载中..." />
+    <el-empty v-else-if="totalCount > 0" description="今日任务完成！">
+      <el-button type="primary" @click="$emit('done')">返回</el-button>
+    </el-empty>
+    <el-empty v-else description="今天还没有可选择的单词">
       <el-button type="primary" @click="$emit('done')">返回</el-button>
     </el-empty>
   </div>
@@ -35,48 +40,101 @@
 import { ref, computed, watch } from 'vue'
 import { useWordStore } from '../stores/wordStore'
 
-const props = defineProps({ bookId: { type: Number, default: 0 } })
+const props = defineProps({ bookId: { type: [Number, String], default: 0 } })
 const emit = defineEmits(['done'])
 
 const wordStore = useWordStore()
-const words = ref([])
-const currentIdx = ref(0)
+const queue = ref([])
+const currentWord = ref(null)
 const options = ref([])
 const correctIdx = ref(0)
 const selectedIdx = ref(-1)
 const answered = ref(false)
 const doneCount = ref(0)
+const totalCount = ref(0)
+const loading = ref(false)
+let requeued = new Set()
 
-const totalCount = computed(() => words.value.length)
-const progressPct = computed(() => totalCount.value ? Math.round((currentIdx.value / totalCount.value) * 100) : 0)
-const currentWord = computed(() => words.value[currentIdx.value])
+const progressPct = computed(() => totalCount.value
+  ? Math.min(100, Math.round((doneCount.value / totalCount.value) * 100))
+  : 0)
 const isCorrect = computed(() => selectedIdx.value === correctIdx.value)
 
 watch(() => props.bookId, async (id) => { if (id) await initQuiz(id) }, { immediate: true })
 
 async function initQuiz(bookId) {
+  loading.value = true
   await wordStore.loadWords(bookId)
-  const all = wordStore.wordList.filter(w => w.mean).sort(() => Math.random() - 0.5).slice(0, 20)
-  words.value = all
-  currentIdx.value = 0; doneCount.value = 0; generateOptions()
+
+  const onlyWrong = wordStore.studyFilter === 'wrong'
+  wordStore.studyFilter = ''
+  let source
+  if (onlyWrong) {
+    source = wordStore.wordList.filter(w => w.wrong && w.mean)
+  } else {
+    wordStore.ensureDailyTask(bookId)
+    // 和翻卡背记同一批词、同一个顺序；乱序开关在 store 里统一生效
+    source = wordStore.taskWords.filter(w => w.mean)
+  }
+
+  queue.value = source.map(w => ({ ...w }))
+  totalCount.value = queue.value.length
+  doneCount.value = 0
+  requeued = new Set()
+  loading.value = false
+  advance()
+}
+
+function advance() {
+  answered.value = false
+  selectedIdx.value = -1
+  currentWord.value = queue.value.shift() || null
+  if (currentWord.value) generateOptions()
 }
 
 function generateOptions() {
-  const word = currentWord.value; if (!word) return
-  selectedIdx.value = -1; answered.value = false
-  const distractors = wordStore.wordList.filter(w => w.mean && w.id !== word.id).sort(() => Math.random() - 0.5).slice(0, 3).map(w => w.mean)
-  const opts = [word.mean, ...distractors].sort(() => Math.random() - 0.5)
-  options.value = opts; correctIdx.value = opts.indexOf(word.mean)
+  const word = currentWord.value
+  if (!word) return
+  const used = new Set([word.mean])
+  const pool = []
+  const collect = (list) => {
+    for (const w of list) {
+      if (pool.length >= 3) return
+      if (!w.mean || used.has(w.mean)) continue
+      used.add(w.mean)
+      pool.push(w.mean)
+    }
+  }
+  // 干扰项优先来自今日任务，保持三种模式都围绕当天这批词
+  collect(wordStore.taskWords)
+  if (pool.length < 3) collect(wordStore.wordList)
+
+  const opts = [word.mean, ...pool].sort(() => Math.random() - 0.5)
+  options.value = opts
+  correctIdx.value = opts.indexOf(word.mean)
 }
 
 function handleSelect(idx) {
   if (answered.value) return
-  selectedIdx.value = idx; answered.value = true; doneCount.value++
-  if (idx === correctIdx.value) wordStore.markRight(currentWord.value.id)
-  else wordStore.markWrong(currentWord.value.id)
+  selectedIdx.value = idx
+  answered.value = true
+  doneCount.value++
+
+  const word = currentWord.value
+  if (idx === correctIdx.value) {
+    wordStore.markRight(word.id)
+  } else {
+    wordStore.markWrong(word.id)
+    // 答错的词在本轮末尾再出一次，只重排一次
+    if (!requeued.has(word.id)) {
+      requeued.add(word.id)
+      queue.value.push(word)
+      totalCount.value = doneCount.value + queue.value.length
+    }
+  }
 }
 
-function next() { currentIdx.value++; if (currentWord.value) generateOptions() }
+function next() { advance() }
 
 function optionClass(idx) {
   if (!answered.value) return ''
@@ -88,7 +146,7 @@ function optionClass(idx) {
 
 <style scoped>
 .quiz-mode { max-width: 520px; margin: 0 auto; }
-.quiz-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
+.quiz-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; gap: 8px; }
 .mode-badge { font-weight: 600; font-size: 15px; }
 .quiz-progress { font-size: 14px; color: var(--color-text-muted); }
 .quiz-card { background: white; border-radius: var(--radius-xl); padding: 32px; margin-top: 20px; box-shadow: var(--shadow-md); text-align: center; }
@@ -97,7 +155,8 @@ function optionClass(idx) {
 .quiz-options { display: flex; flex-direction: column; gap: 10px; }
 .quiz-option { display: flex; align-items: center; gap: 10px; width: 100%; height: auto !important; padding: 14px 16px !important; border-radius: var(--radius-md) !important; border: 2px solid var(--color-border) !important; background: #FAFAFA !important; color: var(--color-text) !important; white-space: normal; text-align: left; }
 .quiz-option:hover:not(.answered) { border-color: var(--color-primary) !important; background: rgba(74,108,247,0.04) !important; }
-.option-letter { font-weight: 700; color: var(--color-primary); width: 24px; }
+.option-letter { font-weight: 700; color: var(--color-primary); width: 24px; flex-shrink: 0; }
+.option-text { flex: 1; }
 .option-icon { margin-left: auto; font-size: 18px; }
 .option-correct { border-color: #22C55E !important; background: #F0FDF4 !important; }
 .option-wrong { border-color: #EF4444 !important; background: #FEF2F2 !important; }
@@ -105,6 +164,7 @@ function optionClass(idx) {
 .quiz-feedback { margin-top: 20px; }
 .feedback-correct { color: #16A34A; font-weight: 600; }
 .feedback-wrong { color: #DC2626; font-weight: 600; }
+.feedback-retry { margin-top: 4px; font-size: 12px; color: var(--color-text-muted); }
 @media (max-width: 640px) {
   .quiz-word { font-size: 28px; }
   .quiz-card { padding: 20px; }

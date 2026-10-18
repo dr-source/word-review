@@ -1,35 +1,72 @@
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
-import { supabase, getPersonalProgress, savePersonalProgress, removePersonalProgress } from '../utils/supabase'
-import { Storage, DB_KEYS } from '../utils/storage'
+import { supabase } from '../utils/supabase'
 import { LocalStore } from '../utils/localStore'
-
-/** 记录每日学习数 */
-function trackDailyStudy() {
-  const record = Storage.get(DB_KEYS.LEARN_RECORD) || {}
-  const today = new Date().toISOString().slice(0, 10)
-  record[today] = (record[today] || 0) + 1
-  Storage.set(DB_KEYS.LEARN_RECORD, record)
-}
+import {
+  getProgress, saveProgress, getWrongIds, getWrongCounts, addWrong, removeWrong,
+  trackStudy, getTodayStudiedIds, getSettings, saveSettings, getTasks, saveTask,
+  intervalMs, todayStr
+} from '../utils/profile'
 
 const CACHE_PREFIX = 'cache_words_'
+const MAX_LEVEL = 7
+
+/** 固定种子洗牌：同一天、同一任务顺序一致，选择/拼写/翻卡对得上 */
+function seededShuffle(list, seed) {
+  let h = 2166136261
+  for (let i = 0; i < seed.length; i++) {
+    h ^= seed.charCodeAt(i)
+    h = Math.imul(h, 16777619)
+  }
+  const arr = [...list]
+  for (let i = arr.length - 1; i > 0; i--) {
+    h = Math.imul(h ^ (h >>> 15), 2246822507)
+    h ^= h >>> 13
+    const j = Math.abs(h) % (i + 1)
+    ;[arr[i], arr[j]] = [arr[j], arr[i]]
+  }
+  return arr
+}
 
 export const useWordStore = defineStore('word', () => {
   const wordList = ref([])
+  const rawWords = ref([])
   const studyQueue = ref([])
   const currentStudyWord = ref(null)
   const showAnswer = ref(false)
   const loading = ref(false)
   const loadedBookId = ref(null)
-  const studyFilter = ref('') // '' = 全部, 'wrong' = 仅错题
+  const studyFilter = ref('') // '' = 今日任务, 'wrong' = 仅错题
 
-  function mergeWithProgress(dbWords) {
-    const progress = getPersonalProgress()
-    return (dbWords || []).map(w => ({
-      id: w.id, bookId: w.book_id,
-      word: w.word, phonetic: w.phonetic || '', mean: w.mean || '', sentence: w.sentence || '',
-      star: false, note: '', learnLevel: 0, nextReview: 0,
-      ...(progress[w.id] || {})
+  const settings = getSettings()
+  const dailySize = ref(settings.dailySize)
+  const shuffleMode = ref(settings.shuffle)
+  const task = ref(null) // { date, ids, size, bookId }
+  // 今日已学词 id 的响应式快照：localStorage 本身不响应，写完必须同步一次
+  const studiedIds = ref(getTodayStudiedIds())
+
+  function refreshToday() {
+    studiedIds.value = getTodayStudiedIds()
+  }
+
+  /** 把原始词条与当前学生的进度、错题状态合并 */
+  function applyProgress() {
+    const progress = getProgress()
+    const wrongIds = getWrongIds()
+    wordList.value = rawWords.value.map(w => ({
+      id: w.id,
+      bookId: w.book_id,
+      book_id: w.book_id,
+      word: w.word,
+      phonetic: w.phonetic || '',
+      mean: w.mean || '',
+      sentence: w.sentence || '',
+      star: false,
+      note: '',
+      learnLevel: 0,
+      nextReview: 0,
+      ...(progress[w.id] || {}),
+      wrong: wrongIds.includes(w.id)
     }))
   }
 
@@ -41,8 +78,29 @@ export const useWordStore = defineStore('word', () => {
   })
 
   const wrongWordList = computed(() => {
-    const wrongIds = Storage.get(DB_KEYS.WRONG_WORDS) || []
-    return wordList.value.filter(item => wrongIds.includes(item.id))
+    const counts = getWrongCounts()
+    return wordList.value
+      .filter(item => item.wrong)
+      .map(item => ({
+        ...item,
+        wrongCount: counts[item.id]?.count || 1,
+        lastWrongAt: counts[item.id]?.lastAt || 0
+      }))
+  })
+
+  /** 今日任务单词，按任务顺序（开启乱序后按当天固定种子洗牌） */
+  const taskWords = computed(() => {
+    const ids = task.value?.ids || []
+    const map = new Map(wordList.value.map(w => [w.id, w]))
+    const list = ids.map(id => map.get(id)).filter(Boolean)
+    if (!shuffleMode.value) return list
+    return seededShuffle(list, `${task.value?.bookId}_${task.value?.date}_${ids.length}`)
+  })
+
+  const taskSize = computed(() => task.value?.ids?.length || 0)
+  const taskDoneCount = computed(() => {
+    const ids = new Set(task.value?.ids || [])
+    return studiedIds.value.filter(id => ids.has(id)).length
   })
 
   /** 从 localStorage 恢复缓存 */
@@ -50,7 +108,8 @@ export const useWordStore = defineStore('word', () => {
     try {
       const cached = localStorage.getItem(CACHE_PREFIX + bookId)
       if (cached) {
-        wordList.value = mergeWithProgress(JSON.parse(cached))
+        rawWords.value = JSON.parse(cached)
+        applyProgress()
         loadedBookId.value = bookId
         return true
       }
@@ -66,12 +125,9 @@ export const useWordStore = defineStore('word', () => {
 
   async function loadWords(bookId) {
     if (!bookId) return
-    // 缓存命中：同词本不重复请求
     if (loadedBookId.value === bookId && wordList.value.length) return
-    // 先显示缓存，再后台刷新
     const hasCache = restoreCache(bookId)
     if (hasCache) {
-      // 后台刷新
       loadWordsFromServer(bookId)
       return
     }
@@ -83,7 +139,8 @@ export const useWordStore = defineStore('word', () => {
     loading.value = true
     if (!supabase) {
       const data = LocalStore.loadWords(bookId)
-      wordList.value = mergeWithProgress(data)
+      rawWords.value = data
+      applyProgress()
       loadedBookId.value = bookId
       saveCache(bookId, data)
       loading.value = false
@@ -91,10 +148,10 @@ export const useWordStore = defineStore('word', () => {
     }
     const { data, error } = await supabase.from('words').select('*').eq('book_id', bookId).order('created_at')
     if (error) throw error
-    const merged = mergeWithProgress(data)
-    wordList.value = merged
+    rawWords.value = data || []
+    applyProgress()
     loadedBookId.value = bookId
-    saveCache(bookId, data)
+    saveCache(bookId, rawWords.value)
     loading.value = false
   }
 
@@ -109,7 +166,6 @@ export const useWordStore = defineStore('word', () => {
         mean: data.mean || '',
         sentence: data.sentence || ''
       })
-      savePersonalProgress(inserted.id, { learnLevel: 0, nextReview: 0 })
       loadedBookId.value = null
       localStorage.removeItem(CACHE_PREFIX + data.bookId)
       await loadWordsFromServer(data.bookId)
@@ -117,12 +173,14 @@ export const useWordStore = defineStore('word', () => {
       return inserted
     }
     const { data: inserted, error } = await supabase.from('words').insert({
-      book_id: data.bookId, word: data.word,
-      phonetic: data.phonetic || '', mean: data.mean || '', sentence: data.sentence || ''
+      book_id: data.bookId,
+      phonetic: data.phonetic || '',
+      word: data.word,
+      mean: data.mean || '',
+      sentence: data.sentence || ''
     }).select().single()
     if (error) throw error
     if (inserted) {
-      savePersonalProgress(inserted.id, { learnLevel: 0, nextReview: 0 })
       loadedBookId.value = null
       localStorage.removeItem(CACHE_PREFIX + data.bookId)
       await loadWordsFromServer(data.bookId)
@@ -143,9 +201,6 @@ export const useWordStore = defineStore('word', () => {
     }))
     if (!supabase) {
       const inserted = LocalStore.insertWords(rows)
-      for (const row of inserted) {
-        savePersonalProgress(row.id, { learnLevel: 0, nextReview: 0 })
-      }
       loadedBookId.value = null
       localStorage.removeItem(CACHE_PREFIX + bookId)
       await loadWordsFromServer(bookId)
@@ -155,9 +210,6 @@ export const useWordStore = defineStore('word', () => {
     const { data: inserted, error } = await supabase.from('words').insert(rows).select()
     if (error) throw error
     if (inserted && inserted.length) {
-      for (const row of inserted) {
-        savePersonalProgress(row.id, { learnLevel: 0, nextReview: 0 })
-      }
       loadedBookId.value = null
       localStorage.removeItem(CACHE_PREFIX + bookId)
       await loadWordsFromServer(bookId)
@@ -169,57 +221,149 @@ export const useWordStore = defineStore('word', () => {
   async function deleteWord(id) {
     if (!supabase) {
       LocalStore.deleteWord(id)
-      removePersonalProgress(id)
+      removeWrong(id)
       loadedBookId.value = null
       return
     }
     await supabase.from('words').delete().eq('id', id)
-    removePersonalProgress(id)
+    removeWrong(id)
     loadedBookId.value = null
   }
 
-  function markRight(id) {
-    trackDailyStudy()
-    const progress = getPersonalProgress()
-    const word = progress[id] || { learnLevel: 0 }
-    let level = Math.min((word.learnLevel || 0) + 1, 7)
-    const intervals = [5, 30, 1440, 2880, 5760, 10080, 20160, 43200]
-    savePersonalProgress(id, { learnLevel: level, nextReview: Date.now() + intervals[level] * 60 * 1000 })
-    let wrong = Storage.get(DB_KEYS.WRONG_WORDS) || []
-    wrong = wrong.filter(w => w !== id)
-    Storage.set(DB_KEYS.WRONG_WORDS, wrong)
+  function syncWordItem(id) {
+    const progress = getProgress()
+    const wrongIds = getWrongIds()
+    const item = wordList.value.find(w => w.id === id)
+    if (!item) return
+    Object.assign(item, { learnLevel: 0, nextReview: 0, ...(progress[id] || {}) }, { wrong: wrongIds.includes(id) })
   }
 
+  /** 认识：升一级；同一天重复答对不再升级，避免一遍就“掌握” */
+  function markRight(id) {
+    const progress = getProgress()
+    const item = progress[id] || {}
+    const date = todayStr()
+    let level = item.learnLevel || 0
+    if (item.lastLevelDate !== date) level = Math.min(level + 1, MAX_LEVEL)
+    saveProgress(id, {
+      learnLevel: level,
+      nextReview: Date.now() + intervalMs(level),
+      lastLevelDate: date
+    })
+    removeWrong(id)
+    trackStudy(id)
+    refreshToday()
+    syncWordItem(id)
+  }
+
+  /** 模糊：等级不升、30 分钟后重新出现，并计入错题本 */
+  function markHard(id) {
+    addWrong(id)
+    const progress = getProgress()
+    const level = progress[id]?.learnLevel || 0
+    saveProgress(id, { learnLevel: level, nextReview: Date.now() + 30 * 60 * 1000 })
+    trackStudy(id)
+    refreshToday()
+    syncWordItem(id)
+  }
+
+  /** 不认识：等级归零、5 分钟后重新出现，计入错题本 */
   function markWrong(id) {
-    trackDailyStudy()
-    savePersonalProgress(id, { learnLevel: 0, nextReview: Date.now() + 5 * 60 * 1000 })
-    let wrong = Storage.get(DB_KEYS.WRONG_WORDS) || []
-    if (!wrong.includes(id)) { wrong.push(id); Storage.set(DB_KEYS.WRONG_WORDS, wrong) }
+    addWrong(id)
+    saveProgress(id, { learnLevel: 0, nextReview: Date.now() + 5 * 60 * 1000 })
+    trackStudy(id)
+    refreshToday()
+    syncWordItem(id)
+  }
+
+  /**
+   * 生成/读取今天的任务：先安排到期复习（按到期先后），再补新词，取前 dailySize 个。
+   * 同一天同一词本只生成一次，第二天自动生成新的。
+   */
+  function ensureDailyTask(bookId, force = false) {
+    const book = bookId || loadedBookId.value
+    if (!book) { task.value = null; return null }
+    const date = todayStr()
+    const cached = getTasks()[book]
+    if (!force && cached && cached.date === date) {
+      task.value = cached
+      return cached
+    }
+    const now = Date.now()
+    const progress = getProgress()
+    const due = rawWords.value
+      .filter(w => {
+        const p = progress[w.id]
+        return p && p.learnLevel > 0 && p.nextReview > 0 && p.nextReview <= now
+      })
+      .sort((a, b) => (progress[a.id].nextReview || 0) - (progress[b.id].nextReview || 0))
+    const fresh = rawWords.value.filter(w => {
+      const p = progress[w.id]
+      return !p || !p.learnLevel
+    })
+    const ids = []
+    const seen = new Set()
+    for (const w of [...due, ...fresh]) {
+      if (ids.length >= dailySize.value) break
+      if (seen.has(w.id)) continue
+      seen.add(w.id)
+      ids.push(w.id)
+    }
+    const next = { date, ids, size: dailySize.value, bookId: book }
+    saveTask(book, next)
+    task.value = next
+    return next
+  }
+
+  function regenerateTask(bookId) {
+    return ensureDailyTask(bookId || loadedBookId.value, true)
+  }
+
+  function setDailySize(size) {
+    const value = Math.min(100, Math.max(5, Math.round(Number(size) || 33)))
+    dailySize.value = value
+    saveSettings({ dailySize: value })
+    return value
+  }
+
+  function setShuffle(value) {
+    shuffleMode.value = !!value
+    saveSettings({ shuffle: shuffleMode.value })
   }
 
   function initStudyQueue(bookId) {
+    const book = bookId || loadedBookId.value
     if (studyFilter.value === 'wrong') {
-      const wrongIds = Storage.get(DB_KEYS.WRONG_WORDS) || []
-      studyQueue.value = wordList.value.filter(w => wrongIds.includes(w.id)).sort(() => Math.random() - 0.5)
+      studyQueue.value = wordList.value.filter(w => w.wrong)
       studyFilter.value = ''
     } else {
-      const now = Date.now()
-      const review = wordList.value.filter(w => w.nextReview > 0 && w.nextReview <= now)
-      const newWords = wordList.value.filter(w => w.learnLevel === 0)
-      studyQueue.value = [...review, ...newWords].sort(() => Math.random() - 0.5)
+      ensureDailyTask(book)
+      studyQueue.value = [...taskWords.value]
     }
+    refreshToday()
     nextWord()
   }
 
-  function nextWord() { showAnswer.value = false; currentStudyWord.value = studyQueue.value.shift() || null }
-  function handleRight() { if (currentStudyWord.value) { markRight(currentStudyWord.value.id); nextWord() } }
-  function handleWrong() { if (currentStudyWord.value) { markWrong(currentStudyWord.value.id); nextWord() } }
+  function nextWord() {
+    showAnswer.value = false
+    currentStudyWord.value = studyQueue.value.shift() || null
+  }
+
+  function handleRight() {
+    if (currentStudyWord.value) { markRight(currentStudyWord.value.id); nextWord() }
+  }
+
+  function handleWrong() {
+    if (currentStudyWord.value) { markWrong(currentStudyWord.value.id); nextWord() }
+  }
 
   return {
-    wordList, studyQueue, currentStudyWord, showAnswer, loading, studyFilter,
+    wordList, rawWords, studyQueue, currentStudyWord, showAnswer, loading, studyFilter,
+    dailySize, shuffleMode, task, taskWords, taskSize, taskDoneCount,
     reviewCount, wrongWordList,
     loadWords, addWord, batchAddWords, deleteWord,
-    markRight, markWrong,
+    markRight, markHard, markWrong,
+    ensureDailyTask, regenerateTask, setDailySize, setShuffle,
     initStudyQueue, nextWord, handleRight, handleWrong
   }
 })

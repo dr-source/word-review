@@ -132,7 +132,7 @@ export function wordRight(wordId) {
   let level = word.learnLevel + 1
   if (level >= EBBINGHAUS.length) level = EBBINGHAUS.length - 1
 
-  const nextTime = Date.now() + EBBINGHAUS[level] * 60 * 1000
+  const nextTime = Date.now() + EBBINGHAUS[level] * 86400000
   updateWord(wordId, { learnLevel: level, nextReview: nextTime })
 
   // 从错题本移除

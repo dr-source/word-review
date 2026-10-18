@@ -8,12 +8,16 @@
 
 | 功能 | 说明 |
 |------|------|
-| ✅ 三种学习模式 | 翻卡背诵、选择题、拼写练习 |
-| ✅ 艾宾浩斯复习 | 自动计算复习间隔（5分→30分→1天→2天→4天→7天→15天） |
+| ✅ 三种学习模式 | 翻卡背诵、选择题、拼写练习，抽查内容与顺序完全一致 |
+| ✅ 艾宾浩斯复习 | 答对升一级，间隔 1→2→4→7→15→30→60 天滚动（模糊 30 分钟、不认识 5 分钟） |
 | ✅ 三档评价 | 不认识 / 模糊 / 认识，精细控制记忆曲线 |
+| ✅ 学生档案 | 每个学生一份独立记录（进度 / 错题 / 记录 / 任务），切换即换档案 |
+| ✅ 每日任务 | 默认 33 词，到期复习优先 + 新词补齐，三模式共用同一批词 |
+| ✅ 乱序抽查 | 当天固定乱序，三模式顺序一致，便于互相抽查 |
+| ✅ 个性化分析 | 写有学生名字的背记情况分析 + 高频错词表 |
 | ✅ 键盘快捷键 | 空格显示答案，1/2/3 快速评价 |
 | ✅ 云端共享 | Supabase 存储词本和单词，所有人数据同步 |
-| ✅ 个人进度 | 学习记录、错题本、掌握等级存在本地浏览器 |
+| ✅ 个人进度 | 学习记录、错题本、掌握等级按学生存在本地浏览器 |
 | ✅ 批量导入 | 支持 Excel / CSV / TXT，自动识别列名 |
 | ✅ 数据导出 | JSON 格式备份和恢复 |
 | ✅ 管理员模式 | 单词管理默认隐藏，5 次点击标题解锁 |
@@ -85,6 +89,22 @@
 - 侧栏底部显示"管理员"标签，点击退出
 - 路由守卫防止直接 URL 访问
 
+### Phase 6：学生档案 + 每日任务（本轮）
+
+| 问题 | 修复 |
+|------|------|
+| 翻卡背记的内容和选择/拼写抽查的不一致 | 三种模式统一从当日任务 `wordStore.taskWords` 取词：翻卡=看词背释义，选择=看英文认中文，拼写=看中文写英文；顺序同源，乱序开关当天固定 |
+| 抽查范围没有边界 | 新增「每日任务」：默认 33 词（5~100 可调），到期复习优先 + 新词补齐，三种模式都只抽当天任务 |
+| 多个学生的记录互相累加，错题本分不清是谁的 | 新增学生档案 `src/utils/profile.js`：全部记录键加 `wr_<学生id>_` 前缀隔离；侧栏与档案页可切换学生，切换后整页重载读取对应档案；旧全局数据首次运行迁入「默认学生」 |
+| 分析结果没有针对性 | `statsStore.analysisReport` 逐条生成带学生名字的分析（掌握率、今日任务完成度、剩余新词天数、高频错词、等级分布、连续天数建议）；统计页顶部标注学生与词本，并新增高频错词表 |
+| 复习间隔不符合遗忘曲线 | `EBBINGHAUS = [1,2,4,7,15,30,60]` 天：答对升一级取下一档；模糊 30 分钟、不认识 5 分钟；同一天重复答对不再升级；错词会被插回当天队列滚动出现 |
+| 错题本看不到错误情况 | 错题本新增「错误次数」「最近错误」两列，标题带当前学生名 |
+| 学完一词后首页/背诵页的「今日任务 X/33」不跟着变 | `wordStore` 把今日已学 id 放进 `ref` 并在打分、生成任务时刷新，`taskDoneCount` 由它派生，跨页面立即同步 |
+| 学完新词再进统计页，今日已学仍显示旧数字 | `statsStore.loadStats` 每次刷新版本号，各统计项 computed 读取该版本建立依赖，二次进入必然重算 |
+
+新增文件：`src/utils/profile.js`、`src/stores/studentStore.js`、`src/pages/StudentsPage.vue`
+改动文件：`wordStore / bookStore / statsStore`、`FlashcardMode / QuizMode / SpellingMode`、`StudyPage / HomePage / StatsPage / WrongBookPage`、`AppSidebar / App.vue`、`main.js / router/index.js`、`storage.js / supabase.js / word.js`
+
 ---
 
 ## 技术栈
@@ -111,10 +131,12 @@ src/
   stores/
     authStore.js           # 管理员模式
     bookStore.js           # 词本状态 + 缓存
-    wordStore.js           # 单词状态 + 学习调度
-    statsStore.js          # 统计数据
+    wordStore.js           # 单词状态 + 每日任务 + 学习调度
+    statsStore.js          # 统计数据 + 个性化分析
+    studentStore.js        # 学生档案（切换 / 汇总）
   pages/
     HomePage.vue           # 首页仪表盘
+    StudentsPage.vue       # 学生档案（新建 / 改名 / 删除 / 切换）
     BookManagePage.vue     # 词本管理（管理员）
     StudyPage.vue          # 背诵页面（模式选择）
     WrongBookPage.vue      # 错题本
@@ -130,8 +152,9 @@ src/
     useSpeech.js           # TTS 封装
     useTouchSwipe.js       # 触摸手势
   utils/
+    profile.js             # 学生档案 + 按学生隔离的本地存储（wr_<学生id>_*）
     supabase.js            # Supabase 客户端
-    storage.js             # localStorage 封装
+    storage.js             # localStorage 封装 + 艾宾浩斯间隔常量
     word.js                # 单词数据工具
     dictionary.js          # 内置词典（300 词）
   styles/

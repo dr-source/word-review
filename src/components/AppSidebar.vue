@@ -5,6 +5,23 @@
       <span class="app-title">单词复习</span>
     </div>
 
+    <!-- 学生切换器（一个学生一份记录） -->
+    <div class="student-switcher">
+      <el-select
+        :model-value="studentStore.currentId"
+        size="small"
+        @change="switchStudent"
+        fit-input-width
+      >
+        <el-option
+          v-for="s in studentStore.students"
+          :key="s.id"
+          :label="s.name"
+          :value="s.id"
+        />
+      </el-select>
+    </div>
+
     <!-- 词本切换器（所有人可见） -->
     <div class="book-switcher">
       <el-select
@@ -55,12 +72,14 @@ import { useRoute, useRouter } from 'vue-router'
 import { useAuthStore } from '../stores/authStore'
 import { useBookStore } from '../stores/bookStore'
 import { useWordStore } from '../stores/wordStore'
+import { useStudentStore } from '../stores/studentStore'
 
 const route = useRoute()
 const router = useRouter()
 const auth = useAuthStore()
 const bookStore = useBookStore()
 const wordStore = useWordStore()
+const studentStore = useStudentStore()
 const currentRoute = computed(() => route.path)
 
 const selectedBookId = ref(null)
@@ -87,6 +106,10 @@ async function switchBook(id) {
   await wordStore.loadWords(id)
 }
 
+function switchStudent(id) {
+  studentStore.switchStudent(id)
+}
+
 function onTitleClick() {
   tapCount.value++
   clearTimeout(tapTimer)
@@ -96,6 +119,7 @@ function onTitleClick() {
 
 const allMenuItems = [
   { path: '/', title: '首页', icon: 'House' },
+  { path: '/students', title: '学生档案', icon: 'User' },
   { path: '/books', title: '单词管理', icon: 'DocumentAdd', admin: true },
   { path: '/study', title: '开始背诵', icon: 'Reading' },
   { path: '/wrong', title: '错题本', icon: 'Warning' },
@@ -131,6 +155,13 @@ function handleSelect(index) {
 }
 .logo-icon { font-size: 22px; }
 .app-title { font-size: 17px; font-weight: 700; color: var(--color-text); }
+
+/* 学生切换器 */
+.student-switcher {
+  padding: 8px 12px;
+  border-bottom: 1px solid var(--color-border);
+}
+.student-switcher .el-select { width: 100%; }
 
 /* 词本切换器 */
 .book-switcher {

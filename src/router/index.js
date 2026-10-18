@@ -25,6 +25,11 @@ const routes = [
     meta: { title: '首页', icon: 'House' }
   },
   {
+    path: '/students',
+    component: withRetry(() => import('../pages/StudentsPage.vue')),
+    meta: { title: '学生档案', icon: 'User' }
+  },
+  {
     path: '/books',
     component: withRetry(() => import('../pages/BookManagePage.vue')),
     meta: { title: '单词管理', icon: 'DocumentAdd' }

@@ -1,5 +1,19 @@
 <template>
   <div class="stats-page">
+    <!-- 学生抬头 -->
+    <div class="page-header">
+      <div>
+        <h2 class="page-title">学习分析 · {{ stats.studentName }}</h2>
+        <div class="page-sub">
+          <el-tag v-if="bookStore.currentBook" size="small" effect="plain">{{ bookStore.currentBook.name }}</el-tag>
+          <el-tag v-if="stats.taskSize" size="small" type="warning" effect="plain">
+            今日任务 {{ stats.taskSize }} 词 · 完成 {{ stats.taskDoneRate }}%
+          </el-tag>
+        </div>
+      </div>
+      <el-button size="small" @click="router.push('/students')">切换学生</el-button>
+    </div>
+
     <!-- 概览卡片 -->
     <el-row :gutter="16" class="stats-overview">
       <el-col :xs="12" :sm="6" v-for="item in overviewCards" :key="item.label">
@@ -48,43 +62,56 @@
       </el-col>
     </el-row>
 
-    <!-- 学习建议 -->
+    <!-- 高频错词 -->
+    <el-card shadow="hover" class="wrong-card" v-if="stats.topWrongWords.length">
+      <template #header>
+        <div class="chart-header">
+          <span>高频错词</span>
+          <el-tag size="small" type="danger" effect="plain">{{ stats.wrongWordsCount }} 词</el-tag>
+        </div>
+      </template>
+      <el-table :data="stats.topWrongWords" size="small" border stripe>
+        <el-table-column prop="word" label="单词" width="140">
+          <template #default="{ row }"><strong>{{ row.word }}</strong></template>
+        </el-table-column>
+        <el-table-column prop="mean" label="释义" min-width="180" />
+        <el-table-column prop="count" label="错误次数" width="90" align="center" />
+        <el-table-column label="最近错误" width="110" align="center">
+          <template #default="{ row }">{{ row.lastAt ? new Date(row.lastAt).toLocaleDateString() : '-' }}</template>
+        </el-table-column>
+      </el-table>
+    </el-card>
+
+    <!-- 学习分析 -->
     <el-card shadow="hover" class="tip-card">
       <template #header>
-        <span>💡 学习建议</span>
+        <span>{{ stats.studentName }} 的背记情况分析</span>
       </template>
-      <div v-if="stats.todayLearned === 0">
-        今天还没有学习，开始今天的复习计划吧！
-      </div>
-      <div v-else-if="stats.wrongWordsCount > stats.totalWords * 0.3">
-        错题较多，建议先复习错题本再学新词。
-      </div>
-      <div v-else-if="stats.streakDays >= 7">
-        已连续学习 {{ stats.streakDays }} 天，保持住！
-      </div>
-      <div v-else>
-        今日已学 {{ stats.todayLearned }} 词，继续加油！
-      </div>
+      <p v-for="(line, i) in stats.analysisReport" :key="i" class="analysis-line">{{ line }}</p>
     </el-card>
   </div>
 </template>
 
 <script setup>
 import { onMounted, nextTick, computed } from 'vue'
+import { useRouter } from 'vue-router'
 import { Chart, registerables } from 'chart.js'
 import { useStatsStore } from '../stores/statsStore'
+import { useBookStore } from '../stores/bookStore'
 import { useChart } from '../composables/useChart'
 
 // 注册 Chart.js 所有组件
 Chart.register(...registerables)
 
+const router = useRouter()
 const stats = useStatsStore()
+const bookStore = useBookStore()
 
 const overviewCards = computed(() => [
   { label: '总单词', value: stats.totalWords, color: 'var(--color-primary)', sub: `已学 ${stats.learnedWords}` },
   { label: '已掌握', value: stats.learnedWords, color: 'var(--color-success)', sub: `掌握率 ${stats.masteryRate}%` },
   { label: '待复习', value: stats.totalWords - stats.learnedWords, color: 'var(--color-warning)', sub: '含新词' },
-  { label: '连续学习', value: `${stats.streakDays}天`, color: 'var(--color-danger)', sub: `今日 ${stats.todayLearned} 词` }
+  { label: '连续学习', value: `${stats.streakDays}天`, color: 'var(--color-danger)', sub: `今日 ${stats.todayUnique} 词` }
 ])
 
 const levelLegend = [
@@ -145,8 +172,6 @@ const masteryChart = useChart('masteryChart', (canvas) => {
 })
 
 onMounted(async () => {
-  const { useBookStore } = await import('../stores/bookStore')
-  const bookStore = useBookStore()
   await stats.loadStats(bookStore.currentBookId)
   nextTick(() => {
     levelChart.render()
@@ -160,6 +185,24 @@ onMounted(async () => {
   max-width: 900px;
   margin: 0 auto;
   width: 100%;
+}
+.page-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+.page-title {
+  font-size: 18px;
+  font-weight: 600;
+  margin: 0;
+}
+.page-sub {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 6px;
 }
 .stats-overview {
   margin-bottom: 16px !important;
@@ -218,8 +261,20 @@ onMounted(async () => {
   height: 8px;
   border-radius: 50%;
 }
+.wrong-card {
+  margin-bottom: 16px;
+}
 .tip-card {
   margin-top: 0;
+}
+.analysis-line {
+  font-size: 13px;
+  line-height: 1.8;
+  color: var(--color-text-secondary);
+  margin: 0 0 6px;
+}
+.analysis-line:last-child {
+  margin-bottom: 0;
 }
 
 /* 移动端响应式 */

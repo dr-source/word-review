@@ -39,6 +39,7 @@ const auth = useAuthStore()
 
 const allMobileMenu = [
   { path: '/', label: '首页', icon: 'House' },
+  { path: '/students', label: '学生', icon: 'User' },
   { path: '/study', label: '背诵', icon: 'Reading' },
   { path: '/books', label: '词本', icon: 'DocumentAdd', admin: true },
   { path: '/wrong', label: '错题', icon: 'Warning' },
