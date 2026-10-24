@@ -1,0 +1,1 @@
+const h="恭喜你，完成一天任务，继续坚持！",n=["棒棒哒！","好棒！","太厉害了！","今天的单词全部拿下！","又坚持了一天，了不起！","你的努力正在变成成绩！"];function o(a=""){let t=2166136261;for(let E=0;E<a.length;E++)t^=a.charCodeAt(E),t=Math.imul(t,16777619);return n[Math.abs(t)%n.length]}export{h as M,o as p};
