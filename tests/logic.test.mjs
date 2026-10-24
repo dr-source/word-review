@@ -6,6 +6,10 @@ import { useWordStore } from '../src/stores/wordStore.js'
 import { useStatsStore } from '../src/stores/statsStore.js'
 import { useBookStore } from '../src/stores/bookStore.js'
 import { useStudentStore } from '../src/stores/studentStore.js'
+import { pickDistractors, coreMean, parsePos } from '../src/utils/distractors.js'
+import {
+  MAIN_ENCOURAGEMENT, EXTRA_ENCOURAGEMENTS, pickExtra, encouragementLine
+} from '../src/utils/encouragement.js'
 
 let pass = 0
 const fails = []
@@ -172,32 +176,47 @@ reset()
   wordStore.setDailySize(33)
 }
 
-// ------------------------------------------------------ 5. 到期复习优先插队
-section('5. 到期复习优先，其次新词')
+// ---------------------------------------- 5. 每日任务 = 八成新词 + 两成回顾
+section('5. 每日任务：八成新词 + 两成回顾')
 reset()
 {
   const { bookStore, wordStore } = await boot()
   const bookId = bookStore.currentBookId
   const words = wordStore.rawWords
   const now = Date.now()
+
+  // 昨天学过、还没到期的 5 个词 → 回顾候选
+  const recentIds = words.slice(200, 205).map(w => w.id)
+  recentIds.forEach((id, i) => {
+    profile.saveProgress(id, {
+      learnLevel: 1,
+      nextReview: now + 3 * DAY,
+      lastLevelDate: yesterday(),
+      lastSeenAt: now - DAY + i * 60000
+    })
+  })
+  // 3 个早该复习的词，故意乱序写入到期时间
   const dueIds = [words[50].id, words[10].id, words[30].id]
-  profile.saveProgress(words[50].id, { learnLevel: 2, nextReview: now - 1000 })
-  profile.saveProgress(words[10].id, { learnLevel: 3, nextReview: now - 5000 })
-  profile.saveProgress(words[30].id, { learnLevel: 1, nextReview: now - 3000 })
+  profile.saveProgress(words[50].id, { learnLevel: 2, nextReview: now - 1000, lastSeenAt: now - 2 * DAY })
+  profile.saveProgress(words[10].id, { learnLevel: 3, nextReview: now - 5000, lastSeenAt: now - 2 * DAY })
+  profile.saveProgress(words[30].id, { learnLevel: 1, nextReview: now - 3000, lastSeenAt: now - 2 * DAY })
 
   const task = wordStore.regenerateTask(bookId)
-  eq(task.ids.slice(0, 3), [words[10].id, words[30].id, words[50].id], '到期词按到期时间升序排在最前')
-  const freshCount = task.ids.slice(3).filter(id => {
-    const p = profile.getProgress()[id]
-    return !p || !p.learnLevel
-  }).length
-  eq(freshCount, 30, '剩余位置用新词补齐')
+  eq(task.ids.length, 33, '每日任务仍是 33 词')
+  ok(Array.isArray(task.reviewIds), '任务记录了回顾词清单')
+  eq(task.reviewIds.length, 7, '回顾词约占两成（33 × 0.2 ≈ 7）')
+  ok(task.reviewIds.every(id => task.ids.includes(id)), '回顾词都排在今日任务里')
+  ok(dueIds.every(id => task.reviewIds.includes(id)), '早该复习的词优先进回顾名额')
+  const freshCount = task.ids.filter(id => !(profile.getProgress()[id] || {}).learnLevel).length
+  eq(freshCount, 26, '八成名额留给没学过的生词')
+  const firstReviewAt = task.ids.findIndex(id => task.reviewIds.includes(id))
+  ok(firstReviewAt > 0, '回顾词穿插在新词中间，不堆在开头', `首次出现在第 ${firstReviewAt + 1} 个`)
 
-  // 未到期（明天才复习）的词不应插队
+  // 很久没学、离到期还远的词不该占今天的名额（保证第二天是一批新词）
   const futureId = words[100].id
-  profile.saveProgress(futureId, { learnLevel: 2, nextReview: now + DAY })
+  profile.saveProgress(futureId, { learnLevel: 5, nextReview: now + 50 * DAY, lastSeenAt: now - 10 * DAY })
   const task2 = wordStore.regenerateTask(bookId)
-  ok(!task2.ids.includes(futureId), '未到期词不进今日任务')
+  ok(!task2.ids.includes(futureId), '离到期还远的旧词不进今天的任务')
 }
 
 // --------------------------------------------------------- 6. 艾宾浩斯调度
@@ -468,6 +487,54 @@ reset()
   profile.saveTask(bookId, { date: yesterday(), ids: [a], size: 1, bookId })
   wordStore.syncFromStorage()
   eq(wordStore.task, null, '同步到过期任务时清空内存里的今日任务')
+}
+
+// -------------------------------------------- 15. 干扰项难度、语境例句与鼓励语
+section('15. 干扰项、语境例句与鼓励语')
+reset()
+{
+  const { wordStore } = await boot()
+  const pool = wordStore.wordList
+  ok(pool.length > 300, `整个词库可供出题（${pool.length} 词）`)
+
+  // 取一个释义较长的词做正确答案，抽 12 次，每次都要凑齐 3 个合格干扰项
+  const correct = pool.find(w => w.mean && coreMean(w.mean).length >= 4) || pool[0]
+  const correctPos = parsePos(correct.mean)
+  let rounds = 0
+  let posRounds = 0
+  for (let i = 0; i < 12; i++) {
+    const opts = pickDistractors(correct, pool, { count: 3 })
+    if (opts.length !== 3) continue
+    const all = [correct, ...opts]
+    const cores = all.map(o => coreMean(o.mean))
+    const wordsUniq = new Set(all.map(o => String(o.word).toLowerCase()))
+    const meansUniq = new Set(cores)
+    const overlap = cores.some(a => cores.some(b => a !== b && (a.includes(b) || b.includes(a))))
+    if (wordsUniq.size === 4 && meansUniq.size === 4 && !overlap) rounds++
+    if (correctPos.length && opts.some(o => parsePos(o.mean).some(p => correctPos.includes(p)))) posRounds++
+  }
+  eq(rounds, 12, '12 次抽题：4 个选项词不同、释义不同且互不包含')
+  if (correctPos.length) {
+    eq(posRounds, 12, `干扰项优先同词性（正确词词性 ${correctPos.join('/')}）`)
+  }
+
+  const opts = pickDistractors(correct, pool, { count: 3 })
+  ok(opts.every(o => o.id !== correct.id), '干扰项不等于正确答案')
+  ok(opts.every(o => o.sentence), '干扰项本身也带例句（可安全展示）')
+  eq(pickDistractors(correct, pool, { count: 3, recent: opts.map(o => coreMean(o.mean)) }).length, 3,
+    '带上「最近出现过」清单也照样凑齐 3 个')
+
+  // 例句：688 词全部要有，且各不相同
+  const noSentence = wordStore.rawWords.filter(w => !w.sentence || w.sentence.trim().length < 8)
+  eq(noSentence.length, 0, `每个单词都有语境例句（共 ${wordStore.rawWords.length} 词）`)
+  eq(new Set(wordStore.rawWords.map(w => w.sentence)).size, wordStore.rawWords.length, '例句各不相同，没有套模板')
+
+  // 鼓励语
+  ok(MAIN_ENCOURAGEMENT.includes('完成一天任务'), '主鼓励语是「完成一天任务」那句', MAIN_ENCOURAGEMENT)
+  ok(EXTRA_ENCOURAGEMENTS.includes('棒棒哒！') && EXTRA_ENCOURAGEMENTS.includes('好棒！'), '附加语含「棒棒哒！」「好棒！」')
+  ok(EXTRA_ENCOURAGEMENTS.includes(pickExtra('2026-01-01')), '附加语取自预设列表')
+  eq(pickExtra('2026-01-01'), pickExtra('2026-01-01'), '同一天挑到的附加语固定不变')
+  ok(encouragementLine('2026-01-01').includes(MAIN_ENCOURAGEMENT), '整句鼓励语包含主句')
 }
 
 console.log(`\n===== 逻辑自测结果：${pass} 通过，${fails.length} 失败 =====`)

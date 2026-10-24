@@ -49,6 +49,12 @@
       <el-progress :percentage="taskPercent" :stroke-width="6" :show-text="false" color="#4A6CF7" />
     </el-card>
 
+    <!-- 一天任务完成后的小奖励 -->
+    <el-card v-if="taskFinished" shadow="never" class="finish-card">
+      <p class="encourage-main">{{ encouragement }}</p>
+      <p class="encourage-extra">{{ encouragementExtra }}</p>
+    </el-card>
+
     <!-- 统计卡片网格 -->
     <el-row :gutter="16" class="stats-grid">
       <el-col :xs="12" :sm="6" v-for="item in statCards" :key="item.label">
@@ -138,6 +144,8 @@ import { useBookStore } from '../stores/bookStore'
 import { useWordStore } from '../stores/wordStore'
 import { useStatsStore } from '../stores/statsStore'
 import { useStudentStore } from '../stores/studentStore'
+import { MAIN_ENCOURAGEMENT, pickExtra } from '../utils/encouragement'
+import { todayStr } from '../utils/profile'
 
 const router = useRouter()
 const bookStore = useBookStore()
@@ -158,6 +166,13 @@ const ringOffset = computed(() => {
 const taskPercent = computed(() => {
   if (!wordStore.taskSize) return 0
   return Math.min(100, Math.round((wordStore.taskDoneCount / wordStore.taskSize) * 100))
+})
+
+const encouragement = MAIN_ENCOURAGEMENT
+const encouragementExtra = pickExtra(todayStr())
+
+const taskFinished = computed(() => {
+  return wordStore.taskSize > 0 && wordStore.taskDoneCount >= wordStore.taskSize
 })
 
 const statCards = computed(() => [
@@ -308,6 +323,24 @@ async function switchHomeBook() {
   font-size: 18px;
   font-weight: 700;
   color: var(--color-primary);
+}
+
+/* 任务完成鼓励语 */
+.finish-card {
+  margin-bottom: 16px;
+  text-align: center;
+  border: none;
+  background: linear-gradient(135deg, rgba(74, 108, 247, 0.1), rgba(34, 197, 94, 0.1));
+}
+.encourage-main {
+  font-size: 17px;
+  font-weight: 600;
+  color: var(--color-primary);
+}
+.encourage-extra {
+  margin-top: 6px;
+  font-size: 14px;
+  color: var(--color-text-muted);
 }
 
 /* 统计卡片 */

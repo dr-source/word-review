@@ -8,8 +8,54 @@ import {
   intervalMs, todayStr
 } from '../utils/profile'
 
-const CACHE_PREFIX = 'cache_words_'
+// 缓存格式变了就换前缀，避免老缓存里没有例句
+const CACHE_PREFIX = 'cache_words_v2_'
 const MAX_LEVEL = 7
+/** 每日任务里回顾旧词的比例：约八成新词、两成回顾 */
+const REVIEW_RATIO = 0.2
+/** 回顾候选窗口：最近几天学过、且今天没排到的词可以被抽中复习 */
+const REVIEW_WINDOW_DAYS = 3
+const DAY_MS = 24 * 60 * 60 * 1000
+
+function startOfToday() {
+  const d = new Date()
+  d.setHours(0, 0, 0, 0)
+  return d.getTime()
+}
+
+/** 是否学过：等级或复习时间有值即视为学过 */
+function hasStudied(p) {
+  return !!p && ((p.learnLevel || 0) > 0 || (p.nextReview || 0) > 0)
+}
+
+/**
+ * 上次学习时间。老数据没有 lastSeenAt，用「下次复习 - 当前间隔」反推，
+ * 再退化为 lastLevelDate 当天中午。
+ */
+function lastSeenAtOf(p) {
+  if (!p) return 0
+  if (p.lastSeenAt) return p.lastSeenAt
+  const next = p.nextReview || 0
+  if (next > 0) {
+    const level = p.learnLevel || 0
+    return next - (level > 0 ? intervalMs(level) : 5 * 60 * 1000)
+  }
+  if (p.lastLevelDate) return new Date(`${p.lastLevelDate}T12:00:00`).getTime()
+  return 0
+}
+
+/** 把回顾词均匀穿插进新词里，避免全部堆在开头 */
+function mixTask(newIds, reviewIds, size) {
+  if (!reviewIds.length) return newIds.slice(0, size)
+  const total = Math.min(size, newIds.length + reviewIds.length)
+  const arr = newIds.slice()
+  const step = reviewIds.length + 1
+  reviewIds.forEach((id, i) => {
+    const target = Math.floor(((i + 1) * total) / step)
+    arr.splice(Math.min(target, arr.length), 0, id)
+  })
+  return arr.slice(0, total)
+}
 
 /** 固定种子洗牌：同一天、同一任务顺序一致，选择/拼写/翻卡对得上 */
 function seededShuffle(list, seed) {
@@ -243,12 +289,14 @@ export const useWordStore = defineStore('word', () => {
     const progress = getProgress()
     const item = progress[id] || {}
     const date = todayStr()
+    const now = Date.now()
     let level = item.learnLevel || 0
     if (item.lastLevelDate !== date) level = Math.min(level + 1, MAX_LEVEL)
     saveProgress(id, {
       learnLevel: level,
-      nextReview: Date.now() + intervalMs(level),
-      lastLevelDate: date
+      nextReview: now + intervalMs(level),
+      lastLevelDate: date,
+      lastSeenAt: now
     })
     removeWrong(id)
     trackStudy(id)
@@ -261,7 +309,7 @@ export const useWordStore = defineStore('word', () => {
     addWrong(id)
     const progress = getProgress()
     const level = progress[id]?.learnLevel || 0
-    saveProgress(id, { learnLevel: level, nextReview: Date.now() + 30 * 60 * 1000 })
+    saveProgress(id, { learnLevel: level, nextReview: Date.now() + 30 * 60 * 1000, lastSeenAt: Date.now() })
     trackStudy(id)
     refreshToday()
     syncWordItem(id)
@@ -270,14 +318,15 @@ export const useWordStore = defineStore('word', () => {
   /** 不认识：等级归零、5 分钟后重新出现，计入错题本 */
   function markWrong(id) {
     addWrong(id)
-    saveProgress(id, { learnLevel: 0, nextReview: Date.now() + 5 * 60 * 1000 })
+    saveProgress(id, { learnLevel: 0, nextReview: Date.now() + 5 * 60 * 1000, lastSeenAt: Date.now() })
     trackStudy(id)
     refreshToday()
     syncWordItem(id)
   }
 
   /**
-   * 生成/读取今天的任务：先安排到期复习（按到期先后），再补新词，取前 dailySize 个。
+   * 生成/读取今天的任务：约八成全新单词 + 两成前几天的回顾词，回顾词均匀穿插。
+   * 已经掌握且没到复习时间的词不再占今天的名额，保证第二天是「一批新词」。
    * 同一天同一词本只生成一次，第二天自动生成新的。
    */
   function ensureDailyTask(bookId, force = false) {
@@ -291,25 +340,61 @@ export const useWordStore = defineStore('word', () => {
     }
     const now = Date.now()
     const progress = getProgress()
-    const due = rawWords.value
-      .filter(w => {
-        const p = progress[w.id]
-        return p && p.learnLevel > 0 && p.nextReview > 0 && p.nextReview <= now
-      })
-      .sort((a, b) => (progress[a.id].nextReview || 0) - (progress[b.id].nextReview || 0))
-    const fresh = rawWords.value.filter(w => {
+    const todayStart = startOfToday()
+    const recentFrom = todayStart - REVIEW_WINDOW_DAYS * DAY_MS
+    const size = dailySize.value
+    const fresh = []
+    const due = []
+    const recent = []
+    const known = []
+    for (const w of rawWords.value) {
       const p = progress[w.id]
-      return !p || !p.learnLevel
-    })
+      if (!hasStudied(p)) { fresh.push(w); continue }
+      const seen = lastSeenAtOf(p)
+      known.push({ w, seen, next: p.nextReview || 0 })
+      if (p.nextReview > 0 && p.nextReview <= now) {
+        due.push({ w, next: p.nextReview })
+      } else if (seen >= recentFrom && seen < todayStart) {
+        recent.push({ w, seen })
+      }
+    }
+    due.sort((a, b) => a.next - b.next)
+    recent.sort((a, b) => a.seen - b.seen)
+
     const ids = []
-    const seen = new Set()
-    for (const w of [...due, ...fresh]) {
-      if (ids.length >= dailySize.value) break
-      if (seen.has(w.id)) continue
-      seen.add(w.id)
+    const picked = new Set()
+    const reviewTarget = size >= 10 ? Math.min(size - 1, Math.round(size * REVIEW_RATIO)) : 0
+    const reviewIds = []
+    for (const { w } of [...due, ...recent]) {
+      if (reviewIds.length >= reviewTarget) break
+      if (picked.has(w.id)) continue
+      picked.add(w.id)
+      reviewIds.push(w.id)
+    }
+    const push = (w) => {
+      if (ids.length >= size) return
+      if (picked.has(w.id)) return
+      picked.add(w.id)
       ids.push(w.id)
     }
-    const next = { date, ids, size: dailySize.value, bookId: book }
+    // 主体是新词，按词库顺序取
+    for (const w of fresh) {
+      if (ids.length + reviewIds.length >= size) break
+      push(w)
+    }
+    // 新词不够时，用剩下的到期词和近期学过的词补齐
+    for (const { w } of [...due, ...recent]) {
+      if (ids.length + reviewIds.length >= size) break
+      push(w)
+    }
+    // 再不够就按下次复习时间升序用其它学过的词补
+    known.sort((a, b) => a.next - b.next)
+    for (const { w } of known) {
+      if (ids.length + reviewIds.length >= size) break
+      push(w)
+    }
+    const mixed = mixTask(ids, reviewIds, size)
+    const next = { date, ids: mixed, size, bookId: book, reviewIds }
     saveTask(book, next)
     // 两个标签页同时生成时，以后写入的那个为准：两边都回读一次，保证拿到的是同一份任务
     task.value = getTasks()[book] || next

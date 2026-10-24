@@ -330,9 +330,12 @@ let firstWord = ''
   eq('翻卡进度 0/33', await text('.progress-badge'), '今日任务 0/33')
   firstWord = await text('.word-text')
   ok('翻卡显示了单词', firstWord.length > 0, firstWord)
+  ok('翻卡正面就显示中文释义（不翻面也能背）', (await text('.word-meaning')).length > 0)
   await click('.flashcard-wrapper')
   await waitFor(`!!document.querySelector('.rating-good')`, '评分按钮')
   ok('翻面后显示释义', (await text('.word-meaning')).length > 0)
+  ok('翻面后显示语境例句', (await exists('.word-sentence')) &&
+    (await text('.word-sentence')).length > 2)
   await click('.rating-good')
   await waitFor(`document.querySelector('.progress-badge')?.textContent.includes('1/33')`, '翻卡计数 +1')
   ok('翻卡切到下一个词', (await text('.word-text')) !== firstWord)
@@ -367,7 +370,24 @@ section('3. 三种模式取词/取义一致')
   eq('选择题进度从 0 开始', await text('.quiz-progress'), '今日任务 0/33')
   const clicked = await clickByText('.quiz-option', mean)
   ok('选择题里能找到该词释义作为选项', clicked)
+  ok('只点选项不立刻判对错（先选中）', await exists('.quiz-option.option-pending'))
+  ok('未确认时没有反馈区', !(await exists('.quiz-feedback')))
+
+  // 手滑点错可以撤销：再点同一项即取消选中
+  await clickByText('.quiz-option', mean)
+  ok('再点同一项可以取消选中', !(await exists('.quiz-option.option-pending')))
+  ok('取消选中后确认按钮变灰', await evaluate(`!!document.querySelector('.quiz-confirm')?.disabled`))
+  await clickByText('.quiz-option', mean)
+  ok('重新选中后恢复待提交状态', await exists('.quiz-option.option-pending'))
+
+  ok('确认按钮在选中后才可点', await evaluate(`(() => {
+    const btn = document.querySelector('.quiz-confirm')
+    return !!btn && !btn.disabled
+  })()`))
+  await click('.quiz-confirm')
   await waitFor(`!!document.querySelector('.quiz-feedback')`, '选择题反馈')
+  ok('提交后显示语境例句', (await exists('.quiz-sentence')) &&
+    (await text('.quiz-sentence')).includes('例句'))
   ok('选择正确释义后判对', await exists('.feedback-correct'))
   await waitFor(`document.querySelector('.quiz-progress')?.textContent.includes('1/33')`, '选择题计数 +1')
   const barTag = await text('.student-bar')
@@ -706,6 +726,11 @@ let S2 = null
   ok('第二个标签页点击切换学生', switched)
   ok('切换后主标签页重载并显示并发学生', await waitForSoft(`document.querySelector('.home-page .greeting')?.textContent.includes('并发学生')`, 20000))
   ok('主标签页确实重载过（内存标记丢失）', await evaluate(`window.__tabMarker === undefined`))
+
+  // 用完就关：留着的标签页会在后面各节清库时靠 storage 事件把旧数据写回来，制造竞态
+  await browser.send('Target.closeTarget', { targetId: tab2.targetId })
+  sessions.delete(S2)
+  S2 = null
 }
 
 // ================================================================ 9. 触屏滑动
@@ -806,8 +831,160 @@ section('9. 移动端触屏滑动（CDP 触摸事件）')
   await browser.send('Emulation.setTouchEmulationEnabled', { enabled: false }, S)
 }
 
-// ================================================================ 10. 控制台
-section('10. 运行期控制台')
+// ================================================================ 10. 乱序开关 + 今日单词一览
+section('10. 乱序抽查开关可点、今日单词整体一览')
+{
+  await navigate(`${BASE}/manifest.json`)
+  await evaluate('localStorage.clear()')
+  await navigate(`${BASE}/#/`)
+  await waitFor(`!!document.querySelector('.home-page .task-count')`, '乱序：首页')
+  await go('/study')
+  await waitFor(`!!document.querySelector('.flashcard-mode .word-text')`, '乱序：翻卡')
+
+  // 开关手感靠 CSS：核心至少 54×26，整行至少 44px 高（触屏最小热区）
+  const box = await evaluate(`
+    (() => {
+      const core = document.querySelector('.shuffle-switch .el-switch__core')
+      const row = document.querySelector('.shuffle-item')
+      if (!core || !row) return null
+      const c = core.getBoundingClientRect()
+      return {
+        coreW: Math.round(c.width),
+        coreH: Math.round(c.height),
+        rowH: Math.round(row.getBoundingClientRect().height)
+      }
+    })()
+  `)
+  ok('乱序开关热区已放大（核心 >=54×26，整行 >=44 高）',
+    box && box.coreW >= 54 && box.coreH >= 26 && box.rowH >= 44, JSON.stringify(box))
+  ok('默认不乱序：学生栏没有「乱序」标签', !(await text('.student-bar')).includes('乱序'))
+
+  // 展开今日单词一览：33 词整体摊开，英文 + 释义 + 例句都在
+  ok('默认收起时不渲染列表', !(await exists('.daily-word-item')))
+  ok('能点开今日单词一览', await clickByText('.word-list-head button', '展开'))
+  await waitFor(`document.querySelectorAll('.daily-word-item').length > 0`, '今日单词一览展开')
+  eq('今日单词一览 33 行', await count('.daily-word-item'), 33)
+  const firstItem = await evaluate(`
+    (() => {
+      const el = document.querySelector('.daily-word-item')
+      if (!el) return null
+      return {
+        en: el.querySelector('.daily-word-en')?.textContent.trim() || '',
+        mean: el.querySelector('.daily-word-mean')?.textContent.trim() || '',
+        sentence: el.querySelector('.daily-word-sentence')?.textContent.trim() || ''
+      }
+    })()
+  `)
+  ok('一览里第一行有英文单词', /^[a-zA-Z][a-zA-Z' -]*$/.test(firstItem?.en || ''), JSON.stringify(firstItem))
+  ok('一览里第一行同时有中文释义', /[\u4e00-\u9fa5]/.test(firstItem?.mean || ''), firstItem?.mean || '')
+  ok('一览里第一行带语境例句', (firstItem?.sentence || '').length > 10, firstItem?.sentence || '')
+
+  const orderBefore = await evaluate(`[...document.querySelectorAll('.daily-word-en')].map(e => e.textContent.trim())`)
+
+  // 点开关核心：必须真的切换（is-checked + 头部标签 + 顺序变化）
+  await click('.shuffle-switch .el-switch__core')
+  await waitFor(`document.querySelector('.shuffle-switch')?.classList.contains('is-checked')`, '乱序开关选中')
+  ok('开启后学生栏出现「乱序」标签',
+    await waitForSoft(`document.querySelector('.student-bar')?.textContent.includes('乱序')`, 4000),
+    await text('.student-bar'))
+  const orderAfter = await evaluate(`[...document.querySelectorAll('.daily-word-en')].map(e => e.textContent.trim())`)
+  eq('乱序后仍是同一批 33 词', [...orderAfter].sort().join(','), [...orderBefore].sort().join(','))
+  ok('乱序后顺序确实变了', orderAfter.join(',') !== orderBefore.join(','), `${orderBefore.slice(0, 3)} → ${orderAfter.slice(0, 3)}`)
+
+  // 再点一次关掉：开关回到未选中，顺序复原
+  await click('.shuffle-switch .el-switch__core')
+  await waitFor(`!document.querySelector('.shuffle-switch')?.classList.contains('is-checked')`, '乱序开关取消')
+  ok('关闭后「乱序」标签消失',
+    await waitForSoft(`!document.querySelector('.student-bar')?.textContent.includes('乱序')`, 4000),
+    await text('.student-bar'))
+  eq('关闭乱序后顺序复原', await evaluate(`[...document.querySelectorAll('.daily-word-en')].map(e => e.textContent.trim())`), orderBefore)
+}
+
+// ================================================================ 11. 老种子词补例句（独立上下文）
+section('11. 老版本种子词升级时补例句')
+{
+  await navigate(`${BASE}/manifest.json`)
+  await evaluate(`
+    localStorage.clear()
+    localStorage.setItem('word_review_local_books', JSON.stringify([
+      { id: 'book_legacy', name: '中考英语核心高频688词汇表', created_at: '2024-01-01T00:00:00.000Z' }
+    ]))
+    localStorage.setItem('word_review_default_book_id', 'book_legacy')
+    localStorage.setItem('word_review_default_seed_version', '2')
+    localStorage.setItem('word_review_local_words', JSON.stringify([
+      { id: 'word_legacy_value', book_id: 'book_legacy', word: 'value', phonetic: 'ˈvæljuː',
+        mean: 'n. 价值；面值 v. 估价，评价', sentence: '', created_at: '2024-01-01T00:00:01.000Z' },
+      { id: 'word_legacy_wear', book_id: 'book_legacy', word: 'wear', phonetic: 'weə(r)',
+        mean: 'v. 穿着，戴着', sentence: '我自己写的例句：He wears a hat.', created_at: '2024-01-01T00:00:02.000Z' }
+    ]))
+  `)
+  await navigate(`${BASE}/#/`)
+  await waitFor(`!!document.querySelector('.home-page .task-count')`, '补例句：首页')
+  const legacy = await evaluate(`
+    (() => {
+      const words = JSON.parse(localStorage.getItem('word_review_local_words') || '[]')
+      const find = w => words.filter(x => x.word === w)[0] || null
+      return { value: find('value'), wear: find('wear'), total: words.length }
+    })()
+  `)
+  ok('老种子词缺例句时按词库补上', (legacy.value?.sentence || '').length > 10, legacy.value?.sentence || '（空）')
+  eq('用户自己写的例句不被覆盖', legacy.wear?.sentence, '我自己写的例句：He wears a hat.')
+  eq('种子版本已是最新时不重复播种（仍 2 个词）', legacy.total, 2)
+  ok('补例句后应用正常渲染', await exists('.home-page .task-count'))
+}
+
+// ================================================================ 12. 完成一天任务后的鼓励语
+section('12. 完成后弹鼓励语（翻卡页 + 首页）')
+{
+  await navigate(`${BASE}/manifest.json`)
+  await evaluate('localStorage.clear()')
+  await navigate(`${BASE}/#/`)
+  await waitFor(`!!document.querySelector('.home-page .task-count')`, '鼓励语：首页')
+  // 把当天任务量降到 5 词，并清掉已生成的任务，让重载后按 5 词重排
+  await evaluate(`
+    (() => {
+      const id = localStorage.getItem('word_review_current_student')
+      localStorage.setItem('wr_' + id + '_settings', JSON.stringify({ dailySize: 5, shuffle: false }))
+      localStorage.removeItem('wr_' + id + '_tasks')
+    })()
+  `)
+  // 同 URL 的 hash 跳转不会真的重载，必须 Page.reload 才能让 store 重新读设置
+  await browser.send('Page.reload', {}, S)
+  await sleep(300)
+  await waitFor(`document.querySelector('.home-page .task-count')?.textContent.trim() === '0/5'`, '鼓励语：按 5 词重排')
+  eq('任务量改成 5 词', await text('.home-page .task-count'), '0/5')
+  ok('任务没做完时首页不弹鼓励卡片', !(await exists('.home-page .finish-card')))
+
+  await go('/study')
+  await waitFor(`!!document.querySelector('.flashcard-mode .word-text')`, '鼓励语：翻卡')
+  // 逐词翻面 + 评「认识」，直到 5 词做完（评分后有短暂锁定，要等按钮解锁再点）
+  let guard = 0
+  while (!(await exists('.flashcard-mode .encouragement')) && guard++ < 30) {
+    if (!(await exists('.rating-good'))) {
+      await evaluate(`(document.querySelector('.flashcard-wrapper').click(), true)`)
+      await waitFor(`!!document.querySelector('.rating-good')`, '翻面')
+    }
+    await waitFor(`(() => { const b = document.querySelector('.rating-good'); return !!b && !b.disabled })()`, '评分按钮解锁', 6000)
+    await evaluate(`(document.querySelector('.rating-good').click(), true)`)
+    await sleep(150)
+  }
+  ok('五词都评完（没有卡在某一词上）', guard < 30, String(guard))
+
+  await waitFor(`!!document.querySelector('.flashcard-mode .encouragement .encourage-main')`, '翻卡完成鼓励语')
+  eq('翻卡做完给出主鼓励语', await text('.flashcard-mode .encourage-main'), '恭喜你，完成一天任务，继续坚持！')
+  ok('翻卡做完另有一句附加鼓励语', (await text('.flashcard-mode .encourage-extra')).length >= 2,
+    await text('.flashcard-mode .encourage-extra'))
+
+  await go('/')
+  await waitFor(`!!document.querySelector('.home-page .finish-card')`, '首页完成卡片')
+  eq('首页同样显示主鼓励语', await text('.home-page .finish-card .encourage-main'), '恭喜你，完成一天任务，继续坚持！')
+  const extraOnHome = await text('.home-page .finish-card .encourage-extra')
+  ok('首页附加鼓励语不为空', extraOnHome.length >= 2, extraOnHome)
+  eq('首页今日任务 5/5', await text('.home-page .task-count'), '5/5')
+}
+
+// ================================================================ 13. 控制台
+section('13. 运行期控制台')
 {
   ok('无 console.error', consoleErrors.length === 0, consoleErrors.slice(0, 3).join(' | '))
   if (consoleWarnings.length) console.log(`  INFO  出现 ${consoleWarnings.length} 条 warning：${consoleWarnings.slice(0, 3).join(' | ')}`)

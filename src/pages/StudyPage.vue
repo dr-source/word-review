@@ -44,9 +44,16 @@
           />
           <span class="task-unit">词</span>
         </div>
-        <div class="task-item">
+        <div class="task-item shuffle-item">
           <span class="task-label">乱序抽查</span>
-          <el-switch :model-value="wordStore.shuffleMode" size="small" @change="toggleShuffle" />
+          <el-switch
+            class="shuffle-switch"
+            :model-value="wordStore.shuffleMode"
+            inline-prompt
+            active-text="已开"
+            inactive-text="已关"
+            @update:model-value="toggleShuffle"
+          />
         </div>
         <el-button size="small" @click="regenerate">重新生成今日任务</el-button>
       </div>
@@ -82,6 +89,28 @@
       <el-button type="primary" @click="showBookSelector = true">选择词本</el-button>
     </el-empty>
 
+    <!-- 今日单词一览：把当天这批词整体摊开，方便家长/学生通读背记 -->
+    <el-card v-if="bookStore.currentBookId" class="word-list-card" shadow="never">
+      <div class="word-list-head">
+        <span class="word-list-title">📖 今日单词一览（{{ wordStore.taskWords.length }} 词）</span>
+        <el-button size="small" text @click="showDailyList = !showDailyList">
+          {{ showDailyList ? '收起' : '展开' }}
+        </el-button>
+      </div>
+      <div v-if="showDailyList" class="daily-word-list">
+        <div v-for="w in wordStore.taskWords" :key="w.id" class="daily-word-item">
+          <div class="daily-word-head">
+            <span class="daily-word-en">{{ w.word }}</span>
+            <span class="daily-word-phonetic" v-if="w.phonetic">{{ w.phonetic }}</span>
+            <el-tag v-if="isReviewWord(w.id)" size="small" type="warning">回顾</el-tag>
+            <el-button size="small" text class="daily-word-speak" @click="speak(w.word)">🔊</el-button>
+          </div>
+          <p class="daily-word-mean">{{ w.mean }}</p>
+          <p class="daily-word-sentence" v-if="w.sentence">{{ w.sentence }}</p>
+        </div>
+      </div>
+    </el-card>
+
     <!-- 词本选择弹窗 -->
     <el-dialog v-model="showBookSelector" title="选择词本" width="320px">
       <el-radio-group v-model="tempBookId" direction="vertical" style="width:100%;">
@@ -103,11 +132,12 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, nextTick } from 'vue'
 import { useRouter } from 'vue-router'
 import { useBookStore } from '../stores/bookStore'
 import { useWordStore } from '../stores/wordStore'
 import { useStudentStore } from '../stores/studentStore'
+import { useSpeech } from '../composables/useSpeech'
 import FlashcardMode from '../components/FlashcardMode.vue'
 import QuizMode from '../components/QuizMode.vue'
 import SpellingMode from '../components/SpellingMode.vue'
@@ -116,8 +146,10 @@ const router = useRouter()
 const bookStore = useBookStore()
 const wordStore = useWordStore()
 const studentStore = useStudentStore()
+const { speak } = useSpeech()
 const studyMode = ref('flashcard')
 const showBookSelector = ref(false)
+const showDailyList = ref(false)
 const tempBookId = ref('')
 // 任务变化时让三个模式组件重新挂载，立刻读到新的任务
 const taskKey = ref(0)
@@ -142,7 +174,12 @@ function applyDailySize(size) {
 
 function toggleShuffle(value) {
   wordStore.setShuffle(value)
-  taskKey.value++
+  // 等开关自己的动画走完再重挂载背记组件，避免点一下像被弹回去
+  nextTick(() => { taskKey.value++ })
+}
+
+function isReviewWord(id) {
+  return (wordStore.task?.reviewIds || []).includes(id)
 }
 
 function regenerate() {
@@ -227,6 +264,80 @@ async function confirmBook() {
   font-size: 12px;
   line-height: 1.6;
   color: var(--color-text-muted);
+}
+/* 手机上小开关不好点，放大轨道和滑块，并给整行留出触摸热区 */
+.shuffle-item {
+  min-height: 44px;
+}
+.shuffle-switch :deep(.el-switch__core) {
+  min-width: 54px;
+  height: 26px;
+}
+.shuffle-switch :deep(.el-switch__core .el-switch__action) {
+  width: 20px;
+  height: 20px;
+}
+.shuffle-switch :deep(.el-switch__inner) {
+  font-size: 11px;
+}
+.word-list-card {
+  margin-top: 16px;
+}
+.word-list-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+}
+.word-list-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--color-text);
+}
+.daily-word-list {
+  margin-top: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  max-height: 60vh;
+  overflow-y: auto;
+}
+.daily-word-item {
+  padding: 10px 12px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: #FAFAFA;
+}
+.daily-word-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.daily-word-en {
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--color-text);
+}
+.daily-word-phonetic {
+  font-size: 12px;
+  color: var(--color-text-muted);
+}
+.daily-word-speak {
+  margin-left: auto;
+}
+.daily-word-mean {
+  margin-top: 4px;
+  font-size: 14px;
+  color: var(--color-primary);
+  line-height: 1.5;
+}
+.daily-word-sentence {
+  margin-top: 4px;
+  font-size: 12px;
+  color: var(--color-text-muted);
+  font-style: italic;
+  line-height: 1.6;
 }
 
 @media (max-width: 640px) {

@@ -8,12 +8,15 @@
 
 | 功能 | 说明 |
 |------|------|
-| ✅ 三种学习模式 | 翻卡背诵、选择题、拼写练习，抽查内容与顺序完全一致 |
+| ✅ 三种学习模式 | 翻卡背诵（正面中英同显）、选择题（先选中再确认，未确认可撤销）、拼写练习，抽查内容与顺序完全一致 |
 | ✅ 艾宾浩斯复习 | 答对升一级，间隔 1→2→4→7→15→30→60 天滚动（模糊 30 分钟、不认识 5 分钟） |
 | ✅ 三档评价 | 不认识 / 模糊 / 认识，精细控制记忆曲线 |
 | ✅ 学生档案 | 每个学生一份独立记录（进度 / 错题 / 记录 / 任务），切换即换档案 |
-| ✅ 每日任务 | 默认 33 词，到期复习优先 + 新词补齐，三模式共用同一批词 |
-| ✅ 乱序抽查 | 当天固定乱序，三模式顺序一致，便于互相抽查 |
+| ✅ 每日任务 | 默认 33 词，**八成新词 + 两成近期回顾**，均匀穿插避免天天背同一批，三模式共用同一批词 |
+| ✅ 乱序抽查 | 当天固定乱序，三模式顺序一致，便于互相抽查（开关核心 54×26、整行 ≥44px，好按） |
+| ✅ 语境例句 | 688 词每词一句例句，翻卡 / 选择题 / 拼写 / 单词一览都能看到词在句子里的用法 |
+| ✅ 今日单词一览 | 背诵页可展开当天这批词，英文 + 音标 + 释义 + 例句 + 发音一次看全 |
+| ✅ 完成鼓励 | 当天任务做完，三种模式与首页弹出「恭喜你，完成一天任务，继续坚持！」+ 随机附加句 |
 | ✅ 个性化分析 | 写有学生名字的背记情况分析 + 高频错词表 |
 | ✅ 键盘快捷键 | 空格显示答案，1/2/3 快速评价 |
 | ✅ 云端共享 | Supabase 存储词本和单词，所有人数据同步 |
@@ -91,7 +94,7 @@
 - 侧栏底部显示"管理员"标签，点击退出
 - 路由守卫防止直接 URL 访问
 
-### Phase 6：学生档案 + 每日任务（本轮）
+### Phase 6：学生档案 + 每日任务
 
 | 问题 | 修复 |
 |------|------|
@@ -107,7 +110,7 @@
 新增文件：`src/utils/profile.js`、`src/stores/studentStore.js`、`src/pages/StudentsPage.vue`
 改动文件：`wordStore / bookStore / statsStore`、`FlashcardMode / QuizMode / SpellingMode`、`StudyPage / HomePage / StatsPage / WrongBookPage`、`AppSidebar / App.vue`、`main.js / router/index.js`、`storage.js / supabase.js / word.js`
 
-### Phase 7：并发与触屏收尾（本轮）
+### Phase 7：并发与触屏收尾
 
 | 问题 | 修复 |
 |------|------|
@@ -125,6 +128,27 @@ CI 排障另外暴露两处真问题：① `vite.config.js` 在 CI 上把 `base`
 
 新增文件：`src/utils/sync.js`、`tests/env.mjs`、`tests/build-logic.mjs`、`tests/logic.test.mjs`、`tests/browser.test.mjs`、`.github/workflows/test.yml`
 改动文件：`App.vue`、`FlashcardMode.vue`、`useTouchSwipe.js`、`wordStore.js`、`statsStore.js`、`profile.js`、`package.json`、`.gitignore`、`README.md`、`CHANGELOG.md`
+
+### Phase 8：背记体验与题目质量（本轮）
+
+| 反馈 | 修复 |
+|------|------|
+| 乱序抽查那个滑动按钮不灵敏 | 开关放大到核心 54×26（`__action` 20px）、整行最小高度 44px；打开 `inline-prompt` 常显「已开/已关」；切换时把重挂载推迟到 `nextTick`，不再出现"点一下像被弹回去" |
+| 背记部分要中英文都显示 | 翻卡**正面**同时显示英文、音标、中文释义，翻面后追加语境例句；不用先翻面才能看意思 |
+| 688 个单词希望能整体显现、按天背记 | 背诵页新增「今日单词一览」：当天这批词（默认 33 词）整体摊开，英文 + 音标 + 释义 + 例句 + 发音按钮，回顾词带「回顾」标签，默认收起 |
+| 选择题点一下就选中、错了不能撤销 | 改成「先选中 → 点确认才判对错」：再点同一项可取消（确认按钮随之置灰），没确认前不算答错、不计入错题本 |
+| 选项重复、太容易靠排除法猜 | 新增 `src/utils/distractors.js`：干扰项优先同词性、释义长度接近、与正确答案互不包含，并对近期出现过的词降权；12 次抽题四选项全不相同、互不包含 |
+| 第二天背的词和前一天大量重复 | 每日任务改为 **80% 新词 + 20% 近期回顾**（默认 33 词 ≈ 26 新 + 7 回顾，回顾取自近 3 天），新词与回顾词均匀穿插；`markRight / markHard / markWrong` 都写 `lastSeenAt` 作为回顾候选依据 |
+| 完成一天任务需要鼓励 | 三种模式与首页在当天任务做完时展示固定主句「恭喜你，完成一天任务，继续坚持！」，再按日期挑一条附加句（含「棒棒哒！」「好棒！」），同一天固定不变；新增 `src/utils/encouragement.js` |
+| 一个单词要在具体语境里 | 688 词全部补上语境例句（`defaultWords.json` 的 `sentence`），翻卡翻面、选择题反馈、拼写反馈、今日单词一览都会显示；种子版本升到 2，老数据首次运行按单词补例句，**不覆盖用户自己写的句子** |
+| 有错但错题本里没体现 | `WrongBookPage` 进页面先加载词库（原来词库为空时错词 id 匹配不到单词，表格渲染成空） |
+
+自测覆盖：逻辑自测 **149** 条断言（新增第 5 节「每日任务：八成新词 + 两成回顾」8 条、第 15 节「干扰项、语境例句与鼓励语」13 条），端到端自测 **124** 条断言（新增「乱序抽查开关可点、今日单词整体一览」13 条、「老版本种子词升级时补例句」4 条、「完成后弹鼓励语」8 条）。
+
+已知边界：乱序开关的放大是在 CSS 层保证热区尺寸（自测断言了真实渲染尺寸 ≥54×26、整行 ≥44），真机手指手感仍需上手确认。
+
+新增文件：`src/utils/distractors.js`、`src/utils/encouragement.js`
+改动文件：`FlashcardMode / QuizMode / SpellingMode`、`StudyPage / HomePage / WrongBookPage`、`wordStore.js`、`localStore.js`、`defaultWords.json`、`tests/logic.test.mjs`、`tests/browser.test.mjs`、`README.md`、`CHANGELOG.md`
 
 ---
 
@@ -177,14 +201,18 @@ src/
     sync.js                # 跨标签页：存储键判定 + storage 事件监听
     supabase.js            # Supabase 客户端
     storage.js             # localStorage 封装 + 艾宾浩斯间隔常量
+    localStore.js          # 未配置 Supabase 时的本地词本存储 + 种子词版本升级
+    distractors.js         # 选择题干扰项：同词性、释义接近、互不包含
+    encouragement.js       # 完成任务鼓励语（主句 + 按日期挑附加句）
     word.js                # 单词数据工具
     dictionary.js          # 内置词典（300 词）
+    defaultWords.json      # 默认词库（688 词，含音标 / 释义 / 语境例句）
   styles/
     variables.css          # 设计系统变量
 tests/
-  logic.test.mjs           # 逻辑自测（Node + 内存 localStorage，131 条断言）
+  logic.test.mjs           # 逻辑自测（Node + 内存 localStorage，149 条断言）
   build-logic.mjs          # 把逻辑自测打包成单文件（Vite 处理 src/ 的 import）
-  browser.test.mjs         # 端到端自测（无头 Chrome/Edge + CDP，90 条断言）
+  browser.test.mjs         # 端到端自测（无头 Chrome/Edge + CDP，124 条断言）
   env.mjs                  # 逻辑自测的浏览器环境替身
 .github/workflows/
   deploy.yml               # push main 后构建并发布 gh-pages

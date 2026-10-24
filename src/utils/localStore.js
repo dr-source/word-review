@@ -5,7 +5,7 @@ const BOOKS_KEY = 'word_review_local_books'
 const WORDS_KEY = 'word_review_local_words'
 const SEED_VERSION_KEY = 'word_review_default_seed_version'
 const DEFAULT_BOOK_ID_KEY = 'word_review_default_book_id'
-const SEED_VERSION = 1
+const SEED_VERSION = 2
 
 function read(key, fallback) {
   try {
@@ -39,19 +39,32 @@ function ensureDefaultBook(books) {
 }
 
 function seedDefaultWords() {
-  if (localStorage.getItem(SEED_VERSION_KEY) === String(SEED_VERSION)) return
   const books = read(BOOKS_KEY, [])
   const book = ensureDefaultBook(books)
-  write(BOOKS_KEY, books)
-
   const words = read(WORDS_KEY, [])
-  const existing = new Set(words.filter(w => w.book_id === book.id).map(w => w.word.toLowerCase()))
+  const seeded = new Map(words.filter(w => w.book_id === book.id).map(w => [w.word.toLowerCase(), w]))
+
+  // 老版本种子词没有例句：升级时按单词补上，不覆盖用户自己写的内容
+  let patched = false
+  for (const w of defaultWords) {
+    const hit = seeded.get(w.word.toLowerCase())
+    if (hit && !hit.sentence && w.sentence) {
+      hit.sentence = w.sentence
+      patched = true
+    }
+  }
+  if (patched) write(WORDS_KEY, words)
+
+  if (localStorage.getItem(SEED_VERSION_KEY) === String(SEED_VERSION)) {
+    write(BOOKS_KEY, books)
+    return
+  }
+
   const items = []
   for (const w of defaultWords) {
     const key = w.word.toLowerCase()
-    if (existing.has(key)) continue
-    existing.add(key)
-    items.push({
+    if (seeded.has(key)) continue
+    const item = {
       book_id: book.id,
       word: w.word,
       phonetic: w.phonetic || '',
@@ -59,8 +72,11 @@ function seedDefaultWords() {
       sentence: w.sentence || '',
       id: makeId('word'),
       created_at: new Date().toISOString()
-    })
+    }
+    seeded.set(key, item)
+    items.push(item)
   }
+  write(BOOKS_KEY, books)
   if (items.length) {
     words.push(...items)
     write(WORDS_KEY, words)

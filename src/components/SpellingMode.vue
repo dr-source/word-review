@@ -10,7 +10,7 @@
       <p class="spelling-hint">看中文释义，拼出对应的英文单词</p>
       <div class="mean-display">{{ currentWord.mean }}</div>
       <p v-if="currentWord.phonetic" class="phonetic-hint">提示：{{ currentWord.phonetic }}</p>
-      <p class="sentence-hint" v-if="currentWord.sentence">{{ currentWord.sentence }}</p>
+      <p class="sentence-hint" v-if="currentWord.sentence">{{ maskedSentence }}</p>
       <div class="input-row">
         <el-input ref="inputRef" v-model="userInput" placeholder="输入英文单词..." size="large" :disabled="answered" @keyup.enter="checkAnswer" />
         <el-button type="primary" size="large" :disabled="!userInput || answered" @click="checkAnswer">确认</el-button>
@@ -27,6 +27,10 @@
 
     <el-empty v-else-if="loading" description="加载中..." />
     <el-empty v-else-if="totalCount > 0" description="今日任务完成！">
+      <div class="encouragement">
+        <p class="encourage-main">{{ encouragement }}</p>
+        <p class="encourage-extra">{{ extra }}</p>
+      </div>
       <el-button type="primary" @click="$emit('done')">返回</el-button>
     </el-empty>
     <el-empty v-else description="今天还没有可拼写的单词">
@@ -37,8 +41,11 @@
 
 <script setup>
 import { ref, computed, watch, nextTick } from 'vue'
+import { ElMessage } from 'element-plus'
 import { useWordStore } from '../stores/wordStore'
 import { useSpeech } from '../composables/useSpeech'
+import { MAIN_ENCOURAGEMENT, pickExtra } from '../utils/encouragement'
+import { todayStr } from '../utils/profile'
 
 const props = defineProps({ bookId: { type: [Number, String], default: 0 } })
 const emit = defineEmits(['done'])
@@ -61,6 +68,18 @@ const progressPct = computed(() => totalCount.value
 const isCorrect = computed(() => {
   if (!answered.value || !currentWord.value) return false
   return userInput.value.trim().toLowerCase() === currentWord.value.word.toLowerCase()
+})
+
+const encouragement = MAIN_ENCOURAGEMENT
+const extra = pickExtra(todayStr())
+
+/** 答之前把例句里的目标词遮掉，不然直接照着抄袭；答完再显示原句 */
+const maskedSentence = computed(() => {
+  const w = currentWord.value
+  if (!w || !w.sentence) return ''
+  if (answered.value) return `例句：${w.sentence}`
+  const stem = String(w.word).replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+  return `语境：${w.sentence.replace(new RegExp(`\\b${stem}\\w*`, 'gi'), '____')}`
 })
 
 watch(() => props.bookId, async (id) => { if (id) await init(id) }, { immediate: true })
@@ -116,7 +135,10 @@ function checkAnswer() {
   }
 }
 
-function next() { advance() }
+function next() {
+  advance()
+  if (!currentWord.value) ElMessage.success(MAIN_ENCOURAGEMENT)
+}
 </script>
 
 <style scoped>
@@ -134,6 +156,9 @@ function next() { advance() }
 .result-correct { color: #16A34A; font-weight: 600; font-size: 16px; }
 .result-wrong { color: #DC2626; font-weight: 600; font-size: 16px; }
 .retry-hint { margin-top: 4px; font-size: 12px; color: var(--color-text-muted); }
+.encouragement { margin-bottom: 16px; }
+.encourage-main { font-size: 17px; font-weight: 600; color: var(--color-primary); line-height: 1.6; }
+.encourage-extra { margin-top: 6px; font-size: 14px; color: var(--color-text-muted); }
 @media (max-width: 640px) {
   .spelling-card { padding: 20px; }
   .mean-display { font-size: 18px; }

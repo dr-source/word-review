@@ -65,15 +65,27 @@
 </template>
 
 <script setup>
+import { onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useWordStore } from '../stores/wordStore'
+import { useBookStore } from '../stores/bookStore'
 import { useStudentStore } from '../stores/studentStore'
 import { useSpeech } from '../composables/useSpeech'
 
 const router = useRouter()
 const wordStore = useWordStore()
+const bookStore = useBookStore()
 const studentStore = useStudentStore()
 const { speak } = useSpeech()
+
+// 错题本只按 id 过滤词库，词库没加载就永远显示“暂无错题”，进页面必须先加载
+onMounted(async () => {
+  if (!bookStore.bookList.length) await bookStore.loadBooks()
+  const bookId = bookStore.currentBookId || bookStore.bookList[0]?.id
+  if (!bookId) return
+  if (!bookStore.currentBookId) bookStore.selectBook(bookId)
+  await wordStore.loadWords(bookId)
+})
 
 function speakWord(text) { speak(text) }
 

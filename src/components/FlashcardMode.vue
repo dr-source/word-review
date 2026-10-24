@@ -4,7 +4,8 @@
       <div class="study-header">
         <div class="progress-info">
           <span class="progress-badge">今日任务 {{ studiedCount }}/{{ totalCount }}</span>
-          <span class="progress-text" v-if="currentWord.learnLevel === 0">新词</span>
+          <span class="progress-text review-tag" v-if="isReview">回顾</span>
+          <span class="progress-text" v-else-if="currentWord.learnLevel === 0">新词</span>
           <span class="progress-text" v-else>复习</span>
           <span class="progress-text" v-if="wordStore.shuffleMode">乱序</span>
         </div>
@@ -22,10 +23,13 @@
           <div class="flashcard-inner">
             <div class="flashcard-front">
               <h1 class="word-text">{{ currentWord.word }}</h1>
-              <p class="word-hint">点击卡片显示答案</p>
+              <p class="word-phonetic" v-if="currentWord.phonetic">{{ currentWord.phonetic }}</p>
+              <p class="word-meaning">{{ currentWord.mean }}</p>
+              <p class="word-hint">点击卡片显示例句</p>
             </div>
             <div class="flashcard-back">
-              <p class="word-phonetic">{{ currentWord.phonetic || '' }}</p>
+              <p class="back-word">{{ currentWord.word }}</p>
+              <p class="word-phonetic" v-if="currentWord.phonetic">{{ currentWord.phonetic }}</p>
               <p class="word-meaning">{{ currentWord.mean }}</p>
               <p v-if="currentWord.sentence" class="word-sentence">"{{ currentWord.sentence }}"</p>
             </div>
@@ -56,6 +60,10 @@
     </div>
     <el-empty v-else-if="loading" description="加载中..." />
     <el-empty v-else-if="totalCount > 0" description="今日任务已全部完成 🎉">
+      <div class="encouragement">
+        <p class="encourage-main">{{ encouragement }}</p>
+        <p class="encourage-extra">{{ extra }}</p>
+      </div>
       <el-button type="primary" @click="restart">再背一遍</el-button>
     </el-empty>
     <el-empty v-else description="今天还没有待背的单词">
@@ -68,9 +76,12 @@
 <script setup>
 import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
 import { useRouter } from 'vue-router'
+import { ElMessage } from 'element-plus'
 import { useWordStore } from '../stores/wordStore'
 import { useSpeech } from '../composables/useSpeech'
 import { useTouchSwipe } from '../composables/useTouchSwipe'
+import { MAIN_ENCOURAGEMENT, pickExtra } from '../utils/encouragement'
+import { todayStr } from '../utils/profile'
 
 const props = defineProps({ bookId: { type: [Number, String], default: 0 } })
 const router = useRouter()
@@ -99,6 +110,13 @@ let requeued = new Set()
 const progressPercent = computed(() => {
   if (!totalCount.value) return 0
   return Math.min(100, Math.round((studiedCount.value / totalCount.value) * 100))
+})
+
+const encouragement = MAIN_ENCOURAGEMENT
+const extra = pickExtra(todayStr())
+const isReview = computed(() => {
+  const reviewIds = wordStore.task?.reviewIds || []
+  return !!currentWord.value && reviewIds.includes(currentWord.value.id)
 })
 
 watch(() => props.bookId, async (id) => { if (id) await startStudy() }, { immediate: true })
@@ -182,6 +200,7 @@ function handleRating(type) {
   // 禁用动画，直接切到下一个单词的正面
   noAnimation.value = true
   nextWord()
+  if (!currentWord.value) ElMessage.success(MAIN_ENCOURAGEMENT)
   setTimeout(() => { noAnimation.value = false; ratingLocked.value = false }, 250)
 }
 
@@ -202,10 +221,11 @@ function handleKeydown(e) {
 .progress-info { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
 .progress-badge { font-size: 14px; font-weight: 600; color: var(--color-text); }
 .progress-text { font-size: 12px; color: var(--color-text-muted); background: #F1F5F9; padding: 2px 8px; border-radius: 9999px; }
+.progress-text.review-tag { color: #B45309; background: #FEF3C7; }
 .queue-hint { font-size: 12px; color: var(--color-text-muted); }
 .study-progress-bar { margin-bottom: 24px; }
 .flashcard-wrapper { perspective: 1200px; margin-bottom: 24px; cursor: pointer; touch-action: pan-y; }
-.flashcard { height: 280px; transition: transform 0.5s cubic-bezier(0.4,0,0.2,1); transform-style: preserve-3d; }
+.flashcard { height: 320px; transition: transform 0.5s cubic-bezier(0.4,0,0.2,1); transform-style: preserve-3d; }
 .flashcard.no-animate { transition: none; }
 .flashcard.flipped { transform: rotateY(180deg); }
 .flashcard-inner { position: relative; width: 100%; height: 100%; transform-style: preserve-3d; }
@@ -213,13 +233,15 @@ function handleKeydown(e) {
   position: absolute; inset: 0; backface-visibility: hidden;
   border-radius: var(--radius-xl); background: white;
   border: 1px solid var(--color-border); box-shadow: var(--shadow-md);
-  display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 32px;
+  display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 28px;
+  overflow-y: auto;
 }
 .flashcard-back { transform: rotateY(180deg); }
-.word-text { font-size: 42px; font-weight: 700; color: var(--color-text); margin-bottom: 12px; letter-spacing: 2px; }
-.word-hint { font-size: 14px; color: var(--color-text-muted); }
-.word-phonetic { font-size: 18px; color: var(--color-text-muted); margin-bottom: 12px; }
-.word-meaning { font-size: 24px; font-weight: 600; color: var(--color-primary); margin-bottom: 8px; }
+.word-text { font-size: 42px; font-weight: 700; color: var(--color-text); margin-bottom: 10px; letter-spacing: 2px; }
+.back-word { font-size: 24px; font-weight: 700; color: var(--color-text); margin-bottom: 8px; }
+.word-hint { font-size: 13px; color: var(--color-text-muted); margin-top: 14px; }
+.word-phonetic { font-size: 17px; color: var(--color-text-muted); margin-bottom: 10px; }
+.word-meaning { font-size: 22px; font-weight: 600; color: var(--color-primary); margin-bottom: 8px; line-height: 1.5; }
 .word-sentence { font-size: 14px; color: var(--color-text-secondary); font-style: italic; text-align: center; line-height: 1.6; }
 .study-actions { text-align: center; }
 .speech-row { display: flex; align-items: center; justify-content: center; gap: 6px; margin-bottom: 20px; }
@@ -242,11 +264,15 @@ function handleKeydown(e) {
 .slide-up-leave-active { transition: all 0.2s ease-in; }
 .slide-up-enter-from { opacity: 0; transform: translateY(20px); }
 .slide-up-leave-to { opacity: 0; transform: translateY(-10px); }
+.encouragement { margin-bottom: 16px; }
+.encourage-main { font-size: 17px; font-weight: 600; color: var(--color-primary); line-height: 1.6; }
+.encourage-extra { margin-top: 6px; font-size: 14px; color: var(--color-text-muted); }
 @media (max-width: 640px) {
-  .flashcard { height: 220px; }
+  .flashcard { height: 270px; }
   .flashcard-front, .flashcard-back { padding: 16px; }
   .word-text { font-size: 32px; }
-  .word-meaning { font-size: 20px; }
+  .back-word { font-size: 20px; }
+  .word-meaning { font-size: 19px; }
   .rating-buttons { gap: 6px; }
   .rating-btn { min-width: 90px; padding: 10px 12px !important; }
   .rating-text { font-size: 13px; }
