@@ -1,0 +1,1 @@
+function a(){function n(s,t=!1,c=.9){if(!window.speechSynthesis)return;const e=new SpeechSynthesisUtterance(s);e.lang=t?"en-GB":"en-US",e.rate=c,speechSynthesis.speak(e)}return{speak:n}}export{a as u};
