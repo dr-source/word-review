@@ -17,6 +17,8 @@
         <el-radio-button value="flashcard">📇 翻卡</el-radio-button>
         <el-radio-button value="quiz">📝 选择</el-radio-button>
         <el-radio-button value="spelling">✏️ 拼写</el-radio-button>
+        <el-radio-button value="cloze">🧩 完形</el-radio-button>
+        <el-radio-button value="syllable">🎵 音节</el-radio-button>
       </el-radio-group>
 
       <el-button
@@ -37,7 +39,7 @@
           <el-input-number
             :model-value="wordStore.dailySize"
             :min="5"
-            :max="100"
+            :max="200"
             :step="1"
             size="small"
             @change="applyDailySize"
@@ -53,6 +55,17 @@
             active-text="已开"
             inactive-text="已关"
             @update:model-value="toggleShuffle"
+          />
+        </div>
+        <div class="task-item shuffle-item">
+          <span class="task-label">拼读音效</span>
+          <el-switch
+            class="shuffle-switch sound-switch"
+            :model-value="soundOn"
+            inline-prompt
+            active-text="开"
+            inactive-text="关"
+            @update:model-value="toggleSound"
           />
         </div>
         <el-button size="small" @click="regenerate">重新生成今日任务</el-button>
@@ -85,31 +98,32 @@
       @done="studyMode = 'flashcard'"
     />
 
+    <!-- 完形填空：随机挖空，一般抽昨天/今天见过的词与易混淆词 -->
+    <ClozeMode
+      v-if="studyMode === 'cloze' && bookStore.currentBookId"
+      :key="'cloze-' + bookStore.currentBookId + '-' + taskKey"
+      :book-id="bookStore.currentBookId"
+      @done="studyMode = 'flashcard'"
+    />
+
+    <!-- 音节背记：按音标划分音节教学生怎么记 -->
+    <SyllableMode
+      v-if="studyMode === 'syllable' && bookStore.currentBookId"
+      :key="'syllable-' + bookStore.currentBookId + '-' + taskKey"
+      :book-id="bookStore.currentBookId"
+    />
+
     <el-empty v-if="!bookStore.currentBookId" description="请先选择词本">
       <el-button type="primary" @click="showBookSelector = true">选择词本</el-button>
     </el-empty>
 
-    <!-- 今日单词一览：把当天这批词整体摊开，方便家长/学生通读背记 -->
-    <el-card v-if="bookStore.currentBookId" class="word-list-card" shadow="never">
-      <div class="word-list-head">
-        <span class="word-list-title">📖 今日单词一览（{{ wordStore.taskWords.length }} 词）</span>
-        <el-button size="small" text @click="showDailyList = !showDailyList">
-          {{ showDailyList ? '收起' : '展开' }}
-        </el-button>
-      </div>
-      <div v-if="showDailyList" class="daily-word-list">
-        <div v-for="w in wordStore.taskWords" :key="w.id" class="daily-word-item">
-          <div class="daily-word-head">
-            <span class="daily-word-en">{{ w.word }}</span>
-            <span class="daily-word-phonetic" v-if="w.phonetic">{{ w.phonetic }}</span>
-            <el-tag v-if="isReviewWord(w.id)" size="small" type="warning">回顾</el-tag>
-            <el-button size="small" text class="daily-word-speak" @click="speak(w.word)">🔊</el-button>
-          </div>
-          <p class="daily-word-mean">{{ w.mean }}</p>
-          <p class="daily-word-sentence" v-if="w.sentence">{{ w.sentence }}</p>
-        </div>
-      </div>
-    </el-card>
+    <!-- 每天背的这批词单独一页做成表格（带中文），翻卡里就不放中文了 -->
+    <div v-if="bookStore.currentBookId" class="entry-row">
+      <el-button class="entry-daily" @click="router.push('/daily-words')">
+        📖 今日单词表（{{ wordStore.taskWords.length }} 词 + 中文释义）
+      </el-button>
+      <el-button class="entry-exam" @click="router.push('/exam')">📄 100 词测试卷</el-button>
+    </div>
 
     <!-- 词本选择弹窗 -->
     <el-dialog v-model="showBookSelector" title="选择词本" width="320px">
@@ -137,19 +151,20 @@ import { useRouter } from 'vue-router'
 import { useBookStore } from '../stores/bookStore'
 import { useWordStore } from '../stores/wordStore'
 import { useStudentStore } from '../stores/studentStore'
-import { useSpeech } from '../composables/useSpeech'
+import { isSoundOn, setSoundOn } from '../composables/useSound'
 import FlashcardMode from '../components/FlashcardMode.vue'
 import QuizMode from '../components/QuizMode.vue'
 import SpellingMode from '../components/SpellingMode.vue'
+import ClozeMode from '../components/ClozeMode.vue'
+import SyllableMode from '../components/SyllableMode.vue'
 
 const router = useRouter()
 const bookStore = useBookStore()
 const wordStore = useWordStore()
 const studentStore = useStudentStore()
-const { speak } = useSpeech()
 const studyMode = ref('flashcard')
 const showBookSelector = ref(false)
-const showDailyList = ref(false)
+const soundOn = ref(isSoundOn())
 const tempBookId = ref('')
 // 任务变化时让三个模式组件重新挂载，立刻读到新的任务
 const taskKey = ref(0)
@@ -178,8 +193,8 @@ function toggleShuffle(value) {
   nextTick(() => { taskKey.value++ })
 }
 
-function isReviewWord(id) {
-  return (wordStore.task?.reviewIds || []).includes(id)
+function toggleSound(value) {
+  soundOn.value = setSoundOn(value)
 }
 
 function regenerate() {
@@ -280,64 +295,11 @@ async function confirmBook() {
 .shuffle-switch :deep(.el-switch__inner) {
   font-size: 11px;
 }
-.word-list-card {
-  margin-top: 16px;
-}
-.word-list-head {
+.entry-row {
   display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: 8px;
-}
-.word-list-title {
-  font-size: 14px;
-  font-weight: 600;
-  color: var(--color-text);
-}
-.daily-word-list {
-  margin-top: 12px;
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-  max-height: 60vh;
-  overflow-y: auto;
-}
-.daily-word-item {
-  padding: 10px 12px;
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-md);
-  background: #FAFAFA;
-}
-.daily-word-head {
-  display: flex;
-  align-items: center;
   gap: 8px;
   flex-wrap: wrap;
-}
-.daily-word-en {
-  font-size: 16px;
-  font-weight: 700;
-  color: var(--color-text);
-}
-.daily-word-phonetic {
-  font-size: 12px;
-  color: var(--color-text-muted);
-}
-.daily-word-speak {
-  margin-left: auto;
-}
-.daily-word-mean {
-  margin-top: 4px;
-  font-size: 14px;
-  color: var(--color-primary);
-  line-height: 1.5;
-}
-.daily-word-sentence {
-  margin-top: 4px;
-  font-size: 12px;
-  color: var(--color-text-muted);
-  font-style: italic;
-  line-height: 1.6;
+  margin-top: 16px;
 }
 
 @media (max-width: 640px) {
@@ -354,6 +316,12 @@ async function confirmBook() {
   }
   .task-row {
     gap: 12px;
+  }
+  .entry-row {
+    flex-direction: column;
+  }
+  .entry-row .el-button + .el-button {
+    margin-left: 0;
   }
 }
 </style>

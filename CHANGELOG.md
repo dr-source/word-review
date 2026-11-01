@@ -8,15 +8,20 @@
 
 | 功能 | 说明 |
 |------|------|
-| ✅ 三种学习模式 | 翻卡背诵（正面中英同显）、选择题（先选中再确认，未确认可撤销）、拼写练习，抽查内容与顺序完全一致 |
+| ✅ 五种学习模式 | 翻卡背诵（正面只放英文音标，点一下＝发音＋翻面）、选择题（先选中再确认）、拼写（手写板 / 键盘）、**完形填空**、**音节背记**，抽查内容与顺序完全一致 |
 | ✅ 艾宾浩斯复习 | 答对升一级，间隔 1→2→4→7→15→30→60 天滚动（模糊 30 分钟、不认识 5 分钟） |
 | ✅ 三档评价 | 不认识 / 模糊 / 认识，精细控制记忆曲线 |
 | ✅ 学生档案 | 每个学生一份独立记录（进度 / 错题 / 记录 / 任务），切换即换档案 |
-| ✅ 每日任务 | 默认 33 词，**八成新词 + 两成近期回顾**，均匀穿插避免天天背同一批，三模式共用同一批词 |
-| ✅ 乱序抽查 | 当天固定乱序，三模式顺序一致，便于互相抽查（开关核心 54×26、整行 ≥44px，好按） |
-| ✅ 语境例句 | 688 词每词一句例句，翻卡 / 选择题 / 拼写 / 单词一览都能看到词在句子里的用法 |
-| ✅ 今日单词一览 | 背诵页可展开当天这批词，英文 + 音标 + 释义 + 例句 + 发音一次看全 |
-| ✅ 完成鼓励 | 当天任务做完，三种模式与首页弹出「恭喜你，完成一天任务，继续坚持！」+ 随机附加句 |
+| ✅ 每日任务 | 默认 **40 词**，**5～200 可调**，**八成新词 + 两成近期回顾**，均匀穿插，五模式共用同一批词；同批任务不放释义相同的词 |
+| ✅ 中考词表 | 新装自动种入「中考必背2000英语词汇」**2009 词**（2025 秋新课标中考词表，零依赖 docx 解析） |
+| ✅ 乱序抽查 | 当天固定乱序，五模式顺序一致，便于互相抽查（开关核心 54×26、整行 ≥44px，好按） |
+| ✅ 今日单词表 | 每天这批词单独一页做成表格：英文 / 音标 / 音节 / 词性·释义 / 例句 / 发音，翻卡里不再放中文 |
+| ✅ 100 词测试卷 | 随机 100 词打乱顺序，一题 1 分，100=Excellent、≥95 Good、≥90 Normal、<90 Come on，交卷列错词 |
+| ✅ 语境例句 | 688 词每词一句例句，中考词表能借到例句的词也补上，翻卡 / 选择 / 完形 / 单词表都能看到用法 |
+| ✅ 按音节背记 | `syllable.js` 按音标切音节（`ə·ˈkɒm·plɪʃ`），标重音、可逐音节听，长单词先记骨架再填字母 |
+| ✅ 音效与烟花 | Web Audio 现场合成的对/错/连对/完成音效，任务完成与交卷飘烟花，「拼读音效」开关可一键静音 |
+| ✅ 连对激励 | 连对 3/4/5/6/7/8/9+ 给 Good/Great/Brilliant/Wonderful/Fantastic/Excellent/Perfect，音效升调 + 小闪光 |
+| ✅ 完成鼓励 | 当天任务做完，各模式与首页弹出「恭喜你，完成一天任务，继续坚持！」+ 随机附加句 + 烟花 |
 | ✅ 个性化分析 | 写有学生名字的背记情况分析 + 高频错词表 |
 | ✅ 键盘快捷键 | 空格显示答案，1/2/3 快速评价 |
 | ✅ 云端共享 | Supabase 存储词本和单词，所有人数据同步 |
@@ -150,6 +155,33 @@ CI 排障另外暴露两处真问题：① `vite.config.js` 在 CI 上把 `base`
 新增文件：`src/utils/distractors.js`、`src/utils/encouragement.js`
 改动文件：`FlashcardMode / QuizMode / SpellingMode`、`StudyPage / HomePage / WrongBookPage`、`wordStore.js`、`localStore.js`、`defaultWords.json`、`tests/logic.test.mjs`、`tests/browser.test.mjs`、`README.md`、`CHANGELOG.md`
 
+### Phase 9：中考词表 + 五种模式 + 音效烟花（本轮）
+
+| 反馈 | 做法 |
+|------|------|
+| 答错的表情太随便 | 答错的 😅 换成**思考表情 🤔**，配文「再想想，正确答案是：」+ 正确释义 |
+| 一天任务完成想有点仪式感 | 新增 `Fireworks.vue`（纯 CSS/DOM 烟花，无依赖），翻卡 / 选择 / 拼写 / 完形完成当天任务、测试卷交卷都飘烟花，同时播完成音效 |
+| 「看中文写英文」改成手写 | 新增 `HandwritingPad.vue`（canvas 手写板，按住写、一键清空），拼写模式默认手写：写完点「对答案」看标准答案再自评对/错；右上角可「⌨️ 改用键盘 / ✍️ 改用手写」。**不做 OCR**，手写靠自评，键盘模式仍是自动判对错 |
+| 翻卡要边看边听发音，别单独点喇叭 | 点卡片一下＝`triggerSpeak()` + 翻面；喇叭按钮保留给只想听发音的场景 |
+| 选择题抽查太简单 | `distractors.js` 重写：先按 `parsePos` 解析词性，**严格同词性优先**；再按释义共用汉字（`coreMean`）、拼写形近（编辑距离）、音标音近打分排序；跳过与正确答案释义互相包含的词；近期出现过的词降权。词性凑不齐才降级回全库 |
+| 想教学生怎么背单词 | 新增 `syllable.js` + `SyllableMode.vue`：按音标切音节（元音核 → 最大音节首，`pl- / str- / tʃ` 不拆），标出重音音节，可逐音节听，长单词先记骨架 |
+| 要有 100 词的卷子验收 | 新增 `exam.js` + `ExamPage.vue`（路由 `/exam`）：随机 100 词打乱、看英文选中文、一题 1 分、可翻页改答案；评级 100=Excellent / ≥95 Good / ≥90 Normal / <90 Come on，成绩页列错词并写入进度（对的升级、错的进错题本） |
+| 把桌面那份中考词表导入 | 新增 `scripts/parse-docx-vocab.mjs`（零依赖 zip + XML 解析），生成 `src/utils/middleSchoolWords.json`：**2009** 条（docx 实际条数，非 2000），字段 `word / phonetic / mean / sentence`；`localStore` 种入词本「中考必背2000英语词汇」，独立版本键只种一次，不会把用户删掉的词塞回来 |
+| 一天背多少要能自己设 | 每日任务默认 **40 词**（原 33），`setDailySize` 夹 **5～200**，「每日任务量」输入框当天立即生效；8:2 配比随之变成 40 ≈ 32 新 + 8 回顾 |
+| 同一批任务出现 a / an 这种同义词 | `ensureDailyTask` 加**同义去重**：一批任务里不放 `coreMean` 相同的词，凑不够才按原规则放宽兜底 |
+| 要类似完形填空 | 新增 `cloze.js` + `ClozeMode.vue`：出题池顺序为今天这批词 → 近 3 天见过的词 → 全库兜底，点选项即判，最多 12 题；`maskSentence` 支持 `study → studied / studies` 这类变形，句子里没有目标词就不硬挖 |
+| 选择题要有对错音效 | 新增 `useSound.js`：Web Audio 现场合成，不引入任何版权音频；答对上行双音、答错低沉短音、完成一串琶音，「拼读音效」开关可全局静音 |
+| 连对要有激励，音效不同 + 小闪光 | 新增 `streak.js` + `StreakFlash.vue`：连对 3/4/5/6/7/8/9+ → Good / Great / Brilliant / Wonderful / Fantastic / Excellent / Perfect，档位越高音高越高，页头常显 `🔥 N 连对`，达标弹闪光 |
+| 翻卡里不要中文 | 翻卡正反面都不再出现中文释义，背面改为显示**音节串 + 语境例句**；中文统一收到新页面「今日单词表」（`/daily-words`，`el-table`：序号 / 单词 / 音标 / 音节 / 词性·释义 / 例句 / 🔊） |
+| 拼写部分不要音标 | 拼写模式去掉音标提示，只给中文释义 |
+
+自测覆盖：逻辑自测 **206** 条断言（新增第 16 节音节 12 条、第 17 节连对与评级 20 条、第 18 节测试卷抽词 7 条、第 19 节词表完整性与种入幂等 10 条），端到端自测 **327** 条断言（今日单词表整表可读、五种模式都能出题、连对 3 题给 Good 闪光、100 词测试卷全对得 Excellent、翻卡无中文但有点击发音与音节串；第 15 节按 12 项需求逐条断言：🤔 思考表情、完成放烟花、手写拼写、点卡即发音、干扰项同词性、音节背记、任务量可调、100 词测试卷评级、完形、音效开关、连对 7 档称号）。
+
+已知边界：① 词表来自 docx，源文件只有 2009 条（文件名写 2000 是取整），另有几十条释义因原文两栏排版被串在一起，属源头数据问题；② 手写不自带识别，判对错靠学生自评；③ 中考词表里约 566 个词能借到例句，完形只能在这些词里出，其余词在其他模式下正常用；④ 音效是 Web Audio 合成的近似音色，不是开心消消乐的原始素材（避免版权）。
+
+新增文件：`src/utils/middleSchoolWords.json`、`src/utils/syllable.js`、`src/utils/streak.js`、`src/utils/exam.js`、`src/utils/cloze.js`、`src/utils/sentences.js`、`src/composables/useSound.js`、`src/components/Fireworks.vue`、`src/components/HandwritingPad.vue`、`src/components/StreakFlash.vue`、`src/components/ClozeMode.vue`、`src/components/SyllableMode.vue`、`src/pages/DailyWordsPage.vue`、`src/pages/ExamPage.vue`、`scripts/parse-docx-vocab.mjs`
+改动文件：`FlashcardMode / QuizMode / SpellingMode / AppSidebar`、`StudyPage`、`router/index.js`、`wordStore.js`、`bookStore.js`、`localStore.js`、`profile.js`、`distractors.js`、`useSpeech.js`、`tests/logic.test.mjs`、`tests/browser.test.mjs`、`README.md`、`CHANGELOG.md`
+
 ---
 
 ## 技术栈
@@ -164,6 +196,7 @@ CI 排障另外暴露两处真问题：① `vite.config.js` 在 CI 上把 `base`
 | Chart.js 4 | 图表 |
 | Supabase | 云端数据库 |
 | Web Speech API | 单词发音 |
+| Web Audio API | 对 / 错 / 连对 / 完成音效（现场合成，无音频文件） |
 | XLSX | Excel 导入 |
 
 ## 文件结构
@@ -183,18 +216,26 @@ src/
     HomePage.vue           # 首页仪表盘
     StudentsPage.vue       # 学生档案（新建 / 改名 / 删除 / 切换）
     BookManagePage.vue     # 词本管理（管理员）
-    StudyPage.vue          # 背诵页面（模式选择）
+    StudyPage.vue          # 背诵页面（五种模式 + 任务量 / 乱序 / 音效开关）
+    DailyWordsPage.vue     # 今日单词表（表格 + 中文释义）
+    ExamPage.vue           # 100 词测试卷（评级 + 错词表）
     WrongBookPage.vue      # 错题本
     StatsPage.vue          # 学习统计 + 图表
   components/
     AppSidebar.vue         # 侧栏导航
-    FlashcardMode.vue      # 翻卡模式
-    QuizMode.vue           # 选择题模式
-    SpellingMode.vue       # 拼写模式
+    FlashcardMode.vue      # 翻卡模式（点一下＝发音＋翻面）
+    QuizMode.vue           # 选择题模式（连对激励 + 音效）
+    SpellingMode.vue       # 拼写模式（手写 / 键盘）
+    ClozeMode.vue          # 完形填空
+    SyllableMode.vue       # 音节背记
+    HandwritingPad.vue     # 手写板（canvas）
+    Fireworks.vue          # 完成任务 / 交卷烟花
+    StreakFlash.vue        # 连对闪光
     ImportDialog.vue       # 批量导入弹窗
   composables/
     useChart.js            # Chart.js 生命周期
     useSpeech.js           # TTS 封装
+    useSound.js            # Web Audio 音效（对 / 错 / 连对 / 完成）
     useTouchSwipe.js       # 触摸手势（翻卡左右 / 上下滑动）
   utils/
     profile.js             # 学生档案 + 按学生隔离的本地存储（wr_<学生id>_*）
@@ -202,17 +243,25 @@ src/
     supabase.js            # Supabase 客户端
     storage.js             # localStorage 封装 + 艾宾浩斯间隔常量
     localStore.js          # 未配置 Supabase 时的本地词本存储 + 种子词版本升级
-    distractors.js         # 选择题干扰项：同词性、释义接近、互不包含
+    distractors.js         # 干扰项：严格同词性 + 易混淆打分
     encouragement.js       # 完成任务鼓励语（主句 + 按日期挑附加句）
+    syllable.js            # 按音标切音节 + 重音位置
+    streak.js              # 连对标号档位（3 Good … 9 Perfect）
+    exam.js                # 测试卷抽词与评级
+    cloze.js               # 完形挖空（含词形变化）
+    sentences.js           # 例句库（给没有例句的词借一句）
     word.js                # 单词数据工具
     dictionary.js          # 内置词典（300 词）
     defaultWords.json      # 默认词库（688 词，含音标 / 释义 / 语境例句）
+    middleSchoolWords.json # 中考必背2000英语词汇（2009 词，docx 解析生成）
   styles/
     variables.css          # 设计系统变量
+scripts/
+  parse-docx-vocab.mjs     # 零依赖解析 docx 词表 → middleSchoolWords.json
 tests/
-  logic.test.mjs           # 逻辑自测（Node + 内存 localStorage，149 条断言）
+  logic.test.mjs           # 逻辑自测（Node + 内存 localStorage，206 条断言）
   build-logic.mjs          # 把逻辑自测打包成单文件（Vite 处理 src/ 的 import）
-  browser.test.mjs         # 端到端自测（无头 Chrome/Edge + CDP，124 条断言）
+  browser.test.mjs         # 端到端自测（无头 Chrome/Edge + CDP，327 条断言）
   env.mjs                  # 逻辑自测的浏览器环境替身
 .github/workflows/
   deploy.yml               # push main 后构建并发布 gh-pages

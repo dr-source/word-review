@@ -40,6 +40,16 @@ const routes = [
     meta: { title: '开始背诵', icon: 'Reading' }
   },
   {
+    path: '/daily-words',
+    component: withRetry(() => import('../pages/DailyWordsPage.vue')),
+    meta: { title: '今日单词表', icon: 'List' }
+  },
+  {
+    path: '/exam',
+    component: withRetry(() => import('../pages/ExamPage.vue')),
+    meta: { title: '单词测试卷', icon: 'EditPen' }
+  },
+  {
     path: '/wrong',
     component: withRetry(() => import('../pages/WrongBookPage.vue')),
     meta: { title: '错题本', icon: 'Warning' }

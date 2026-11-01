@@ -24,14 +24,14 @@
             <div class="flashcard-front">
               <h1 class="word-text">{{ currentWord.word }}</h1>
               <p class="word-phonetic" v-if="currentWord.phonetic">{{ currentWord.phonetic }}</p>
-              <p class="word-meaning">{{ currentWord.mean }}</p>
-              <p class="word-hint">点击卡片显示例句</p>
+              <p class="word-hint">点一下卡片：听发音 + 看例句</p>
             </div>
             <div class="flashcard-back">
               <p class="back-word">{{ currentWord.word }}</p>
               <p class="word-phonetic" v-if="currentWord.phonetic">{{ currentWord.phonetic }}</p>
-              <p class="word-meaning">{{ currentWord.mean }}</p>
+              <p class="word-syllable" v-if="syllables">{{ syllables }}</p>
               <p v-if="currentWord.sentence" class="word-sentence">"{{ currentWord.sentence }}"</p>
+              <p v-else class="word-sentence muted">中文释义在「今日单词表」里，先去那边对一遍意思</p>
             </div>
           </div>
         </div>
@@ -59,13 +59,16 @@
       </div>
     </div>
     <el-empty v-else-if="loading" description="加载中..." />
-    <el-empty v-else-if="totalCount > 0" description="今日任务已全部完成 🎉">
-      <div class="encouragement">
-        <p class="encourage-main">{{ encouragement }}</p>
-        <p class="encourage-extra">{{ extra }}</p>
-      </div>
-      <el-button type="primary" @click="restart">再背一遍</el-button>
-    </el-empty>
+    <template v-else-if="totalCount > 0">
+      <Fireworks :active="showFireworks" />
+      <el-empty description="今日任务已全部完成 🎉">
+        <div class="encouragement">
+          <p class="encourage-main">{{ encouragement }}</p>
+          <p class="encourage-extra">{{ extra }}</p>
+        </div>
+        <el-button type="primary" @click="restart">再背一遍</el-button>
+      </el-empty>
+    </template>
     <el-empty v-else description="今天还没有待背的单词">
       <el-button type="primary" @click="restart">生成今日任务</el-button>
       <el-button @click="router.push('/books')">去添加单词</el-button>
@@ -80,8 +83,11 @@ import { ElMessage } from 'element-plus'
 import { useWordStore } from '../stores/wordStore'
 import { useSpeech } from '../composables/useSpeech'
 import { useTouchSwipe } from '../composables/useTouchSwipe'
+import { playFinish } from '../composables/useSound'
+import Fireworks from './Fireworks.vue'
 import { MAIN_ENCOURAGEMENT, pickExtra } from '../utils/encouragement'
 import { todayStr } from '../utils/profile'
+import { syllableLine } from '../utils/syllable'
 
 const props = defineProps({ bookId: { type: [Number, String], default: 0 } })
 const router = useRouter()
@@ -104,8 +110,11 @@ const totalCount = ref(0)
 const ratingLocked = ref(false)
 const loading = ref(false)
 const noAnimation = ref(false)
+const showFireworks = ref(false)
 let seenIds = new Set()
 let requeued = new Set()
+// 同一个词反复点只发一次音，避免叠音
+let spokenId = null
 
 const progressPercent = computed(() => {
   if (!totalCount.value) return 0
@@ -117,6 +126,14 @@ const extra = pickExtra(todayStr())
 const isReview = computed(() => {
   const reviewIds = wordStore.task?.reviewIds || []
   return !!currentWord.value && reviewIds.includes(currentWord.value.id)
+})
+
+// 背面按音标把单词切成音节，配合「音节背记」模式一起看
+const syllables = computed(() => {
+  const word = currentWord.value
+  if (!word || !word.phonetic) return ''
+  const line = syllableLine(word.phonetic)
+  return line.includes('·') ? line : ''
 })
 
 watch(() => props.bookId, async (id) => { if (id) await startStudy() }, { immediate: true })
@@ -152,11 +169,13 @@ async function startStudy() {
 
 function restart() {
   if (!totalCount.value) wordStore.regenerateTask(props.bookId)
+  showFireworks.value = false
   startStudy()
 }
 
 function nextWord() {
   showAnswer.value = false
+  spokenId = null
   currentWord.value = queue.value.shift() || null
 }
 function revealAnswer() {
@@ -165,12 +184,22 @@ function revealAnswer() {
 function handleShowAnswer() {
   // 滑动结束后浏览器还会补一个 click，忽略掉，避免刚切到下一个词就自动翻面
   if (swipe.justSwiped()) return
+  // 点一下卡片就发音：一边翻一边听，不用再单独点喇叭
+  triggerSpeak()
   revealAnswer()
+}
+
+/** 同一个词反复点只发一次音，避免叠音 */
+function triggerSpeak() {
+  const word = currentWord.value
+  if (!word || spokenId === word.id) return
+  spokenId = word.id
+  speak(word.word)
 }
 
 /** 滑动评价：答案还没显示时只翻面，防止滑一下就被误评分 */
 function swipeRate(type) {
-  if (!showAnswer.value) { revealAnswer(); return }
+  if (!showAnswer.value) { triggerSpeak(); revealAnswer(); return }
   handleRating(type)
 }
 
@@ -200,7 +229,12 @@ function handleRating(type) {
   // 禁用动画，直接切到下一个单词的正面
   noAnimation.value = true
   nextWord()
-  if (!currentWord.value) ElMessage.success(MAIN_ENCOURAGEMENT)
+  if (!currentWord.value) {
+    ElMessage.success(MAIN_ENCOURAGEMENT)
+    // 一天的任务收工：放烟花 + 收尾音效
+    showFireworks.value = true
+    playFinish()
+  }
   setTimeout(() => { noAnimation.value = false; ratingLocked.value = false }, 250)
 }
 
@@ -241,8 +275,9 @@ function handleKeydown(e) {
 .back-word { font-size: 24px; font-weight: 700; color: var(--color-text); margin-bottom: 8px; }
 .word-hint { font-size: 13px; color: var(--color-text-muted); margin-top: 14px; }
 .word-phonetic { font-size: 17px; color: var(--color-text-muted); margin-bottom: 10px; }
-.word-meaning { font-size: 22px; font-weight: 600; color: var(--color-primary); margin-bottom: 8px; line-height: 1.5; }
+.word-syllable { font-size: 15px; color: var(--color-primary); letter-spacing: 1px; margin-bottom: 10px; font-family: 'Segoe UI', system-ui, sans-serif; }
 .word-sentence { font-size: 14px; color: var(--color-text-secondary); font-style: italic; text-align: center; line-height: 1.6; }
+.word-sentence.muted { color: var(--color-text-muted); font-style: normal; }
 .study-actions { text-align: center; }
 .speech-row { display: flex; align-items: center; justify-content: center; gap: 6px; margin-bottom: 20px; }
 .speech-label { font-size: 12px; color: var(--color-text-muted); margin-right: 12px; }
@@ -272,7 +307,6 @@ function handleKeydown(e) {
   .flashcard-front, .flashcard-back { padding: 16px; }
   .word-text { font-size: 32px; }
   .back-word { font-size: 20px; }
-  .word-meaning { font-size: 19px; }
   .rating-buttons { gap: 6px; }
   .rating-btn { min-width: 90px; padding: 10px 12px !important; }
   .rating-text { font-size: 13px; }

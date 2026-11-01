@@ -7,6 +7,13 @@ import { useStatsStore } from '../src/stores/statsStore.js'
 import { useBookStore } from '../src/stores/bookStore.js'
 import { useStudentStore } from '../src/stores/studentStore.js'
 import { pickDistractors, coreMean, parsePos } from '../src/utils/distractors.js'
+import { splitSyllables, syllableLine, stressedSyllable } from '../src/utils/syllable.js'
+import { STREAK_TIERS, streakTier, streakLabel } from '../src/utils/streak.js'
+import { EXAM_SIZE, examGrade, pickExamWords } from '../src/utils/exam.js'
+import { maskSentence } from '../src/utils/cloze.js'
+import { LocalStore, EXAM_BOOK_NAME } from '../src/utils/localStore.js'
+import { sentenceFor } from '../src/utils/sentences.js'
+import middleSchoolWords from '../src/utils/middleSchoolWords.json' with { type: 'json' }
 import {
   MAIN_ENCOURAGEMENT, EXTRA_ENCOURAGEMENTS, pickExtra, encouragementLine
 } from '../src/utils/encouragement.js'
@@ -31,11 +38,13 @@ function reset() {
   setActivePinia(createPinia())
 }
 
-async function boot() {
+async function boot(bookMatch = '中考必背2000') {
   const bookStore = useBookStore()
   await bookStore.loadBooks()
+  const book = bookStore.bookList.find(b => b.name.includes(bookMatch)) || bookStore.bookList[0]
+  bookStore.selectBook(book.id)
   const wordStore = useWordStore()
-  await wordStore.loadWords(bookStore.currentBookId)
+  await wordStore.loadWords(book.id)
   return { bookStore, wordStore }
 }
 
@@ -110,7 +119,7 @@ reset()
   eq(profile.getProgress(), {}, '切到新学生后进度为空')
   eq(profile.getWrongIds(), [], '切到新学生后错题本为空')
   eq(profile.getTodayStudiedIds(), [], '切到新学生后今日学习为空')
-  eq(profile.getSettings().dailySize, 33, '新学生默认每日任务 33 词')
+  eq(profile.getSettings().dailySize, 40, '新学生默认每日任务 40 词')
 
   profile.saveProgress('wordB', { learnLevel: 1 })
   profile.trackStudy('wordB')
@@ -145,9 +154,9 @@ reset()
   eq(wordStore.rawWords.length > 300, true, `内置词库已载入（${wordStore.rawWords.length} 词）`)
 
   const t1 = wordStore.ensureDailyTask(bookId)
-  eq(t1.ids.length, 33, '默认每日任务 33 词')
+  eq(t1.ids.length, 40, '默认每日任务 40 词')
   eq(t1.date, today(), '任务日期为今天')
-  eq(wordStore.taskSize, 33, 'taskSize = 33')
+  eq(wordStore.taskSize, 40, 'taskSize = 40')
 
   const t2 = wordStore.ensureDailyTask(bookId)
   eq(t2.ids, t1.ids, '同一天重复调用返回同一批词（不重新生成）')
@@ -159,21 +168,21 @@ reset()
   profile.saveTask(bookId, { ...t1, date: '2000-01-01' })
   const t3 = wordStore.ensureDailyTask(bookId)
   eq(t3.date, today(), '隔天后重新生成今日任务')
-  ok(t3.ids.length === 33, '新任务仍为 33 词')
+  ok(t3.ids.length === 40, '新任务仍为 40 词')
 
-  // 32 个词已学，任务仍应补到 33 个新词
-  for (const w of wordStore.rawWords.slice(0, 32)) profile.saveProgress(w.id, { learnLevel: 1, nextReview: Date.now() + 30 * DAY })
+  // 39 个词已学，任务仍应补到 40 个新词
+  for (const w of wordStore.rawWords.slice(0, 39)) profile.saveProgress(w.id, { learnLevel: 1, nextReview: Date.now() + 30 * DAY })
   profile.saveTask(bookId, { ...t3, date: '2000-01-01' })
   const t4 = wordStore.ensureDailyTask(bookId)
-  eq(t4.ids.length, 33, '已学词不会挤掉任务总量')
+  eq(t4.ids.length, 40, '已学词不会挤掉任务总量')
 
   // 每日任务上限/下限
   eq(wordStore.setDailySize(3), 5, '每日任务数下限 5')
-  eq(wordStore.setDailySize(500), 100, '每日任务数上限 100')
+  eq(wordStore.setDailySize(500), 200, '每日任务数上限 200')
   eq(wordStore.setDailySize(20), 20, '每日任务数可设 20')
   const t5 = wordStore.regenerateTask(bookId)
   eq(t5.ids.length, 20, '改数量后重新生成任务生效')
-  wordStore.setDailySize(33)
+  wordStore.setDailySize(40)
 }
 
 // ---------------------------------------- 5. 每日任务 = 八成新词 + 两成回顾
@@ -202,13 +211,13 @@ reset()
   profile.saveProgress(words[30].id, { learnLevel: 1, nextReview: now - 3000, lastSeenAt: now - 2 * DAY })
 
   const task = wordStore.regenerateTask(bookId)
-  eq(task.ids.length, 33, '每日任务仍是 33 词')
+  eq(task.ids.length, 40, '每日任务仍是 40 词')
   ok(Array.isArray(task.reviewIds), '任务记录了回顾词清单')
-  eq(task.reviewIds.length, 7, '回顾词约占两成（33 × 0.2 ≈ 7）')
+  eq(task.reviewIds.length, 8, '回顾词约占两成（40 × 0.2 = 8）')
   ok(task.reviewIds.every(id => task.ids.includes(id)), '回顾词都排在今日任务里')
   ok(dueIds.every(id => task.reviewIds.includes(id)), '早该复习的词优先进回顾名额')
   const freshCount = task.ids.filter(id => !(profile.getProgress()[id] || {}).learnLevel).length
-  eq(freshCount, 26, '八成名额留给没学过的生词')
+  eq(freshCount, 32, '八成名额留给没学过的生词')
   const firstReviewAt = task.ids.findIndex(id => task.reviewIds.includes(id))
   ok(firstReviewAt > 0, '回顾词穿插在新词中间，不堆在开头', `首次出现在第 ${firstReviewAt + 1} 个`)
 
@@ -446,7 +455,7 @@ reset()
   const bookId = bookStore.currentBookId
   wordStore.ensureDailyTask(bookId)
   const localIds = [...wordStore.task.ids]
-  ok(localIds.length === 33, '本页先生成 33 词任务', String(localIds.length))
+  ok(localIds.length === 40, '本页先生成 40 词任务', String(localIds.length))
 
   // 另一个标签页同时生成了今日任务（这里用顺序颠倒表示“另一份”）
   const otherTask = { date: today(), ids: [...localIds].reverse(), size: localIds.length, bookId }
@@ -520,14 +529,23 @@ reset()
 
   const opts = pickDistractors(correct, pool, { count: 3 })
   ok(opts.every(o => o.id !== correct.id), '干扰项不等于正确答案')
-  ok(opts.every(o => o.sentence), '干扰项本身也带例句（可安全展示）')
+  ok(opts.every(o => o.mean), '干扰项都带释义（可安全展示）')
   eq(pickDistractors(correct, pool, { count: 3, recent: opts.map(o => coreMean(o.mean)) }).length, 3,
     '带上「最近出现过」清单也照样凑齐 3 个')
 
-  // 例句：688 词全部要有，且各不相同
-  const noSentence = wordStore.rawWords.filter(w => !w.sentence || w.sentence.trim().length < 8)
-  eq(noSentence.length, 0, `每个单词都有语境例句（共 ${wordStore.rawWords.length} 词）`)
-  eq(new Set(wordStore.rawWords.map(w => w.sentence)).size, wordStore.rawWords.length, '例句各不相同，没有套模板')
+  // 完形填空要靠例句：2009 词本里能借到例句的约占三成，数量得够撑起一次练习
+  const withSentence = wordStore.wordList.filter(w => w.sentence)
+  ok(withSentence.length > 300, `中考词本里有例句的词够用完形（${withSentence.length} 词）`)
+  ok(withSentence.every(w => w.sentence === sentenceFor(w.word) || w.sentence.length > 8), '例句要么自带要么来自例句库')
+  eq(maskSentence('I want to study English.', 'study'), 'I want to ______ English.', '完形挖空：整词替换')
+  eq(maskSentence('She studied hard last night.', 'study'), 'She ______ hard last night.', '完形挖空：变形按词干匹配')
+  eq(maskSentence('No match here.', 'banana'), '', '句子里没有这个词时不硬挖')
+
+  // 例句：688 词本自带例句，全部都有且各不相同
+  const { wordStore: coreStore } = await boot('688')
+  const noSentence = coreStore.rawWords.filter(w => !w.sentence || w.sentence.trim().length < 8)
+  eq(noSentence.length, 0, `688 词本每个单词都有语境例句（共 ${coreStore.rawWords.length} 词）`)
+  eq(new Set(coreStore.rawWords.map(w => w.sentence)).size, coreStore.rawWords.length, '例句各不相同，没有套模板')
 
   // 鼓励语
   ok(MAIN_ENCOURAGEMENT.includes('完成一天任务'), '主鼓励语是「完成一天任务」那句', MAIN_ENCOURAGEMENT)
@@ -535,6 +553,111 @@ reset()
   ok(EXTRA_ENCOURAGEMENTS.includes(pickExtra('2026-01-01')), '附加语取自预设列表')
   eq(pickExtra('2026-01-01'), pickExtra('2026-01-01'), '同一天挑到的附加语固定不变')
   ok(encouragementLine('2026-01-01').includes(MAIN_ENCOURAGEMENT), '整句鼓励语包含主句')
+}
+
+// ------------------------------------------------------- 16. 按音标划分音节
+section('16. 按音标划分音节')
+reset()
+{
+  eq(splitSyllables('əˈkɒmplɪʃ'), ['ə', 'ˈkɒm', 'plɪʃ'], 'accomplish 切成 3 个音节')
+  eq(syllableLine('ˈdɪkʃənri'), 'ˈdɪk·ʃən·ri', '音节之间用「·」连接')
+  eq(stressedSyllable('ˈdɪkʃənri'), 0, '重音符所在音节下标正确')
+  eq(stressedSyllable('əˈkɒmplɪʃ'), 1, '重音落在第二个音节')
+  eq(splitSyllables(''), [], '空音标返回空数组')
+  eq(splitSyllables('   '), [], '纯空格音标返回空数组')
+  eq(splitSyllables('nʌt'), ['nʌt'], '单音节词不拆')
+  eq(splitSyllables('streŋθ'), ['streŋθ'], '没有可拆辅音丛时不拆')
+
+  const clean = s => String(s || '').replace(/[/[\]\s.,;:·\-–—()]/g, '')
+  const bad = middleSchoolWords.filter(w => w.phonetic && clean(syllableLine(w.phonetic)) !== clean(w.phonetic))
+  eq(bad.length, 0, `全库 ${middleSchoolWords.filter(w => w.phonetic).length} 条音标拼回后与原串一致`,
+    bad.slice(0, 5).map(w => `${w.word}: ${w.phonetic} → ${syllableLine(w.phonetic)}`).join(' | '))
+  const multi = middleSchoolWords.filter(w => w.phonetic && splitSyllables(w.phonetic).length > 1)
+  ok(multi.length > 1000, `大多数词能拆成多音节（${multi.length} 词）`)
+}
+
+// -------------------------------------------------------- 17. 连对与评级
+section('17. 连对称号与测试卷评级')
+reset()
+{
+  eq(streakLabel(0), '', '0 连对没有称号')
+  eq(streakLabel(2), '', '2 连对还没到激励线')
+  eq(streakLabel(3), 'Good', '3 连对 Good')
+  eq(streakLabel(4), 'Great', '4 连对 Great')
+  eq(streakLabel(5), 'Brilliant', '5 连对 Brilliant')
+  eq(streakLabel(6), 'Wonderful', '6 连对 Wonderful')
+  eq(streakLabel(7), 'Fantastic', '7 连对 Fantastic')
+  eq(streakLabel(8), 'Excellent', '8 连对 Excellent')
+  eq(streakLabel(9), 'Perfect', '9 连对 Perfect')
+  eq(streakLabel(12), 'Perfect', '超过 9 连对保持 Perfect')
+  eq(STREAK_TIERS.map(t => t.at), [3, 4, 5, 6, 7, 8, 9], '激励档位从 3 连对起逐级递增')
+  eq(streakTier(3), { at: 3, label: 'Good' }, 'streakTier 返回命中的档位')
+
+  eq(EXAM_SIZE, 100, '测试卷 100 题')
+  eq(examGrade(100).label, 'Excellent', '100 分 Excellent')
+  eq(examGrade(95).label, 'Good', '95 分 Good')
+  eq(examGrade(99).label, 'Good', '99 分 Good')
+  eq(examGrade(90).label, 'Normal', '90 分 Normal')
+  eq(examGrade(94).label, 'Normal', '94 分 Normal')
+  eq(examGrade(89).label, 'Come on', '89 分 Come on')
+  eq(examGrade(0).label, 'Come on', '0 分 Come on')
+  eq(examGrade(120).score, 100, '超界分数夹到 100')
+  ok(examGrade(100).tip.length > 4, '每个档位都带鼓励语')
+}
+
+// ------------------------------------------------------- 18. 测试卷抽词
+section('18. 测试卷抽词')
+reset()
+{
+  const { wordStore } = await boot()
+  const list = wordStore.wordList
+  const paper = pickExamWords(list, EXAM_SIZE)
+  eq(paper.length, 100, '抽满 100 题')
+  eq(new Set(paper.map(w => w.id)).size, 100, '100 题的词不重复')
+  ok(paper.every(w => w.word && w.mean), '每道题都有词和释义')
+  ok(paper.every(w => list.some(x => x.id === w.id)), '抽到的词都来自当前词本')
+  eq(pickExamWords(list, 5).length, 5, '可以只抽 5 题')
+  eq(pickExamWords(list.slice(0, 3), 100).length, 3, '词不够时有多少出多少')
+  const shuffled = new Set(Array.from({ length: 5 }, () => pickExamWords(list, 100).map(w => w.id).join()))
+  ok(shuffled.size > 1, '每次抽题顺序都不一样')
+}
+
+// ------------------------------------------------- 19. 词本完整性 & 只种一次
+section('19. 中考词本完整性与种入幂等')
+reset()
+{
+  ok(middleSchoolWords.length >= 2000, `docx 导入的词条数 ${middleSchoolWords.length}`)
+  ok(middleSchoolWords.every(w => w.word && String(w.word).trim()), '每条都有单词')
+  ok(middleSchoolWords.every(w => w.mean && String(w.mean).trim()), '每条都有中文释义')
+  eq(new Set(middleSchoolWords.map(w => String(w.word).toLowerCase())).size, middleSchoolWords.length, '没有重复单词')
+  const noPhonetic = middleSchoolWords.filter(w => !w.phonetic || !String(w.phonetic).trim())
+  ok(noPhonetic.length < 20, `缺音标的词少于 20 条（实际 ${noPhonetic.length} 条）`,
+    noPhonetic.slice(0, 5).map(w => w.word).join(','))
+  ok(middleSchoolWords.filter(w => w.sentence && w.sentence.length > 8).length < 20,
+    '种入的词条不带例句，交给例句库补')
+}
+
+reset()
+{
+  const { bookStore, wordStore } = await boot()
+  const examBook = bookStore.bookList.find(b => b.name === EXAM_BOOK_NAME)
+  ok(examBook, `新装默认词本叫「${EXAM_BOOK_NAME}」`)
+  eq(wordStore.wordList.length, middleSchoolWords.length, '当前词本就是整份中考词表')
+  eq(LocalStore.loadWords(examBook.id).length, middleSchoolWords.length, '词条按整份词表种入')
+
+  // 再次加载词本不应该重复种入
+  await bookStore.loadBooks()
+  eq(LocalStore.loadWords(examBook.id).length, middleSchoolWords.length, '重复加载词本不会重复种入')
+  eq(LocalStore.loadAllWords().filter(w => w.book_id === examBook.id).length, middleSchoolWords.length,
+    '同一词本里没有重复词条')
+
+  // 删掉一个词后再次加载，确认没有重复种入
+  const first = LocalStore.loadWords(examBook.id)[0]
+  LocalStore.deleteWord(first.id)
+  eq(LocalStore.loadWords(examBook.id).length, middleSchoolWords.length - 1, '删词后数量减一')
+  await bookStore.loadBooks()
+  eq(LocalStore.loadWords(examBook.id).length, middleSchoolWords.length - 1,
+    '种子词表只种一次，不会把用户删掉的词塞回来')
 }
 
 console.log(`\n===== 逻辑自测结果：${pass} 通过，${fails.length} 失败 =====`)

@@ -7,6 +7,8 @@ import {
   trackStudy, getTodayStudiedIds, getSettings, saveSettings, getTasks, saveTask,
   intervalMs, todayStr
 } from '../utils/profile'
+import { sentenceFor } from '../utils/sentences'
+import { coreMean } from '../utils/distractors'
 
 // 缓存格式变了就换前缀，避免老缓存里没有例句
 const CACHE_PREFIX = 'cache_words_v2_'
@@ -106,7 +108,7 @@ export const useWordStore = defineStore('word', () => {
       word: w.word,
       phonetic: w.phonetic || '',
       mean: w.mean || '',
-      sentence: w.sentence || '',
+      sentence: w.sentence || sentenceFor(w.word) || '',
       star: false,
       note: '',
       learnLevel: 0,
@@ -363,17 +365,24 @@ export const useWordStore = defineStore('word', () => {
 
     const ids = []
     const picked = new Set()
+    // 同一批任务里不放释义一样（如 a / an）或主干释义相同的词，否则选项会出现两个都对
+    const usedMeans = new Set()
     const reviewTarget = size >= 10 ? Math.min(size - 1, Math.round(size * REVIEW_RATIO)) : 0
     const reviewIds = []
     for (const { w } of [...due, ...recent]) {
       if (reviewIds.length >= reviewTarget) break
       if (picked.has(w.id)) continue
       picked.add(w.id)
+      const core = coreMean(w.mean)
+      if (core) usedMeans.add(core)
       reviewIds.push(w.id)
     }
-    const push = (w) => {
+    const push = (w, strict = true) => {
       if (ids.length >= size) return
       if (picked.has(w.id)) return
+      const core = coreMean(w.mean)
+      if (strict && core && usedMeans.has(core)) return
+      if (core) usedMeans.add(core)
       picked.add(w.id)
       ids.push(w.id)
     }
@@ -392,6 +401,13 @@ export const useWordStore = defineStore('word', () => {
     for (const { w } of known) {
       if (ids.length + reviewIds.length >= size) break
       push(w)
+    }
+    // 词库太小凑不满时放宽去重，保证任务量
+    if (ids.length + reviewIds.length < size) {
+      for (const w of [...fresh, ...known.map(k => k.w)]) {
+        if (ids.length + reviewIds.length >= size) break
+        push(w, false)
+      }
     }
     const mixed = mixTask(ids, reviewIds, size)
     const next = { date, ids: mixed, size, bookId: book, reviewIds }
@@ -423,7 +439,7 @@ export const useWordStore = defineStore('word', () => {
   }
 
   function setDailySize(size) {
-    const value = Math.min(100, Math.max(5, Math.round(Number(size) || 33)))
+    const value = Math.min(200, Math.max(5, Math.round(Number(size) || 40)))
     dailySize.value = value
     saveSettings({ dailySize: value })
     return value

@@ -2,9 +2,12 @@
   <div class="quiz-mode">
     <div class="quiz-header">
       <span class="mode-badge">📝 选择题</span>
+      <span class="quiz-streak" v-if="streak >= 2">🔥 {{ streak }} 连对</span>
       <span class="quiz-progress">今日任务 {{ doneCount }}/{{ totalCount }}</span>
     </div>
     <el-progress :percentage="progressPct" :stroke-width="6" :show-text="false" color="#F59E0B" />
+
+    <StreakFlash :label="flashLabel" :count="streak" />
 
     <div class="quiz-card" v-if="currentWord">
       <h2 class="quiz-word">{{ currentWord.word }}</h2>
@@ -37,7 +40,7 @@
 
       <div v-if="answered" class="quiz-feedback">
         <p :class="isCorrect ? 'feedback-correct' : 'feedback-wrong'">
-          {{ isCorrect ? '🎉 回答正确！' : '😅 正确答案是：' + currentWord.mean }}
+          {{ isCorrect ? '🎉 回答正确！' : '🤔 再想想，正确答案是：' + currentWord.mean }}
         </p>
         <p class="quiz-sentence" v-if="currentWord.sentence">例句：{{ currentWord.sentence }}</p>
         <p v-if="!isCorrect" class="feedback-retry">这个词本轮最后会再出现一次</p>
@@ -46,13 +49,16 @@
     </div>
 
     <el-empty v-else-if="loading" description="加载中..." />
-    <el-empty v-else-if="totalCount > 0" description="今日任务完成！">
-      <div class="encouragement">
-        <p class="encourage-main">{{ encouragement }}</p>
-        <p class="encourage-extra">{{ extra }}</p>
-      </div>
-      <el-button type="primary" @click="$emit('done')">返回</el-button>
-    </el-empty>
+    <template v-else-if="totalCount > 0">
+      <Fireworks :active="showFireworks" />
+      <el-empty description="今日任务完成！">
+        <div class="encouragement">
+          <p class="encourage-main">{{ encouragement }}</p>
+          <p class="encourage-extra">{{ extra }}</p>
+        </div>
+        <el-button type="primary" @click="$emit('done')">返回</el-button>
+      </el-empty>
+    </template>
     <el-empty v-else description="今天还没有可选择的单词">
       <el-button type="primary" @click="$emit('done')">返回</el-button>
     </el-empty>
@@ -60,10 +66,14 @@
 </template>
 
 <script setup>
-import { ref, computed, watch } from 'vue'
+import { ref, computed, watch, onUnmounted } from 'vue'
 import { ElMessage } from 'element-plus'
 import { useWordStore } from '../stores/wordStore'
 import { pickDistractors } from '../utils/distractors'
+import { playCorrect, playWrong, playStreak, playFinish } from '../composables/useSound'
+import { STREAK_TIERS, streakTier } from '../utils/streak'
+import Fireworks from './Fireworks.vue'
+import StreakFlash from './StreakFlash.vue'
 import { MAIN_ENCOURAGEMENT, pickExtra } from '../utils/encouragement'
 import { todayStr } from '../utils/profile'
 
@@ -81,6 +91,10 @@ const answered = ref(false)
 const doneCount = ref(0)
 const totalCount = ref(0)
 const loading = ref(false)
+const streak = ref(0)
+const flashLabel = ref('')
+const showFireworks = ref(false)
+let flashTimer = 0
 let requeued = new Set()
 // 最近出过的释义，避免同一套干扰项反复出现
 let recentMeans = []
@@ -114,6 +128,9 @@ async function initQuiz(bookId) {
   doneCount.value = 0
   requeued = new Set()
   recentMeans = []
+  streak.value = 0
+  flashLabel.value = ''
+  showFireworks.value = false
   loading.value = false
   advance()
 }
@@ -156,8 +173,12 @@ function submit() {
   const word = currentWord.value
   if (selectedIdx.value === correctIdx.value) {
     wordStore.markRight(word.id)
+    registerStreak()
   } else {
     wordStore.markWrong(word.id)
+    streak.value = 0
+    hideFlash()
+    playWrong()
     // 答错的词在本轮末尾再出一次，只重排一次
     if (!requeued.has(word.id)) {
       requeued.add(word.id)
@@ -167,10 +188,34 @@ function submit() {
   }
 }
 
+/** 连对：3 题起给称号，换一套更亮的音效 + 闪光 */
+function registerStreak() {
+  streak.value++
+  const tier = streakTier(streak.value)
+  if (!tier) { playCorrect(streak.value); return }
+  const index = STREAK_TIERS.findIndex(t => t.label === tier.label)
+  playStreak(index)
+  flashLabel.value = tier.label
+  clearTimeout(flashTimer)
+  flashTimer = window.setTimeout(hideFlash, 1800)
+}
+
+function hideFlash() {
+  clearTimeout(flashTimer)
+  flashTimer = 0
+  flashLabel.value = ''
+}
+
 function next() {
   advance()
-  if (!currentWord.value) ElMessage.success(MAIN_ENCOURAGEMENT)
+  if (!currentWord.value) {
+    ElMessage.success(MAIN_ENCOURAGEMENT)
+    showFireworks.value = true
+    playFinish()
+  }
 }
+
+onUnmounted(() => clearTimeout(flashTimer))
 
 function optionClass(idx) {
   if (!answered.value) return idx === pendingIdx.value ? 'option-pending' : ''
@@ -185,6 +230,7 @@ function optionClass(idx) {
 .quiz-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; gap: 8px; }
 .mode-badge { font-weight: 600; font-size: 15px; }
 .quiz-progress { font-size: 14px; color: var(--color-text-muted); }
+.quiz-streak { font-size: 13px; font-weight: 600; color: #F59E0B; margin-left: auto; margin-right: 8px; }
 .quiz-card { background: white; border-radius: var(--radius-xl); padding: 32px; margin-top: 20px; box-shadow: var(--shadow-md); text-align: center; }
 .quiz-word { font-size: 36px; margin-bottom: 4px; }
 .quiz-hint { font-size: 14px; color: var(--color-text-muted); margin-bottom: 24px; }

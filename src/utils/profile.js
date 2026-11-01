@@ -13,7 +13,7 @@ const LEGACY_KEYS = {
   records: 'learn_record'
 }
 
-const DEFAULT_SETTINGS = { dailySize: 33, shuffle: false }
+const DEFAULT_SETTINGS = { dailySize: 40, shuffle: false, sound: true }
 
 function read(key, fallback) {
   try {

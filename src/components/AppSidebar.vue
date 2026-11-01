@@ -122,6 +122,8 @@ const allMenuItems = [
   { path: '/students', title: '学生档案', icon: 'User' },
   { path: '/books', title: '单词管理', icon: 'DocumentAdd', admin: true },
   { path: '/study', title: '开始背诵', icon: 'Reading' },
+  { path: '/daily-words', title: '今日单词表', icon: 'List' },
+  { path: '/exam', title: '单词测试卷', icon: 'EditPen' },
   { path: '/wrong', title: '错题本', icon: 'Warning' },
   { path: '/stats', title: '学习统计', icon: 'DataAnalysis' }
 ]

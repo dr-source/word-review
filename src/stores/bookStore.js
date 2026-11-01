@@ -1,7 +1,7 @@
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
 import { supabase } from '../utils/supabase'
-import { LocalStore } from '../utils/localStore'
+import { LocalStore, EXAM_BOOK_NAME } from '../utils/localStore'
 import { getStudentBookId, setStudentBookId } from '../utils/profile'
 
 const CACHE_KEY = 'cache_books'
@@ -38,7 +38,9 @@ export const useBookStore = defineStore('book', () => {
       currentBookId.value = saved
       return
     }
-    if (bookList.value.length) currentBookId.value = bookList.value[0].id
+    // 没有历史选择时优先「中考必背2000英语词汇」，其次用第一个词本
+    const preferred = bookList.value.find(b => b.name === EXAM_BOOK_NAME) || bookList.value[0]
+    if (preferred) currentBookId.value = preferred.id
   }
 
   /** 从 localStorage 恢复缓存 */
