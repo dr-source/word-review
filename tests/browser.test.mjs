@@ -291,6 +291,74 @@ const typeIntoIn = (sid, sel, value) => evaluateIn(sid, `
   })()
 `)
 const typeInto = (sel, value) => typeIntoIn(S, sel, value)
+/** 点屏幕上的字母键拼一串字母（拼写模式没有输入框，只能点键） */
+const spellKeys = word => evaluate(`
+  (() => {
+    const byLetter = new Map([...document.querySelectorAll('.spelling-mode .spell-key')]
+      .filter(k => !k.classList.contains('spell-del'))
+      .map(k => [(k.textContent || '').trim().toLowerCase(), k]))
+    let typed = 0
+    for (const ch of ${JSON.stringify(String(word))}.toLowerCase().replace(/[^a-z]/g, '')) {
+      const el = byLetter.get(ch)
+      if (!el) return { typed, missing: ch }
+      el.click()
+      typed++
+    }
+    return { typed, missing: '' }
+  })()
+`)
+/**
+ * 把 AudioContext 换成记录器：每次 createOscillator 都把「波形 + 频率」记进 window.__tones。
+ * 只能靠 addScriptToEvaluateOnNewDocument 在文档加载前注入，否则模块里缓存的 ctx 还是旧的。
+ * 顺手把 userActivation 置成「用户真的点过」，否则 allowed() 会直接不发声。
+ */
+const SOUND_SPY = `
+(() => {
+  try {
+    Object.defineProperty(navigator, 'userActivation', {
+      value: { hasBeenActive: true, isActive: true }, configurable: true
+    })
+  } catch (e) {}
+  const tones = []
+  window.__tones = tones
+  class Gain {
+    constructor() {
+      this.gain = {
+        setValueAtTime() {},
+        linearRampToValueAtTime() {},
+        exponentialRampToValueAtTime() {}
+      }
+    }
+    connect(node) { return node }
+  }
+  class Osc {
+    constructor() { this._type = 'sine'; this._freq = 0 }
+    get type() { return this._type }
+    set type(v) { this._type = v }
+    get frequency() {
+      const self = this
+      return { setValueAtTime(v) { self._freq = v } }
+    }
+    connect(node) { return node }
+    start() { tones.push({ type: this._type, freq: Math.round(this._freq * 10) / 10 }) }
+    stop() {}
+  }
+  class FakeCtx {
+    constructor() {
+      this.state = 'running'
+      this.destination = { connect() {} }
+      this._t = 0
+    }
+    get currentTime() { this._t += 0.001; return this._t }
+    createOscillator() { return new Osc() }
+    createGain() { return new Gain() }
+    resume() { return Promise.resolve() }
+  }
+  window.AudioContext = FakeCtx
+  window.webkitAudioContext = FakeCtx
+})()
+`
+
 async function go(path) {
   await evaluate(`location.hash = ${JSON.stringify('#' + path)}`)
 }
@@ -492,14 +560,18 @@ let firstWord = ''
   await click('.flashcard-wrapper')
   await waitFor(`!!document.querySelector('.rating-good')`, '评分按钮')
   ok('翻面后也不显示中文释义节点', !(await exists('.word-meaning')))
-  // 词库里有例句就必须显示；没有例句时给的是「去今日单词表对释义」的提示
+  // 翻过来就看中文；词库里有例句就顺带显示，没有例句也不再塞占位提示
+  const backMean = norm(await text('.flashcard-back .back-mean'))
+  const expectMean = norm(await meanOf(firstWord))
+  ok('翻面后显示中文释义', backMean.length > 0 && backMean === expectMean,
+    `期望「${expectMean}」实际「${backMean}」`)
   const backSentence = await storedSentenceOf(firstWord)
   const expectBack = sentenceOf(firstWord, backSentence)
-  const backText = await text('.word-sentence')
-  const backMuted = await evaluate(`!!document.querySelector('.word-sentence.muted')`)
-  ok('翻面后：有例句就显示例句，没例句就给看释义的提示',
-    expectBack ? (backText.includes(expectBack.slice(0, 24)) && !backMuted) : backMuted,
-    `期望「${expectBack || '（无例句→提示）'}」实际「${backText}」 muted=${backMuted}`)
+  const backText = await text('.flashcard-back .word-sentence')
+  ok('有例句就顺带显示例句', expectBack ? backText.includes(expectBack.slice(0, 24)) : true,
+    `期望「${expectBack || '（无例句）'}」实际「${backText}」`)
+  ok('没例句时不再塞「去单词表看释义」的占位',
+    !(await exists('.flashcard-back .word-sentence.muted')))
   await click('.rating-good')
   await waitFor(`document.querySelector('.progress-badge')?.textContent.includes('1/40')`, '翻卡计数 +1')
   ok('翻卡切到下一个词', (await text('.word-text')) !== firstWord)
@@ -555,13 +627,28 @@ section('3. 三种模式取词/取义一致')
   const barTag = await text('.student-bar')
   ok('选择题答对后顶部计数为 1/40（同词去重只加一次）', barTag.includes('今日任务 1/40 词'), barTag)
 
-  // 拼写：默认手写板 + 自评
+  // 拼写：屏幕字母键 + 软件自动判分（没有手写板、没有输入框、没有自评）
   await clickByText('.mode-selector .el-radio-button', '拼写')
   await waitFor(`!!document.querySelector('.spelling-mode .mean-display')`, '拼写渲染')
   eq('拼写首词释义与翻卡同词', await text('.mean-display'), mean)
-  ok('拼写默认是手写板', (await exists('.spelling-mode .pad-canvas')) && !(await exists('.input-row input')))
-  ok('手写板一开始是空的（有占位提示）', await exists('.pad-placeholder'))
-  ok('切换按钮当前提示可以改用键盘', (await text('.handwrite-toggle')).includes('改用键盘'))
+  ok('拼写不再有手写板', !(await exists('.spelling-mode .pad-canvas')) && !(await exists('.spelling-mode .pad-placeholder')))
+  ok('拼写不再用系统键盘输入框', !(await exists('.spelling-mode .input-row input')))
+  ok('拼写不再有「我写对/我写错」自评按钮', !(await exists('.spelling-mode .self-btn')))
+  eq('自带键盘只有 26 个字母键', await evaluate(`
+    (() => [...document.querySelectorAll('.spelling-mode .spell-key')]
+      .filter(k => !k.classList.contains('spell-del'))
+      .map(k => (k.textContent || '').trim().toLowerCase()).sort().join(''))()
+  `), 'abcdefghijklmnopqrstuvwxyz')
+  ok('自带键盘另有一个删除键', await exists('.spelling-mode .spell-key.spell-del'))
+  ok('字母键按 QWERTY 三排摆放', await evaluate(`
+    (() => {
+      const rows = [...document.querySelectorAll('.spelling-mode .spell-key-row')]
+      return rows.length >= 3 && (rows[0].textContent || '').replace(/\\s+/g, '') === 'qwertyuiop'
+    })()
+  `))
+  ok('拼写提示写明「字母键」和「自动判对错」',
+    (await text('.spelling-hint')).includes('字母键') && (await text('.spelling-hint')).includes('自动判'),
+    await text('.spelling-hint'))
   const phonetic = await evaluate(`
     (() => {
       const words = JSON.parse(localStorage.getItem('word_review_local_words') || '[]')
@@ -572,47 +659,34 @@ section('3. 三种模式取词/取义一致')
   if (phonetic) {
     ok('拼写卡不给音标（避免照着音标抄）', !(await text('.spelling-mode')).includes(phonetic), phonetic)
   }
+  eq('字母槽数量等于正确拼写的字母数', await count('.spelling-mode .spell-slot'),
+    firstWord.replace(/[^A-Za-z]/g, '').length)
 
-  // 在画布上真画一笔：空状态消失才算写进去了
-  await evaluate(`
-    (() => {
-      const canvas = document.querySelector('.pad-canvas')
-      if (!canvas) return false
-      const r = canvas.getBoundingClientRect()
-      const at = (dx, dy) => ({
-        clientX: Math.round(r.left + dx), clientY: Math.round(r.top + dy),
-        pointerId: 1, pointerType: 'touch', isPrimary: true, bubbles: true, cancelable: true
-      })
-      canvas.dispatchEvent(new PointerEvent('pointerdown', at(30, 60)))
-      canvas.dispatchEvent(new PointerEvent('pointermove', at(60, 90)))
-      canvas.dispatchEvent(new PointerEvent('pointermove', at(90, 50)))
-      canvas.dispatchEvent(new PointerEvent('pointerup', at(90, 50)))
-      return true
-    })()
-  `)
-  ok('手写一笔后占位提示消失', await waitForSoft(`!document.querySelector('.pad-placeholder')`, 3000))
-  await click('.pad-check')
-  await waitFor(`!!document.querySelector('.self-check .answer-word')`, '手写对答案')
-  eq('对答案给出正确拼写', await text('.self-check .answer-word'), firstWord)
-  await click('.self-right')
-  await waitFor(`!!document.querySelector('.result-correct')`, '手写自评判对')
-  ok('手写自评「我写对了」判对', await exists('.result-correct'))
+  // 点满字母自动判分：对错由软件算，学生没有自评的口子
+  eq('逐键拼出正确拼写', (await spellKeys(firstWord)).missing, '')
+  await waitFor(`!!document.querySelector('.spelling-result .result-correct')`, '拼对自动判对')
+  ok('软件自己判对并给出 ✅', (await text('.spelling-result .result-correct')).includes('正确'),
+    await text('.spelling-result .result-correct'))
+  ok('判完就不再显示字母键（防止继续乱点）', !(await exists('.spelling-mode .spell-keys')))
   const barTag2 = await text('.student-bar')
   ok('拼写答对同一词后顶部计数仍为 1/40', barTag2.includes('今日任务 1/40 词'), barTag2)
 
-  // 切到键盘模式再答错一个新词
+  // 下一题故意拼错：自动判错 + 提示稍后再出现
   await clickByText('.spelling-result button', '下一题')
   await waitFor(`!!document.querySelector('.mean-display') && !document.querySelector('.spelling-result')`, '拼写下一题')
   const secondMean = await text('.mean-display')
   ok('下一题换了新词', secondMean !== mean, secondMean)
-  await click('.handwrite-toggle')
-  await waitFor(`!!document.querySelector('.input-row input')`, '切到键盘输入')
-  ok('切到键盘后手写板消失', !(await exists('.pad-canvas')))
-  await typeInto('.input-row input', 'zzzz')
-  await click('.input-row button')
-  await waitFor(`!!document.querySelector('.result-wrong')`, '拼写判错')
-  ok('拼写答错显示正确答案', (await text('.result-wrong')).includes('正确答案'))
-  ok('拼写答错提示会再出现', await exists('.retry-hint'))
+  ok('下一题的字母槽被清空',
+    await evaluate(`[...document.querySelectorAll('.spelling-mode .spell-slot')].every(s => !(s.textContent || '').trim())`))
+  ok('下一题重新给出字母键', await exists('.spelling-mode .spell-keys'))
+  const secondSlots = await count('.spelling-mode .spell-slot')
+  ok('下一题字母槽数量也等于正确拼写的字母数', secondSlots > 0, String(secondSlots))
+  eq('错拼也点满字母槽', (await spellKeys('z'.repeat(secondSlots))).missing, '')
+  await waitFor(`!!document.querySelector('.spelling-result .result-wrong')`, '拼错自动判错')
+  ok('拼错时软件直接亮出正确答案',
+    (await text('.spelling-result .result-wrong')).includes('正确答案'), await text('.spelling-result .result-wrong'))
+  ok('拼错提示这个词稍后还会再出现一次',
+    (await text('.retry-hint')).includes('再出现一次'), await text('.retry-hint'))
   const barTag3 = await text('.student-bar')
   ok('答错新词后顶部计数为 2/40', barTag3.includes('今日任务 2/40 词'), barTag3)
 }
@@ -1136,46 +1210,26 @@ section('11. 老版本种子词升级时补例句')
   ok('补例句后应用正常渲染', await exists('.home-page .task-count'))
 }
 
-// ================================================================ 12. 五种模式都能出题
-section('12. 五种练习模式都能出题、连对 3 题给 Good 闪光')
+// ================================================================ 12. 四种模式都能出题
+section('12. 四种练习模式都能出题、连对 3 题给 Good 闪光')
 {
   await navigate(`${BASE}/manifest.json`)
   await evaluate('localStorage.clear()')
   await navigate(`${BASE}/#/`)
-  await waitFor(`!!document.querySelector('.home-page .task-count')`, '五模式：首页')
+  await waitFor(`!!document.querySelector('.home-page .task-count')`, '四模式：首页')
   await go('/study')
-  await waitFor(`document.querySelectorAll('.mode-selector .el-radio-button').length === 5`, '五种练习模式')
+  await waitFor(`document.querySelectorAll('.mode-selector .el-radio-button').length === 4`, '四种练习模式')
 
-  eq('背诵页给了 5 种模式', await count('.mode-selector .el-radio-button'), 5)
+  eq('背诵页给了 4 种模式', await count('.mode-selector .el-radio-button'), 4)
   const modeText = await text('.mode-selector')
-  ok('模式里有完形填空', modeText.includes('完形'), modeText)
-  ok('模式里有音节拼读', modeText.includes('音节'), modeText)
+  ok('模式里有翻卡 / 选择 / 拼写 / 完形',
+    ['翻卡', '选择', '拼写', '完形'].every(m => modeText.includes(m)), modeText)
+  ok('音节练习模式已下掉（音节改由「今日单词表」提供）', !modeText.includes('音节'), modeText)
+  ok('页面上不再挂载音节模式组件', !(await exists('.syllable-mode')))
   ok('背诵页带「今日单词表」入口',
     (await text('.entry-row .entry-daily')).includes('今日单词表'), await text('.entry-row .entry-daily'))
   ok('背诵页带「100 词测试卷」入口',
     (await text('.entry-row .entry-exam')).includes('100 词测试卷'), await text('.entry-row .entry-exam'))
-
-  // 音节模式：切出音节片 + 中文释义，能翻到下一个词
-  ok('切到音节模式', await clickByText('.mode-selector .el-radio-button', '音节'))
-  await waitFor(`!!document.querySelector('.syllable-word')`, '音节模式出题')
-  const syl = await evaluate(`
-    (() => ({
-      word: (document.querySelector('.syllable-word')?.textContent || '').trim(),
-      mean: (document.querySelector('.syllable-mean')?.textContent || '').trim(),
-      chips: [...document.querySelectorAll('.syllable-chip')].length,
-      empty: !!document.querySelector('.syllable-empty'),
-      progress: (document.querySelector('.syllable-progress')?.textContent || '').trim()
-    }))()
-  `)
-  ok('音节模式给出的单词是英文', /^[A-Za-z][A-Za-z' -]*$/.test(syl.word), syl.word)
-  ok('音节模式同时给出中文释义', /[\u4e00-\u9fa5]/.test(syl.mean), syl.mean)
-  ok('有音标的词切出音节片，没音标的给出提示', syl.chips >= 1 || syl.empty,
-    `chips=${syl.chips} empty=${syl.empty}`)
-  eq('音节模式从第 1 个词开始', syl.progress, '1/40')
-  ok('点「下一个」翻到第 2 个词', await clickByText('.syllable-nav button', '下一个'))
-  await waitFor(`(document.querySelector('.syllable-progress')?.textContent || '').trim() === '2/40'`, '音节翻到第 2 个')
-  ok('翻页后仍是英文单词 + 中文释义',
-    /[\u4e00-\u9fa5]/.test(await text('.syllable-mean')), await text('.syllable-mean'))
 
   // 完形填空：挖空的例句 + 四个选项，选对了给单词和释义
   ok('切到完形模式', await clickByText('.mode-selector .el-radio-button', '完形'))
@@ -1346,7 +1400,7 @@ section('14. 完成后弹鼓励语（翻卡页 + 首页）')
 }
 
 // ================================================================ 15. 本轮 12 项需求逐条自测
-section('15. 12 项需求逐条自测（表情 / 烟花 / 手写 / 发音 / 难度 / 音节 / 词表 / 测试卷 / 完形 / 音效 / 连对）')
+section('15. 12 项需求逐条自测（表情 / 烟花 / 字母键盘 / 发音 / 难度 / 音效 / 词表 / 测试卷 / 完形 / 连对）')
 {
   // ---------------------------------------------------------------- 本段专用小工具
   /** 读学生设置；键不存在返回 '__missing__'（eq 不接受 undefined） */
@@ -1437,24 +1491,6 @@ section('15. 12 项需求逐条自测（表情 / 烟花 / 手写 / 发音 / 难�
     `)
   }
 
-  /** 手写板上画两笔（PointerEvent 真派发，不是直接调组件方法） */
-  const drawOnPad = () => evaluate(`
-    (() => {
-      const canvas = document.querySelector('.spelling-mode .pad-canvas')
-      if (!canvas) return false
-      const r = canvas.getBoundingClientRect()
-      const fire = (type, dx, dy, buttons) => canvas.dispatchEvent(new PointerEvent(type, {
-        bubbles: true, cancelable: true, pointerId: 1, pointerType: 'mouse',
-        isPrimary: true, button: 0, buttons, clientX: r.left + dx, clientY: r.top + dy
-      }))
-      fire('pointerdown', 20, 40, 1)
-      fire('pointermove', 50, 60, 1)
-      fire('pointermove', 90, 90, 1)
-      fire('pointerup', 90, 90, 0)
-      return true
-    })()
-  `)
-
   const optionTexts = sel => evaluate(`
     (() => [...document.querySelectorAll(${JSON.stringify(sel)})]
       .map(e => (e.textContent || '').replace(/\\s+/g, ' ').trim()))()
@@ -1519,18 +1555,15 @@ section('15. 12 项需求逐条自测（表情 / 烟花 / 手写 / 发音 / 难�
   eq('同一个词反复点只念一次（不叠音）', await spokenTexts(), [cardWord])
   await restoreSpeech()
 
-  // ---------------------------------------------------------------- C2 翻卡背面不放中文
+  // ---------------------------------------------------------------- C2 翻卡背面给中文释义
   {
-    const hintRaw = await evaluate(
-      `(document.querySelector('.flashcard-back .word-sentence.muted')?.textContent || '')`)
-    const hint = norm(hintRaw)
-    const backAll = norm(await text('.flashcard-mode .flashcard-back'))
-    const meaningPart = hint ? backAll.split(hint).join('') : backAll
-    ok('翻卡背面不出现中文释义', !/[\u4e00-\u9fa5]/.test(meaningPart), meaningPart || '（空）')
+    const backMean = norm(await text('.flashcard-back .back-mean'))
     const cardMean = norm(await meanOf(cardWord))
-    ok('翻卡背面没有该词的中文释义', !cardMean || !meaningPart.includes(cardMean),
-      `释义「${cardMean}」背面「${meaningPart}」`)
-    ok('提示学生中文在「今日单词表」里', !hint || hint.includes('今日单词表'), hint || '（有例句，无提示）')
+    ok('翻卡背面显示中文释义', /[\u4e00-\u9fa5]/.test(backMean), backMean || '（空）')
+    ok('背面释义就是这个词的释义', !!cardMean && backMean === cardMean,
+      `期望「${cardMean}」实际「${backMean}」`)
+    ok('背面不再需要「中文去今日单词表看」的提示',
+      !(await exists('.flashcard-back .word-sentence.muted')))
   }
 
   // ---------------------------------------------------------------- D 音效开关
@@ -1565,74 +1598,69 @@ section('15. 12 项需求逐条自测（表情 / 烟花 / 手写 / 发音 / 难�
     eq('烟花层是全屏 fixed 覆盖', fw?.pos, 'fixed')
   }
 
-  // ---------------------------------------------------------------- F 拼写改手写、且不给音标
+  // ---------------------------------------------------------------- F 拼写改用字母键、软件判分
   ok('切到拼写模式', await clickByText('.mode-selector .el-radio-button', '拼写'))
-  await waitFor(`!!document.querySelector('.spelling-mode .pad-canvas')`, '手写板')
-  ok('拼写提示改为「手写」', (await text('.spelling-mode .spelling-hint')).includes('手写'),
-    await text('.spelling-mode .spelling-hint'))
-  ok('手写板初始是空的（占位提示在）', await exists('.spelling-mode .pad-placeholder'))
+  await waitFor(`!!document.querySelector('.spelling-mode .spell-keys')`, '拼写字母键盘')
+  ok('拼写卡片里没有手写板',
+    !(await exists('.spelling-mode .pad-canvas')) && !(await exists('.spelling-mode .pad-placeholder')))
+  ok('拼写卡片里没有输入框', !(await exists('.spelling-mode .spelling-card input')))
+  ok('拼写卡片里没有自评按钮', !(await exists('.spelling-mode .self-btn')))
   eq('拼写卡片里没有音标元素（需求 5）', await count('.spelling-mode .word-phonetic'), 0)
-  await click('.pad-check')
-  ok('空着手写板点「对答案」会被拦下',
-    await waitForSoft(`[...document.querySelectorAll('.el-message')].some(m => (m.textContent || '').includes('先在框里'))`, 5000),
-    await text('.el-message'))
-  ok('被拦下时没有直接给出答案', !(await exists('.self-check .answer-word')))
-  ok('在手写板上画两笔', await drawOnPad())
-  ok('画完后占位提示消失', await waitForSoft(`!document.querySelector('.spelling-mode .pad-placeholder')`, 5000))
-  await click('.pad-check')
-  await waitFor(`!!document.querySelector('.self-check .answer-word')`, '自评答案')
+  eq('键盘只有 26 个字母键 + 1 个删除键', await count('.spelling-mode .spell-key'), 27)
   {
-    const answerWord = norm(await text('.self-check .answer-word'))
-    ok('自评答案给出英文单词', /^[A-Za-z][A-Za-z' -]*$/.test(answerWord), answerWord)
+    const lettersOf = w => String(w || '').replace(/[^A-Za-z]/g, '')
+    const cards = await todayWords()
     const cardText = norm(await text('.spelling-mode .spelling-card'))
-    const phoneticOf = (await todayWords()).find(w => w.word.toLowerCase() === answerWord.toLowerCase())?.phonetic || ''
-    ok('拼写卡片上不显示音标', !phoneticOf || !cardText.includes(phoneticOf),
-      `音标「${phoneticOf}」卡片「${cardText.slice(0, 80)}」`)
+    ok('拼写卡片上不显示音标', !cards[0].phonetic || !cardText.includes(cards[0].phonetic),
+      `音标「${cards[0].phonetic}」卡片「${cardText.slice(0, 80)}」`)
     ok('卡片里也没有 IPA 重音符', !cardText.includes('ˈ'), cardText.slice(0, 80))
-    const before = (await wrongIds()).length
-    await click('.self-btn.self-wrong')
-    await waitFor(`!!document.querySelector('.spelling-result .result-wrong')`, '自评写错')
-    ok('自评写错时给出正确答案', (await text('.spelling-result .result-wrong')).includes(answerWord),
+    eq('拼写第一个词的字母槽数量正确', await count('.spelling-mode .spell-slot'), lettersOf(cards[0].word).length)
+    ok('还没拼完时没有结果区', !(await exists('.spelling-result')))
+
+    // 拼对：软件自己判对，没有自评口子
+    eq('逐键拼出第 1 个词', (await spellKeys(cards[0].word)).missing, '')
+    await waitFor(`!!document.querySelector('.spelling-result .result-correct')`, '拼对自动判对')
+    ok('软件判对，不让学生自评', !(await exists('.self-btn')))
+    ok('判分后字母键收起（不能再乱点）', !(await exists('.spelling-mode .spell-keys')))
+    eq('拼写进度记为 1/6', norm(await text('.spelling-progress')), '今日任务 1/6')
+
+    // 拼错：软件自己判错 + 进错题本 + 排到第 3 位重现
+    await clickByText('.spelling-result button', '下一题')
+    await waitFor(`!!document.querySelector('.mean-display') && !document.querySelector('.spelling-result')`, '拼写下一题')
+    const beforeWrong = (await wrongIds()).length
+    eq('故意错拼也点满字母槽',
+      (await spellKeys('z'.repeat(lettersOf(cards[1].word).length))).missing, '')
+    await waitFor(`!!document.querySelector('.spelling-result .result-wrong')`, '拼错自动判错')
+    ok('拼错时软件直接亮出正确拼写',
+      norm(await text('.spelling-result .result-wrong')).includes(cards[1].word),
       await text('.spelling-result .result-wrong'))
-    ok('自评写错时提示本轮最后再出现一次',
-      (await text('.spelling-result .retry-hint')).includes('再出现一次'),
-      await text('.spelling-result .retry-hint'))
-    ok('写错的词进了错题本', (await wrongIds()).length > before,
-      `${before} → ${(await wrongIds()).length}`)
-    ok('点「下一题」继续', await clickByText('.spelling-result button', '下一题'))
-    ok('下一题手写板被清空', await waitForSoft(`!!document.querySelector('.spelling-mode .pad-placeholder')`, 6000))
-    eq('下一题同样不显示音标', await count('.spelling-mode .word-phonetic'), 0)
+    ok('拼错提示这个词稍后还会再出现一次',
+      norm(await text('.retry-hint')).includes('再出现一次'), await text('.retry-hint'))
+    ok('写错的词进了错题本', (await wrongIds()).length > beforeWrong,
+      `${beforeWrong} → ${(await wrongIds()).length}`)
+
+    // 需求 6：错词排到第 3 个位置，再答对 3 题后它会重新出现
+    for (let i = 2; i <= 4; i++) {
+      await clickByText('.spelling-result button', '下一题')
+      await waitFor(`!!document.querySelector('.spelling-mode .spell-keys')`, `拼写第 ${i + 1} 题`)
+      eq(`第 ${i + 1} 题仍按任务顺序取词`, norm(await text('.mean-display')), norm(cards[i].mean))
+      await spellKeys(cards[i].word)
+      await waitFor(`!!document.querySelector('.result-correct')`, `第 ${i + 1} 题拼对`)
+    }
+    await clickByText('.spelling-result button', '下一题')
+    await waitFor(`!!document.querySelector('.spelling-mode .spell-keys')`, '错词重排后再次出题')
+    eq('拼错的词隔 3 题重新出现', norm(await text('.mean-display')), norm(cards[1].mean))
   }
 
-  // ---------------------------------------------------------------- G 音节背记（教怎么按音标切音节记）
-  ok('切到音节模式', await clickByText('.mode-selector .el-radio-button', '音节'))
-  await waitFor(`!!document.querySelector('.syllable-mode .syllable-word')`, '音节背记出题')
-  {
-    const syl = await evaluate(`
-      (() => ({
-        word: (document.querySelector('.syllable-word')?.textContent || '').trim(),
-        phonetic: (document.querySelector('.syllable-phonetic')?.textContent || '').trim(),
-        chips: [...document.querySelectorAll('.syllable-chip')].map(c =>
-          (c.textContent || '').replace('重读', '').replace(/\\s+/g, ' ').trim()),
-        stressed: !!document.querySelector('.syllable-chip.is-stressed'),
-        listen: !!document.querySelector('.syllable-listen'),
-        tip: (document.querySelector('.syllable-tip')?.textContent || '').replace(/\\s+/g, ' ').trim(),
-        empty: !!document.querySelector('.syllable-empty')
-      }))()
-    `)
-    ok('音节页讲清了怎么按音标切音节', syl.tip.includes('音节') && syl.tip.includes('重读'), syl.tip.slice(0, 60))
-    ok('音节页能直接听发音', syl.listen)
-    if (syl.phonetic) {
-      eq(`音节切分与音标一致（${syl.word} ${syl.phonetic}）`,
-        syl.chips, splitSyllables(syl.phonetic))
-      eq('重读音节标记与音标一致', syl.stressed, stressedSyllable(syl.phonetic) >= 0)
-    } else {
-      ok('没有音标时给出提示而不是空着', syl.empty)
-    }
-    ok('点「下一个」能翻到下一个词', await clickByText('.syllable-nav button', '下一个'))
-    await waitFor(`(document.querySelector('.syllable-progress')?.textContent || '').trim() === '2/6'`,
-      '音节翻到第 2 个')
-  }
+  // ---------------------------------------------------------------- G 音节练习模式已下掉
+  ok('模式切换里不再有「音节」', !(await text('.mode-selector')).includes('音节'), await text('.mode-selector'))
+  ok('页面上没有音节模式组件', !(await exists('.syllable-mode')))
+  ok('模式按钮正好 4 个且都不含「音节」', await evaluate(`
+    (() => {
+      const btns = [...document.querySelectorAll('.mode-selector .el-radio-button')]
+      return btns.length === 4 && btns.every(b => !(b.textContent || '').includes('音节'))
+    })()
+  `))
 
   // ---------------------------------------------------------------- H 任务量调回 40
   await setTaskSize(40)
@@ -1853,6 +1881,80 @@ section('15. 12 项需求逐条自测（表情 / 烟花 / 手写 / 发音 / 难�
     eq('错词卷 100 行', await count('.exam-result .el-table__body tr'), 100)
     ok('交卷后放烟花', await exists('.exam-result .fireworks-canvas'))
     ok('成绩页可以再测一次', await exists('.exam-again'))
+  }
+
+  // ---------------------------------------------------------------- M 测试卷：答对/答错声音不一样
+  {
+    const tab = await openTab()
+    await browser.send('Page.addScriptToEvaluateOnNewDocument', { source: SOUND_SPY }, tab.sessionId)
+    await navigateIn(tab.sessionId, `${BASE}/`)
+    await evaluateIn(tab.sessionId, `location.hash = '#/exam'`)
+    const r = await evaluateIn(tab.sessionId, `
+      (async () => {
+        ${CURRENT_BOOK_JS}
+        const N = t => String(t || '').replace(/\\s+/g, ' ').trim()
+        const tick = (ms = 30) => new Promise(res => setTimeout(res, ms))
+        const until = async (fn, ms = 8000) => {
+          const t0 = Date.now()
+          while (Date.now() - t0 < ms) { if (fn()) return true; await tick(60) }
+          return false
+        }
+        if (!await until(() => document.querySelector('.exam-start'))) return { ok: false, reason: '没进到测试卷开始页' }
+        document.querySelector('.exam-start').click()
+        if (!await until(() => document.querySelector('.exam-word'))) return { ok: false, reason: '没出第一题' }
+
+        const words = JSON.parse(localStorage.getItem('word_review_local_words') || '[]')
+        const pool = bookId ? words.filter(x => x.book_id === bookId) : words
+        const byWord = new Map()
+        for (const w of pool) {
+          const key = String(w.word || '').toLowerCase()
+          if (!byWord.has(key)) byWord.set(key, [])
+          byWord.get(key).push(N(w.mean))
+        }
+        const take = () => { const seq = window.__tones.slice(); window.__tones.length = 0; return seq }
+
+        const answer = async wantCorrect => {
+          const word = N(document.querySelector('.exam-word')?.textContent)
+          const cands = (byWord.get(String(word).toLowerCase()) || []).filter(Boolean)
+          const opts = [...document.querySelectorAll('.exam-option')]
+          const texts = opts.map(o => N(o.querySelector('.option-text')?.textContent))
+          const idx = wantCorrect
+            ? texts.findIndex(t => cands.includes(t))
+            : texts.findIndex(t => !cands.includes(t))
+          if (idx < 0) return { ok: false, reason: '找不到合适的选项', word, texts }
+          window.__tones.length = 0
+          opts[idx].click()
+          await tick(80)
+          const seq = take()
+          const btns = [...document.querySelectorAll('.exam-actions button')]
+          const btn = btns.find(b => (b.textContent || '').includes('下一题')) ||
+                      btns.find(b => (b.textContent || '').includes('交卷'))
+          if (btn) { btn.click(); await tick(80) }
+          return { ok: true, word, seq }
+        }
+
+        const right = await answer(true)
+        if (!right.ok) return right
+        const wrong = await answer(false)
+        if (!wrong.ok) return wrong
+        return { ok: true, right: right.seq, wrong: wrong.seq }
+      })()
+    `)
+    ok('测试卷答对/答错都能抓到播放序列', r?.ok && Array.isArray(r.right) && Array.isArray(r.wrong),
+      JSON.stringify(r))
+    const rightSeq = Array.isArray(r?.right) ? r.right : []
+    const wrongSeq = Array.isArray(r?.wrong) ? r.wrong : []
+    eq('答对：三个上行音 + 一个高八度点缀', rightSeq.map(t => t.type).join(','),
+      'triangle,triangle,triangle,sine')
+    eq('答错：两个下行音（锯齿波）', wrongSeq.map(t => t.type).join(','), 'sawtooth,sawtooth')
+    const rising = rightSeq.length === 4 &&
+      rightSeq[0].freq < rightSeq[1].freq && rightSeq[1].freq < rightSeq[2].freq
+    const falling = wrongSeq.length === 2 && wrongSeq[0].freq > wrongSeq[1].freq
+    ok('答对是上行、答错是下行（一听就知道错了）', rising && falling,
+      `对 ${JSON.stringify(rightSeq)} 错 ${JSON.stringify(wrongSeq)}`)
+    ok('对错两次的频率序列完全不同',
+      JSON.stringify(rightSeq.map(t => t.freq)) !== JSON.stringify(wrongSeq.map(t => t.freq)),
+      `对 ${JSON.stringify(rightSeq.map(t => t.freq))} 错 ${JSON.stringify(wrongSeq.map(t => t.freq))}`)
   }
 }
 

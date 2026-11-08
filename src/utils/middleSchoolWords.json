@@ -1506,7 +1506,7 @@
     "sentence": ""
   },
   {
-    "word": "can modal",
+    "word": "can",
     "phonetic": "kæn",
     "mean": "v.能够；可以；可能；会n.罐子",
     "sentence": ""
@@ -2334,7 +2334,7 @@
     "sentence": ""
   },
   {
-    "word": "could modal",
+    "word": "could",
     "phonetic": "kʊd",
     "mean": "v.(can的过去式)可以…；(表示许可或请求)可以…；行",
     "sentence": ""
@@ -6384,15 +6384,9 @@
     "sentence": ""
   },
   {
-    "word": "may modal",
+    "word": "may",
     "phonetic": "meɪ",
-    "mean": "v. 可能；也许；或许(过去时：might)",
-    "sentence": ""
-  },
-  {
-    "word": "May",
-    "phonetic": "meɪ",
-    "mean": "n.5月",
+    "mean": "v. 可能；也许；或许(过去时：might)；n.5月(May)",
     "sentence": ""
   },
   {
@@ -6786,7 +6780,7 @@
     "sentence": ""
   },
   {
-    "word": "must modal",
+    "word": "must",
     "phonetic": "mʌst",
     "mean": "v.必须；应当；必定是",
     "sentence": ""
@@ -9264,7 +9258,7 @@
     "sentence": ""
   },
   {
-    "word": "should modal",
+    "word": "should",
     "phonetic": "ʃʊd",
     "mean": "v. 应当；应该；会",
     "sentence": ""
@@ -9408,7 +9402,7 @@
     "sentence": ""
   },
   {
-    "word": "shall model",
+    "word": "shall",
     "phonetic": "ʃæl",
     "mean": "v.&aux.(表示将来)将",
     "sentence": ""
@@ -11790,7 +11784,7 @@
     "sentence": ""
   },
   {
-    "word": "will modal",
+    "word": "will",
     "phonetic": "wɪl",
     "mean": "v.将；会(表示将来)； 愿意；",
     "sentence": ""

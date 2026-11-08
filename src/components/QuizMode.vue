@@ -43,7 +43,7 @@
           {{ isCorrect ? '🎉 回答正确！' : '🤔 再想想，正确答案是：' + currentWord.mean }}
         </p>
         <p class="quiz-sentence" v-if="currentWord.sentence">例句：{{ currentWord.sentence }}</p>
-        <p v-if="!isCorrect" class="feedback-retry">这个词本轮最后会再出现一次</p>
+        <p v-if="!isCorrect" class="feedback-retry">这个词稍后还会再出现一次</p>
         <el-button type="primary" @click="next" style="margin-top: 8px;">下一题</el-button>
       </div>
     </div>
@@ -76,6 +76,9 @@ import Fireworks from './Fireworks.vue'
 import StreakFlash from './StreakFlash.vue'
 import { MAIN_ENCOURAGEMENT, pickExtra } from '../utils/encouragement'
 import { todayStr } from '../utils/profile'
+
+// 答错的词重排到第 3 个位置：过两三题就再见到一遍，趁热记住
+const RETRY_POS = 3
 
 const props = defineProps({ bookId: { type: [Number, String], default: 0 } })
 const emit = defineEmits(['done'])
@@ -179,10 +182,10 @@ function submit() {
     streak.value = 0
     hideFlash()
     playWrong()
-    // 答错的词在本轮末尾再出一次，只重排一次
+    // 答错的词插到第 3 个位置再出一次：过两三题就复习一遍，比拖到队尾有效；只重排一次
     if (!requeued.has(word.id)) {
       requeued.add(word.id)
-      queue.value.push(word)
+      queue.value.splice(Math.min(RETRY_POS, queue.value.length), 0, word)
       totalCount.value = doneCount.value + queue.value.length
     }
   }

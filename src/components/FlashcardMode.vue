@@ -24,14 +24,14 @@
             <div class="flashcard-front">
               <h1 class="word-text">{{ currentWord.word }}</h1>
               <p class="word-phonetic" v-if="currentWord.phonetic">{{ currentWord.phonetic }}</p>
-              <p class="word-hint">点一下卡片：听发音 + 看例句</p>
+              <p class="word-hint">点一下卡片：听发音 + 看中文释义</p>
             </div>
             <div class="flashcard-back">
               <p class="back-word">{{ currentWord.word }}</p>
               <p class="word-phonetic" v-if="currentWord.phonetic">{{ currentWord.phonetic }}</p>
               <p class="word-syllable" v-if="syllables">{{ syllables }}</p>
+              <p class="back-mean" v-if="currentWord.mean">{{ currentWord.mean }}</p>
               <p v-if="currentWord.sentence" class="word-sentence">"{{ currentWord.sentence }}"</p>
-              <p v-else class="word-sentence muted">中文释义在「今日单词表」里，先去那边对一遍意思</p>
             </div>
           </div>
         </div>
@@ -277,7 +277,7 @@ function handleKeydown(e) {
 .word-phonetic { font-size: 17px; color: var(--color-text-muted); margin-bottom: 10px; }
 .word-syllable { font-size: 15px; color: var(--color-primary); letter-spacing: 1px; margin-bottom: 10px; font-family: 'Segoe UI', system-ui, sans-serif; }
 .word-sentence { font-size: 14px; color: var(--color-text-secondary); font-style: italic; text-align: center; line-height: 1.6; }
-.word-sentence.muted { color: var(--color-text-muted); font-style: normal; }
+.back-mean { font-size: 20px; font-weight: 600; color: var(--color-text); text-align: center; line-height: 1.6; margin-bottom: 10px; }
 .study-actions { text-align: center; }
 .speech-row { display: flex; align-items: center; justify-content: center; gap: 6px; margin-bottom: 20px; }
 .speech-label { font-size: 12px; color: var(--color-text-muted); margin-right: 12px; }
@@ -307,6 +307,7 @@ function handleKeydown(e) {
   .flashcard-front, .flashcard-back { padding: 16px; }
   .word-text { font-size: 32px; }
   .back-word { font-size: 20px; }
+  .back-mean { font-size: 17px; }
   .rating-buttons { gap: 6px; }
   .rating-btn { min-width: 90px; padding: 10px 12px !important; }
   .rating-text { font-size: 13px; }

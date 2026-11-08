@@ -18,7 +18,6 @@
         <el-radio-button value="quiz">📝 选择</el-radio-button>
         <el-radio-button value="spelling">✏️ 拼写</el-radio-button>
         <el-radio-button value="cloze">🧩 完形</el-radio-button>
-        <el-radio-button value="syllable">🎵 音节</el-radio-button>
       </el-radio-group>
 
       <el-button
@@ -31,7 +30,7 @@
       </el-button>
     </div>
 
-    <!-- 每日任务设置：三种模式共用同一批词 -->
+    <!-- 每日任务设置：四种模式共用同一批词 -->
     <el-card class="task-settings" shadow="never">
       <div class="task-row">
         <div class="task-item">
@@ -71,7 +70,7 @@
         <el-button size="small" @click="regenerate">重新生成今日任务</el-button>
       </div>
       <p class="task-tip">
-        翻卡背记、选择、拼写使用的是同一批任务单词、同一个顺序；开启乱序后当天顺序固定，三种模式仍然对得上。
+        翻卡背记、选择、拼写、完形使用的是同一批任务单词、同一个顺序；开启乱序后当天顺序固定，四种模式仍然对得上。
       </p>
     </el-card>
 
@@ -106,18 +105,11 @@
       @done="studyMode = 'flashcard'"
     />
 
-    <!-- 音节背记：按音标划分音节教学生怎么记 -->
-    <SyllableMode
-      v-if="studyMode === 'syllable' && bookStore.currentBookId"
-      :key="'syllable-' + bookStore.currentBookId + '-' + taskKey"
-      :book-id="bookStore.currentBookId"
-    />
-
     <el-empty v-if="!bookStore.currentBookId" description="请先选择词本">
       <el-button type="primary" @click="showBookSelector = true">选择词本</el-button>
     </el-empty>
 
-    <!-- 每天背的这批词单独一页做成表格（带中文），翻卡里就不放中文了 -->
+    <!-- 每天背的这批词单独一页做成表格（带中文、音标、音节） -->
     <div v-if="bookStore.currentBookId" class="entry-row">
       <el-button class="entry-daily" @click="router.push('/daily-words')">
         📖 今日单词表（{{ wordStore.taskWords.length }} 词 + 中文释义）
@@ -156,7 +148,6 @@ import FlashcardMode from '../components/FlashcardMode.vue'
 import QuizMode from '../components/QuizMode.vue'
 import SpellingMode from '../components/SpellingMode.vue'
 import ClozeMode from '../components/ClozeMode.vue'
-import SyllableMode from '../components/SyllableMode.vue'
 
 const router = useRouter()
 const bookStore = useBookStore()
@@ -166,7 +157,7 @@ const studyMode = ref('flashcard')
 const showBookSelector = ref(false)
 const soundOn = ref(isSoundOn())
 const tempBookId = ref('')
-// 任务变化时让三个模式组件重新挂载，立刻读到新的任务
+// 任务变化时让各模式组件重新挂载，立刻读到新的任务
 const taskKey = ref(0)
 
 onMounted(async () => {
