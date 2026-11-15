@@ -11,9 +11,10 @@ import { splitSyllables, syllableLine, stressedSyllable } from '../src/utils/syl
 import { STREAK_TIERS, streakTier, streakLabel } from '../src/utils/streak.js'
 import { EXAM_SIZE, examGrade, pickExamWords } from '../src/utils/exam.js'
 import { maskSentence } from '../src/utils/cloze.js'
-import { LocalStore, EXAM_BOOK_NAME } from '../src/utils/localStore.js'
+import { LocalStore, EXAM_BOOK_NAME, GRADE8_BOOK_NAME } from '../src/utils/localStore.js'
 import { sentenceFor } from '../src/utils/sentences.js'
 import middleSchoolWords from '../src/utils/middleSchoolWords.json' with { type: 'json' }
+import grade8Words from '../src/utils/grade8Words.json' with { type: 'json' }
 import {
   MAIN_ENCOURAGEMENT, EXTRA_ENCOURAGEMENTS, pickExtra, encouragementLine
 } from '../src/utils/encouragement.js'
@@ -658,6 +659,52 @@ reset()
   await bookStore.loadBooks()
   eq(LocalStore.loadWords(examBook.id).length, middleSchoolWords.length - 1,
     '种子词表只种一次，不会把用户删掉的词塞回来')
+}
+
+// ------------------------------------------------- 20. 2025 秋八上词本（PDF 导入）
+section('20. 2025 秋八上英语单词表：完整性与可切换')
+reset()
+{
+  ok(grade8Words.length >= 500, `PDF 导入的词条数 ${grade8Words.length}`)
+  ok(grade8Words.every(w => w.word && String(w.word).trim()), '每条都有单词')
+  ok(grade8Words.every(w => w.mean && String(w.mean).trim()), '每条都有中文释义')
+  eq(new Set(grade8Words.map(w => String(w.word).toLowerCase())).size, grade8Words.length, '没有重复单词')
+  ok(grade8Words.every(w => /^[A-Za-z]/.test(w.word)), '每条都以字母开头（没有把音标/页码当词头）',
+    grade8Words.filter(w => !/^[A-Za-z]/.test(w.word)).slice(0, 5).map(w => w.word).join(','))
+  const glued = grade8Words.filter(w => /(adj|adv|verb|noun|pron|prep|conj)$/.test(w.word))
+  eq(glued.length, 0, `没有「单词+词性」粘连（${glued.slice(0, 5).map(w => w.word).join(',')}）`)
+  const noPhonetic = grade8Words.filter(w => !w.phonetic || !String(w.phonetic).trim())
+  ok(noPhonetic.length < grade8Words.length * 0.25,
+    `缺音标的词不超过四分之一（实际 ${noPhonetic.length} 条）`,
+    noPhonetic.slice(0, 5).map(w => w.word).join(','))
+}
+
+reset()
+{
+  const { bookStore, wordStore } = await boot(GRADE8_BOOK_NAME)
+  const g8Book = bookStore.bookList.find(b => b.name === GRADE8_BOOK_NAME)
+  ok(g8Book, `词本列表里有「${GRADE8_BOOK_NAME}」`)
+  eq(bookStore.bookList.length, 3, `内置三本词本（${bookStore.bookList.map(b => b.name).join(' / ')}）`)
+  eq(wordStore.wordList.length, grade8Words.length, '切到八上词本后词数就是整份词表')
+  eq(LocalStore.loadWords(g8Book.id).length, grade8Words.length, '词条按整份词表种入')
+
+  // 每天任务量可调，且上下限被夹在 5~200
+  wordStore.setDailySize(30)
+  eq(wordStore.dailySize, 30, '每日任务量能调到 30')
+  wordStore.setDailySize(40)
+  eq(wordStore.dailySize, 40, '每日任务量能调到 40')
+  wordStore.setDailySize(999)
+  eq(wordStore.dailySize, 200, '超出上限被夹到 200')
+  wordStore.setDailySize(1)
+  eq(wordStore.dailySize, 5, '低于下限被夹到 5')
+
+  await bookStore.loadBooks()
+  eq(LocalStore.loadWords(g8Book.id).length, grade8Words.length, '重复加载词本不会重复种入')
+  const first = LocalStore.loadWords(g8Book.id)[0]
+  LocalStore.deleteWord(first.id)
+  await bookStore.loadBooks()
+  eq(LocalStore.loadWords(g8Book.id).length, grade8Words.length - 1,
+    '八上词表也只种一次，不会把用户删掉的词塞回来')
 }
 
 console.log(`\n===== 逻辑自测结果：${pass} 通过，${fails.length} 失败 =====`)

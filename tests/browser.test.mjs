@@ -1277,6 +1277,54 @@ section('12. 四种练习模式都能出题、连对 3 题给 Good 闪光')
   ok('3 连对触发 Good 闪光',
     await waitForSoft(`(document.querySelector('.streak-flash .streak-label')?.textContent || '').trim() === 'Good'`, 4000),
     await text('.streak-flash'))
+
+  // 连对鼓励不能挤占选项：浮层定位、不吃鼠标事件、矩形不与任何选项相交
+  const streakBox = await evaluate(`
+    (() => {
+      const flash = document.querySelector('.streak-flash')
+      const slot = document.querySelector('.streak-flash-slot')
+      if (!flash || !slot) return null
+      const box = el => { const r = el.getBoundingClientRect(); return { top: r.top, bottom: r.bottom, left: r.left, right: r.right, w: r.width, h: r.height } }
+      const opts = [...document.querySelectorAll('.quiz-option')].map(box)
+      const f = box(flash)
+      const overlap = opts.some(o => !(o.right <= f.left || o.left >= f.right || o.bottom <= f.top || o.top >= f.bottom))
+      return {
+        position: getComputedStyle(slot).position,
+        flashPointer: getComputedStyle(flash).pointerEvents,
+        slotPointer: getComputedStyle(slot).pointerEvents,
+        overlap,
+        flashTop: Math.round(f.top),
+        optTops: opts.map(o => Math.round(o.top))
+      }
+    })()
+  `)
+  ok('连对鼓励是浮层（position: fixed），不占文档流', streakBox?.position === 'fixed', JSON.stringify(streakBox))
+  ok('连对鼓励不吃鼠标事件（pointer-events: none），不会挡住点击',
+    streakBox?.flashPointer === 'none' && streakBox?.slotPointer === 'none', JSON.stringify(streakBox))
+  ok('连对鼓励的矩形不与任何选项相交',
+    streakBox?.overlap === false, JSON.stringify(streakBox))
+  // 再验一次「不挤动」：把浮层从 DOM 里摘掉再插回，选项位置必须一模一样
+  const shift = await evaluate(`
+    (() => {
+      const flash = document.querySelector('.streak-flash')
+      const slot = document.querySelector('.streak-flash-slot')
+      const card = document.querySelector('.quiz-card')
+      if (!flash || !slot || !card) return null
+      const before = card.getBoundingClientRect().top
+      const parent = slot.parentNode
+      const next = slot.nextSibling
+      parent.removeChild(slot)
+      void card.offsetHeight
+      const without = card.getBoundingClientRect().top
+      parent.insertBefore(slot, next)
+      void card.offsetHeight
+      const after = card.getBoundingClientRect().top
+      return { before, without, after }
+    })()
+  `)
+  ok('摘掉连对浮层后选项卡片位置不动（完全脱离文档流）',
+    shift && Math.abs(shift.before - shift.without) < 1 && Math.abs(shift.before - shift.after) < 1,
+    JSON.stringify(shift))
 }
 
 // ================================================================ 13. 100 词测试卷
@@ -1883,7 +1931,7 @@ section('15. 12 项需求逐条自测（表情 / 烟花 / 字母键盘 / 发音 
     ok('成绩页可以再测一次', await exists('.exam-again'))
   }
 
-  // ---------------------------------------------------------------- M 测试卷：答对/答错声音不一样
+  // ---------------------------------------------------------------- M 测试卷：答对/答错同一个中性音
   {
     const tab = await openTab()
     await browser.send('Page.addScriptToEvaluateOnNewDocument', { source: SOUND_SPY }, tab.sessionId)
@@ -1940,20 +1988,14 @@ section('15. 12 项需求逐条自测（表情 / 烟花 / 字母键盘 / 发音 
         return { ok: true, right: right.seq, wrong: wrong.seq }
       })()
     `)
-    ok('测试卷答对/答错都能抓到播放序列', r?.ok && Array.isArray(r.right) && Array.isArray(r.wrong),
+    ok('测试卷选完选项都有声音反馈', r?.ok && Array.isArray(r.right) && Array.isArray(r.wrong),
       JSON.stringify(r))
     const rightSeq = Array.isArray(r?.right) ? r.right : []
     const wrongSeq = Array.isArray(r?.wrong) ? r.wrong : []
-    eq('答对：三个上行音 + 一个高八度点缀', rightSeq.map(t => t.type).join(','),
-      'triangle,triangle,triangle,sine')
-    eq('答错：两个下行音（锯齿波）', wrongSeq.map(t => t.type).join(','), 'sawtooth,sawtooth')
-    const rising = rightSeq.length === 4 &&
-      rightSeq[0].freq < rightSeq[1].freq && rightSeq[1].freq < rightSeq[2].freq
-    const falling = wrongSeq.length === 2 && wrongSeq[0].freq > wrongSeq[1].freq
-    ok('答对是上行、答错是下行（一听就知道错了）', rising && falling,
-      `对 ${JSON.stringify(rightSeq)} 错 ${JSON.stringify(wrongSeq)}`)
-    ok('对错两次的频率序列完全不同',
-      JSON.stringify(rightSeq.map(t => t.freq)) !== JSON.stringify(wrongSeq.map(t => t.freq)),
+    eq('选对：只响一个中性短音', rightSeq.map(t => t.type).join(','), 'sine')
+    eq('选错：也是同一个中性短音', wrongSeq.map(t => t.type).join(','), 'sine')
+    ok('对错两次的频率序列完全相同（听不出对错，不能靠声音改答案）',
+      JSON.stringify(rightSeq.map(t => t.freq)) === JSON.stringify(wrongSeq.map(t => t.freq)),
       `对 ${JSON.stringify(rightSeq.map(t => t.freq))} 错 ${JSON.stringify(wrongSeq.map(t => t.freq))}`)
   }
 }

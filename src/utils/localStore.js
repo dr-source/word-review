@@ -1,5 +1,6 @@
 import defaultWords from './defaultWords.json'
 import middleSchoolWords from './middleSchoolWords.json'
+import grade8Words from './grade8Words.json'
 
 // 本地回退存储：未配置 Supabase 时使用 localStorage 保存词本和单词
 const BOOKS_KEY = 'word_review_local_books'
@@ -13,6 +14,11 @@ const EXAM_SEED_VERSION_KEY = 'word_review_exam_seed_version'
 const EXAM_SEED_VERSION = 1
 const DEFAULT_BOOK_NAME = '中考英语核心高频688词汇表'
 export const EXAM_BOOK_NAME = '中考必背2000英语词汇'
+// 第三本内置词本：2025 秋八上英语单词表（从 PDF 词表导入）
+const GRADE8_BOOK_ID_KEY = 'word_review_grade8_book_id'
+const GRADE8_SEED_VERSION_KEY = 'word_review_grade8_seed_version'
+const GRADE8_SEED_VERSION = 1
+export const GRADE8_BOOK_NAME = '2025秋八上英语单词表'
 
 function read(key, fallback) {
   try {
@@ -101,6 +107,13 @@ function seedDefaultWords() {
     const examBook = ensureBook(books, EXAM_BOOK_ID_KEY, EXAM_BOOK_NAME)
     insertMissingWords(examBook, middleSchoolWords)
     localStorage.setItem(EXAM_SEED_VERSION_KEY, String(EXAM_SEED_VERSION))
+  }
+
+  // 2025 秋八上英语单词表：同样只种一次
+  if (localStorage.getItem(GRADE8_SEED_VERSION_KEY) !== String(GRADE8_SEED_VERSION)) {
+    const grade8Book = ensureBook(books, GRADE8_BOOK_ID_KEY, GRADE8_BOOK_NAME)
+    insertMissingWords(grade8Book, grade8Words)
+    localStorage.setItem(GRADE8_SEED_VERSION_KEY, String(GRADE8_SEED_VERSION))
   }
 
   write(BOOKS_KEY, books)

@@ -1,5 +1,5 @@
 <template>
-  <div class="streak-flash-slot">
+  <div class="streak-flash-slot" aria-live="polite">
     <transition name="streak">
       <div v-if="label" class="streak-flash">
         <span class="streak-spark">✨</span>
@@ -19,28 +19,38 @@ defineProps({
 </script>
 
 <style scoped>
-.streak-flash-slot { min-height: 0; }
+/* 连对鼓励是一条浮层提示：脱离文档流、不吃鼠标事件，
+   这样它出现/消失都不会把下面的选项挤动，也不会挡住点击 */
+.streak-flash-slot {
+  position: fixed;
+  top: 84px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 2000;
+  pointer-events: none;
+}
 .streak-flash {
   display: flex;
   align-items: center;
   justify-content: center;
   gap: 8px;
-  margin-top: 12px;
   padding: 8px 14px;
   border-radius: 9999px;
   background: linear-gradient(90deg, #FFFBEB, #FEF3C7);
   border: 1px solid #FCD34D;
-  box-shadow: 0 0 0 0 rgba(245, 158, 11, 0.5);
+  box-shadow: 0 0 0 0 rgba(245, 158, 11, 0.5), 0 6px 18px rgba(180, 83, 9, 0.18);
   animation: streak-glow 1.1s ease-out infinite;
   height: 40px;
+  pointer-events: none;
+  user-select: none;
 }
 .streak-spark { font-size: 16px; animation: streak-twinkle 0.9s ease-in-out infinite; }
 .streak-label { font-size: 17px; font-weight: 800; color: #D97706; letter-spacing: 0.5px; }
 .streak-count { font-size: 13px; color: #B45309; }
 @keyframes streak-glow {
-  0% { box-shadow: 0 0 0 0 rgba(245, 158, 11, 0.55); }
-  70% { box-shadow: 0 0 0 12px rgba(245, 158, 11, 0); }
-  100% { box-shadow: 0 0 0 0 rgba(245, 158, 11, 0); }
+  0% { box-shadow: 0 0 0 0 rgba(245, 158, 11, 0.55), 0 6px 18px rgba(180, 83, 9, 0.18); }
+  70% { box-shadow: 0 0 0 12px rgba(245, 158, 11, 0), 0 6px 18px rgba(180, 83, 9, 0.18); }
+  100% { box-shadow: 0 0 0 0 rgba(245, 158, 11, 0), 0 6px 18px rgba(180, 83, 9, 0.18); }
 }
 @keyframes streak-twinkle {
   0%, 100% { transform: scale(1) rotate(0deg); opacity: 1; }
@@ -51,4 +61,12 @@ defineProps({
 .streak-leave-active { transition: all 0.2s ease-in; animation: none; }
 .streak-enter-from { opacity: 0; transform: scale(0.7); }
 .streak-leave-to { opacity: 0; transform: scale(0.9); }
+
+/* 手机竖屏：贴顶一点，字号收小，宽度不超过屏幕 */
+@media (max-width: 480px) {
+  .streak-flash-slot { top: 56px; max-width: 92vw; }
+  .streak-flash { height: 34px; padding: 6px 12px; gap: 6px; }
+  .streak-label { font-size: 15px; }
+  .streak-count { font-size: 12px; }
+}
 </style>

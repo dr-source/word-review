@@ -92,7 +92,7 @@ import { useBookStore } from '../stores/bookStore'
 import { useWordStore } from '../stores/wordStore'
 import { pickDistractors } from '../utils/distractors'
 import { EXAM_SIZE, examGrade, pickExamWords } from '../utils/exam'
-import { playFinish, playCorrect, playWrong } from '../composables/useSound'
+import { playFinish, playTap } from '../composables/useSound'
 import Fireworks from '../components/Fireworks.vue'
 
 const router = useRouter()
@@ -181,9 +181,8 @@ function start() {
 
 function pick(i) {
   answers.value[index.value] = i
-  const q = questions.value[index.value]
-  if (i === q.correctIdx) playCorrect(0)
-  else playWrong()
+  // 交卷前不揭示对错：选项音一律用中性点击音，免得学生靠听声音改答案
+  playTap()
 }
 
 function prev() {

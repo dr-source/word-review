@@ -13,13 +13,13 @@
 | ✅ 三档评价 | 不认识 / 模糊 / 认识，精细控制记忆曲线 |
 | ✅ 学生档案 | 每个学生一份独立记录（进度 / 错题 / 记录 / 任务），切换即换档案 |
 | ✅ 每日任务 | 默认 **40 词**，**5～200 可调**，**八成新词 + 两成近期回顾**，均匀穿插，四模式共用同一批词；同批任务不放释义相同的词 |
-| ✅ 中考词表 | 新装自动种入「中考必背2000英语词汇」**2008 词**（2025 秋新课标中考词表，零依赖 docx 解析） |
+| ✅ 中考词表 | 新装自动种入三本内置词本：「中考必背2000英语词汇」**2008 词**（2025 秋新课标中考词表，零依赖 docx 解析）、「中考英语核心高频688词汇表」、「**2025秋八上英语单词表**」538 词（零依赖 PDF 解析），随时切换 |
 | ✅ 乱序抽查 | 当天固定乱序，四模式顺序一致，便于互相抽查（开关核心 54×26、整行 ≥44px，好按） |
 | ✅ 今日单词表 | 每天这批词单独一页做成表格：英文 / 音标 / 音节 / 词性·释义 / 例句 / 发音（`syllable.js` 按音标切出的音节列），翻卡背面也直接显示中文释义 |
 | ✅ 100 词测试卷 | 随机 100 词打乱顺序，一题 1 分，100=Excellent、≥95 Good、≥90 Normal、<90 Come on，交卷列错词 |
 | ✅ 语境例句 | 688 词每词一句例句，中考词表能借到例句的词也补上，翻卡 / 选择 / 完形 / 单词表都能看到用法 |
-| ✅ 音效与烟花 | Web Audio 现场合成的对/错/连对/完成音效，任务完成与交卷飘烟花，「拼读音效」开关可一键静音；100 词测试卷答对是上行三音 + 高八度点缀、答错是下行锯齿双音，一听就能分清 |
-| ✅ 连对激励 | 连对 3/4/5/6/7/8/9+ 给 Good/Great/Brilliant/Wonderful/Fantastic/Excellent/Perfect，音效升调 + 小闪光 |
+| ✅ 音效与烟花 | Web Audio 现场合成的对/错/连对/完成音效，任务完成与交卷飘烟花，「拼读音效」开关可一键静音；**100 词测试卷交卷前选对选错都只响同一个中性短音**，学生没法靠声音听出对错再改答案 |
+| ✅ 连对激励 | 连对 3/4/5/6/7/8/9+ 给 Good/Great/Brilliant/Wonderful/Fantastic/Excellent/Perfect，音效升调 + 小闪光；称号是**顶部浮层**（`pointer-events: none`），不挤动也不挡住选项 |
 | ✅ 完成鼓励 | 当天任务做完，各模式与首页弹出「恭喜你，完成一天任务，继续坚持！」+ 随机附加句 + 烟花 |
 | ✅ 个性化分析 | 写有学生名字的背记情况分析 + 高频错词表 |
 | ✅ 键盘快捷键 | 空格显示答案，1/2/3 快速评价 |
@@ -198,6 +198,24 @@ CI 排障另外暴露两处真问题：① `vite.config.js` 在 CI 上把 `base`
 
 删除文件：`src/components/SyllableMode.vue`、`src/components/HandwritingPad.vue`
 改动文件：`FlashcardMode.vue`、`SpellingMode.vue`、`QuizMode.vue`、`StudyPage.vue`、`src/utils/middleSchoolWords.json`、`tests/browser.test.mjs`、`README.md`、`CHANGELOG.md`
+
+---
+
+### Phase 11：八上词本 + 测试卷静音 + 连对浮层（本轮）
+
+| 需求 | 实现 |
+|------|------|
+| 导入「2025秋八上英语单词表.pdf」当新词本 | 新增零依赖解析脚本 `scripts/parse-pdf-vocab.mjs`（自己扫 PDF 对象、`zlib.inflateSync` 解 FlateDecode、ToUnicode CMap 还原中文、按 `Tm` 坐标还原版式），产出 `src/utils/grade8Words.json` **538 词**；`localStore.js` 按「只种一次」的方式种成第三本词本「2025秋八上英语单词表」，在「📚 词本」里可随时切换 |
+| 测试卷对错声音要一样（交卷前听不出对错） | 上一轮理解反了（当时做成了对/错两种声音），本轮改回来：新增 `playTap()`——单个 0.09 秒的 sine 中性短音，`ExamPage.pick()` 无论选对选错都只播它，交卷后才由评级与烟花给反馈 |
+| 连对鼓励字体会把选项挤下去，导致点错 | `StreakFlash.vue` 从文档流里搬出来：整条称号改成 `position: fixed` 的浮层（顶部居中、`z-index: 2000`、`pointer-events: none`、`user-select: none`），出现/消失不再改变选项位置，也不吃点击；≤480px 加了一档贴顶的小尺寸样式。选择、完形共用同一个组件，两边一起修好 |
+
+PDF 解析踩过的坑（都写进脚本注释了）：每页是双栏且**奇偶页版心镜像**（左栏 x 在 79/51 之间切换），所以分割线按页内的页码 run 现算；run 是碎片，词间空格靠**真实字体宽度**（`/FirstChar` + `/Widths` + TJ 字距调整）算出来，阈值 `SPACE_GAP = 1.1px`；`0x1d` 是 `fl` 连字（不修 `flour` 会变 `our`）；条目会跨栏跨页，所以先攒全局单流行再切条目。
+
+已知边界：538 词里 94 条没有音标——`stand up` / `nothing but` 这类短语原书就没印音标；`steamed chicken soup` 原书只标了 `/stiːmd/`。
+
+自测覆盖：逻辑自测 **206 → 223** 条断言（新增八上词表完整性、三本词本可切换、每日任务量 5～200 夹取），端到端自测 **338 → 341** 条断言（测试卷对错同音、连对浮层 `position: fixed` / `pointer-events: none` / 不与选项相交 / 摘掉浮层后卡片位置不动），全绿。
+
+改动文件：`src/composables/useSound.js`、`src/pages/ExamPage.vue`、`src/components/StreakFlash.vue`、`src/utils/localStore.js`、`src/utils/grade8Words.json`（新增）、`scripts/parse-pdf-vocab.mjs`（新增）、`tests/logic.test.mjs`、`tests/browser.test.mjs`、`README.md`、`CHANGELOG.md`
 
 ---
 

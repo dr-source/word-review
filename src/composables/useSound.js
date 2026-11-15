@@ -88,6 +88,12 @@ export function playStreak(tierIndex = 0) {
   playSequence([24, 31], { gap: 0.08, dur: 0.34, type: 'sine', gain: 0.05 })
 }
 
+/** 单选/确认用的中性点击音：不带对错倾向，避免听音改答案 */
+export function playTap() {
+  if (!allowed()) return
+  playSequence([7], { gap: 0, dur: 0.09, type: 'sine', gain: 0.05 })
+}
+
 /** 完成一天任务 / 交卷：上行琶音当烟花的声音 */
 export function playFinish() {
   if (!allowed()) return
@@ -111,5 +117,5 @@ export function setSoundOn(on) {
 }
 
 export function useSound() {
-  return { playCorrect, playWrong, playStreak, playFinish, isSoundOn, setSoundOn }
+  return { playCorrect, playWrong, playTap, playStreak, playFinish, isSoundOn, setSoundOn }
 }
