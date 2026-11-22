@@ -29,6 +29,13 @@
         <el-table-column prop="phonetic" label="音标" width="140" />
         <el-table-column prop="mean" label="释义" min-width="200" />
         <el-table-column prop="wrongCount" label="错误次数" width="90" align="center" />
+        <el-table-column label="还需答对" width="100" align="center">
+          <template #default="{ row }">
+            <el-tag :type="row.need > 0 ? 'warning' : 'success'" effect="plain" class="cell-need">
+              {{ row.need > 0 ? `${row.need} 次` : '已达标' }}
+            </el-tag>
+          </template>
+        </el-table-column>
         <el-table-column label="最近错误" width="110" align="center">
           <template #default="{ row }">
             {{ row.lastWrongAt ? new Date(row.lastWrongAt).toLocaleDateString('zh-CN') : '-' }}
@@ -55,7 +62,8 @@
           <strong>复习建议</strong>
           <p class="review-tip">
             错题包含 {{ wordStore.wrongWordList.length }} 个单词，
-            建议优先复习这些容易遗忘的词。
+            建议优先复习这些容易遗忘的词。它们会继续出现在每日任务和测试卷里，
+            跨天答对 2 次才移出错题本。
           </p>
         </div>
         <el-button type="primary" @click="reviewWrong">开始复习</el-button>

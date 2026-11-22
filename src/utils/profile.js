@@ -15,6 +15,9 @@ const LEGACY_KEYS = {
 
 const DEFAULT_SETTINGS = { dailySize: 40, shuffle: false, sound: true }
 
+/** 错题需要跨天答对这么多次才移出错题本 */
+export const PASS_DAYS = 2
+
 function read(key, fallback) {
   try {
     const raw = localStorage.getItem(key)
@@ -181,13 +184,13 @@ export function getWrongCounts() {
   return read(scopedKey('wrong_counts'), {})
 }
 
-/** 答错：进错题本并累加错误次数 */
+/** 答错：进错题本并累加错误次数，答对进度清零 */
 export function addWrong(wordId) {
   const wrong = getWrongIds()
   if (!wrong.includes(wordId)) write(scopedKey('wrong'), [...wrong, wordId])
   const counts = getWrongCounts()
   const item = counts[wordId] || { count: 0, lastAt: 0 }
-  counts[wordId] = { count: item.count + 1, lastAt: Date.now() }
+  counts[wordId] = { count: item.count + 1, lastAt: Date.now(), passes: 0 }
   write(scopedKey('wrong_counts'), counts)
   return counts[wordId]
 }
@@ -197,6 +200,24 @@ export function removeWrong(wordId) {
   const wrong = getWrongIds()
   if (!wrong.includes(wordId)) return
   write(scopedKey('wrong'), wrong.filter(id => id !== wordId))
+}
+
+/**
+ * 错题答对：跨天累计，累计满 PASS_DAYS 天才移出错题本。
+ * 同一天内重复答对只算一次，避免一天猛刷就清掉错词。
+ */
+export function noteWrongRight(wordId) {
+  if (!getWrongIds().includes(wordId)) return null
+  const counts = getWrongCounts()
+  const item = counts[wordId] || { count: 0, lastAt: 0 }
+  const today = todayStr()
+  if (item.lastRightDate === today) return item
+  const passes = (item.passes || 0) + 1
+  const next = { ...item, passes, lastRightDate: today }
+  counts[wordId] = next
+  write(scopedKey('wrong_counts'), counts)
+  if (passes >= PASS_DAYS) removeWrong(wordId)
+  return next
 }
 
 // ---------- 学习记录（当前学生） ----------

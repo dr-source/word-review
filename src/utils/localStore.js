@@ -14,10 +14,10 @@ const EXAM_SEED_VERSION_KEY = 'word_review_exam_seed_version'
 const EXAM_SEED_VERSION = 1
 const DEFAULT_BOOK_NAME = '中考英语核心高频688词汇表'
 export const EXAM_BOOK_NAME = '中考必背2000英语词汇'
-// 第三本内置词本：2025 秋八上英语单词表（从 PDF 词表导入）
+// 第三本内置词本：2025 秋八上英语单词表（从 PDF 词表导入，v2 起带单元号）
 const GRADE8_BOOK_ID_KEY = 'word_review_grade8_book_id'
 const GRADE8_SEED_VERSION_KEY = 'word_review_grade8_seed_version'
-const GRADE8_SEED_VERSION = 1
+const GRADE8_SEED_VERSION = 2
 export const GRADE8_BOOK_NAME = '2025秋八上英语单词表'
 
 function read(key, fallback) {
@@ -41,12 +41,20 @@ function sortByCreatedAt(items) {
   return items.sort((a, b) => String(a.created_at).localeCompare(String(b.created_at)))
 }
 
-function ensureBook(books, idKey, name) {
+/**
+ * 取（或建）内置词本。每次都重读 BOOKS_KEY 并按 id / 同名复用，建好立刻落盘：
+ * 多个标签页同时首启时，各种子不会各建一本空词本互相覆盖。
+ */
+function ensureBook(idKey, name) {
+  const books = read(BOOKS_KEY, [])
   const storedId = localStorage.getItem(idKey)
-  const existing = books.find(b => b.id === storedId)
-  if (existing) return existing
+  const existing = books.find(b => b.id === storedId) || books.find(b => b.name === name)
+  if (existing) {
+    localStorage.setItem(idKey, existing.id)
+    return existing
+  }
   const book = { id: makeId('book'), name, created_at: new Date().toISOString() }
-  books.push(book)
+  write(BOOKS_KEY, [...books, book])
   localStorage.setItem(idKey, book.id)
   return book
 }
@@ -60,6 +68,21 @@ function patchSentences(book, source) {
     const hit = seeded.get(w.word.toLowerCase())
     if (hit && !hit.sentence && w.sentence) {
       hit.sentence = w.sentence
+      patched = true
+    }
+  }
+  if (patched) write(WORDS_KEY, words)
+}
+
+/** 已种过的词条只补单元号，不动其它字段（老数据升级用） */
+function patchUnits(book, source) {
+  const words = read(WORDS_KEY, [])
+  const seeded = new Map(words.filter(w => w.book_id === book.id).map(w => [w.word.toLowerCase(), w]))
+  let patched = false
+  for (const w of source) {
+    const hit = seeded.get(w.word.toLowerCase())
+    if (hit && !hit.unit && w.unit) {
+      hit.unit = w.unit
       patched = true
     }
   }
@@ -80,6 +103,7 @@ function insertMissingWords(book, source) {
       phonetic: w.phonetic || '',
       mean: w.mean || '',
       sentence: w.sentence || '',
+      unit: w.unit || '',
       id: makeId('word'),
       created_at: new Date().toISOString()
     }
@@ -93,8 +117,7 @@ function insertMissingWords(book, source) {
 }
 
 function seedDefaultWords() {
-  const books = read(BOOKS_KEY, [])
-  const book = ensureBook(books, DEFAULT_BOOK_ID_KEY, DEFAULT_BOOK_NAME)
+  const book = ensureBook(DEFAULT_BOOK_ID_KEY, DEFAULT_BOOK_NAME)
   patchSentences(book, defaultWords)
 
   if (localStorage.getItem(SEED_VERSION_KEY) !== String(SEED_VERSION)) {
@@ -104,19 +127,26 @@ function seedDefaultWords() {
 
   // 中考必背 2000 词：只在还没种过时建本，用户删掉后不会被重新塞回来
   if (localStorage.getItem(EXAM_SEED_VERSION_KEY) !== String(EXAM_SEED_VERSION)) {
-    const examBook = ensureBook(books, EXAM_BOOK_ID_KEY, EXAM_BOOK_NAME)
+    const examBook = ensureBook(EXAM_BOOK_ID_KEY, EXAM_BOOK_NAME)
     insertMissingWords(examBook, middleSchoolWords)
     localStorage.setItem(EXAM_SEED_VERSION_KEY, String(EXAM_SEED_VERSION))
   }
 
-  // 2025 秋八上英语单词表：同样只种一次
-  if (localStorage.getItem(GRADE8_SEED_VERSION_KEY) !== String(GRADE8_SEED_VERSION)) {
-    const grade8Book = ensureBook(books, GRADE8_BOOK_ID_KEY, GRADE8_BOOK_NAME)
+  // 2025 秋八上英语单词表：同样只种一次；老数据升级时只补单元号，不把用户删掉的词塞回来
+  const grade8StoredId = localStorage.getItem(GRADE8_BOOK_ID_KEY)
+  const grade8Books = read(BOOKS_KEY, [])
+  const grade8Existing = grade8StoredId
+    ? grade8Books.find(b => b.id === grade8StoredId)
+    : grade8Books.find(b => b.name === GRADE8_BOOK_NAME)
+  if (grade8Existing) {
+    patchUnits(grade8Existing, grade8Words)
+    localStorage.setItem(GRADE8_BOOK_ID_KEY, grade8Existing.id)
+    localStorage.setItem(GRADE8_SEED_VERSION_KEY, String(GRADE8_SEED_VERSION))
+  } else if (!grade8StoredId && localStorage.getItem(GRADE8_SEED_VERSION_KEY) !== String(GRADE8_SEED_VERSION)) {
+    const grade8Book = ensureBook(GRADE8_BOOK_ID_KEY, GRADE8_BOOK_NAME)
     insertMissingWords(grade8Book, grade8Words)
     localStorage.setItem(GRADE8_SEED_VERSION_KEY, String(GRADE8_SEED_VERSION))
   }
-
-  write(BOOKS_KEY, books)
 }
 
 export const LocalStore = {

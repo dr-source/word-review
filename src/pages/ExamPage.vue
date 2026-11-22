@@ -6,6 +6,9 @@
       <p class="intro-text">
         从当前词本随机抽 {{ size }} 个单词、打乱顺序，看英文选中文，一题 1 分，满分 {{ size }} 分。
       </p>
+      <p class="intro-text priority-note" v-if="priorityCount > 0">
+        错题本里还有 <strong class="priority-count">{{ priorityCount }}</strong> 个词没记牢，会优先收进这次的卷子里；跨天答对 2 次才移出错题本。
+      </p>
       <ul class="intro-rules">
         <li><strong>{{ size }} 分</strong> → Excellent（满分）</li>
         <li><strong>{{ Math.ceil(size * 0.95) }} 分及以上</strong> → Good</li>
@@ -109,6 +112,13 @@ const finishPlayed = ref(false)
 
 const poolCount = computed(() => wordStore.wordList.filter(w => w.word && w.mean).length)
 const size = computed(() => Math.min(EXAM_SIZE, poolCount.value))
+/** 错题本里的词（按错得多的排前面），一定会进卷子 */
+const priorityIds = computed(() => wordStore.wrongWordList
+  .slice()
+  .sort((a, b) => b.wrongCount - a.wrongCount)
+  .map(w => w.id)
+  .filter(id => wordStore.wordList.some(w => w.id === id && w.word && w.mean)))
+const priorityCount = computed(() => Math.min(priorityIds.value.length, size.value))
 const current = computed(() => questions.value[index.value] || null)
 const answeredCount = computed(() => answers.value.filter(a => a >= 0).length)
 const answeredPct = computed(() => questions.value.length
@@ -156,7 +166,9 @@ onMounted(async () => {
 
 /** 抽词 + 提前把四选项都生成好，答题时不再临时算，卷子才稳定 */
 function buildQuestions() {
-  const picked = pickExamWords(wordStore.wordList, size.value)
+  const picked = pickExamWords(wordStore.wordList, size.value, Math.random, {
+    priorityIds: priorityIds.value
+  })
   return picked.map(w => {
     const distractors = pickDistractors(w, wordStore.wordList, { count: 3 })
     const options = [w, ...distractors]
@@ -222,6 +234,8 @@ function submit() {
 .intro-title { font-size: 20px; font-weight: 700; color: var(--color-text); }
 .intro-text { margin-top: 10px; font-size: 14px; line-height: 1.7; color: var(--color-text-secondary); }
 .intro-rules { margin: 12px 0 0 18px; font-size: 13px; line-height: 1.9; color: var(--color-text-secondary); }
+.priority-note { color: #B45309; }
+.priority-count { color: #DC2626; }
 .exam-start { margin-top: 18px; }
 .exam-header { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; }
 .mode-badge { font-weight: 600; font-size: 15px; }

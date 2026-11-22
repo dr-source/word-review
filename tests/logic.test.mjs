@@ -13,6 +13,7 @@ import { EXAM_SIZE, examGrade, pickExamWords } from '../src/utils/exam.js'
 import { maskSentence } from '../src/utils/cloze.js'
 import { LocalStore, EXAM_BOOK_NAME, GRADE8_BOOK_NAME } from '../src/utils/localStore.js'
 import { sentenceFor } from '../src/utils/sentences.js'
+import { groupByUnit, pickUnitGroup, unitLabel } from '../src/utils/units.js'
 import middleSchoolWords from '../src/utils/middleSchoolWords.json' with { type: 'json' }
 import grade8Words from '../src/utils/grade8Words.json' with { type: 'json' }
 import {
@@ -295,7 +296,22 @@ reset()
   eq(profile.getWrongCounts()[id].count, 2, '错误次数累加为 2')
 
   wordStore.markRight(id)
-  eq(profile.getWrongIds(), [], '答对后移出错题本')
+  eq(profile.getWrongIds(), [id], '答对一次还留在错题本（要跨天答对 2 次）')
+  eq(profile.getWrongCounts()[id].passes, 1, '答对进度记 1 次')
+  eq(profile.getWrongCounts()[id].count, 2, '错误次数保留')
+
+  wordStore.markRight(id)
+  eq(profile.getWrongCounts()[id].passes, 1, '同一天重复答对只算一次')
+
+  // 把上次答对日期改成昨天，模拟第二天再答对一次
+  {
+    const key = profile.scopedKey('wrong_counts')
+    const counts = JSON.parse(localStorage.getItem(key))
+    counts[id].lastRightDate = profile.todayStr(new Date(Date.now() - DAY))
+    localStorage.setItem(key, JSON.stringify(counts))
+  }
+  wordStore.markRight(id)
+  eq(profile.getWrongIds(), [], '跨天答对 2 次后移出错题本')
   eq(profile.getWrongCounts()[id].count, 2, '移出错题本后错误次数保留')
 
   const wrongItem = wordStore.wrongWordList.find(w => w.id === id)
@@ -304,6 +320,7 @@ reset()
   wordStore.markWrong(id)
   const item2 = wordStore.wrongWordList.find(w => w.id === id)
   eq(item2.wrongCount, 3, '错题本显示累计错误次数')
+  eq(item2.need, 2, '再次答错后需重新跨天答对 2 次')
   ok(item2.lastWrongAt > 0, '错题本显示最近错误时间')
 }
 
@@ -705,6 +722,143 @@ reset()
   await bookStore.loadBooks()
   eq(LocalStore.loadWords(g8Book.id).length, grade8Words.length - 1,
     '八上词表也只种一次，不会把用户删掉的词塞回来')
+}
+
+// ------------------------------------------------ 21. 今日单词表按单元分组
+section('21. 今日单词表按单元分组')
+{
+  eq(unitLabel('3'), 'Unit 3', '单元号渲染成「Unit 3」')
+  eq(unitLabel(3), 'Unit 3', '纯数字单元号也能渲染')
+  eq(unitLabel(''), '未分单元', '空单元号归到「未分单元」')
+  eq(unitLabel(undefined), '未分单元', '缺字段归到「未分单元」')
+
+  const groups = groupByUnit([
+    { id: 'a', unit: '3' },
+    { id: 'b', unit: '' },
+    { id: 'c', unit: '1' },
+    { id: 'd', unit: '10' },
+    { id: 'e', unit: '3' }
+  ])
+  eq(groups.map(g => g.unit), ['1', '3', '10', ''], '单元号按数字升序，未分单元排最后')
+  eq(groups.map(g => g.label), ['Unit 1', 'Unit 3', 'Unit 10', '未分单元'], '每组带标题')
+  eq(groups[1].rows.map(r => r.id), ['a', 'e'], '同一单元的词归到一组')
+  eq(groups.map(g => g.rows.length), [1, 2, 1, 1], '每组带自己的词数')
+  eq(new Set(groups.map(g => g.key)).size, groups.length, '分组 key 不重复')
+  eq(groupByUnit([]), [], '空表返回空分组')
+  eq(groupByUnit(undefined), [], '未传数据也不报错')
+
+  // 单元切换：点哪个单元就看哪张表，不用从 Unit 1 往下翻
+  eq(pickUnitGroup(groups, 'all'), groups, '选「全部」时所有单元表都在')
+  eq(pickUnitGroup(groups, ''), groups, '没选单元时等于全部')
+  eq(pickUnitGroup(groups, '3').map(g => g.label), ['Unit 3'], '选 Unit 3 就只拿 Unit 3 那张表')
+  eq(pickUnitGroup(groups, '3')[0].rows.map(r => r.id), ['a', 'e'], '切过去的表里就是那个单元的词')
+  eq(pickUnitGroup(groups, '10').map(g => g.label), ['Unit 10'], '高单元号也能直接切过去')
+  eq(pickUnitGroup(groups, 'none').map(g => g.label), ['未分单元'], '「未分单元」也能单独切过去')
+  eq(pickUnitGroup(groups, '99').length, groups.length, '选中不存在的单元就退回全部，不给空表')
+  eq(pickUnitGroup([], '3'), [], '没有任何分组时切哪个单元都是空')
+
+  const badUnit = grade8Words.filter(w => !/^[1-8]$/.test(String(w.unit || '')))
+  eq(badUnit.length, 0, '八上每条词都带 Unit 1–8',
+    badUnit.slice(0, 5).map(w => `${w.word}:${w.unit}`).join(','))
+  eq([...new Set(grade8Words.map(w => String(w.unit)))].sort(),
+    ['1', '2', '3', '4', '5', '6', '7', '8'], '八个单元都有词')
+}
+
+reset()
+{
+  const { bookStore, wordStore } = await boot(GRADE8_BOOK_NAME)
+  eq(wordStore.wordList.filter(w => w.unit).length, grade8Words.length, '单元号从词库透传到 wordList')
+  const task = wordStore.ensureDailyTask(bookStore.currentBookId)
+  const rows = task.ids
+    .map(id => wordStore.wordList.find(w => w.id === id))
+    .filter(Boolean)
+    .map(w => ({ unit: w.unit }))
+  eq(rows.length, 40, '今日任务仍是 40 词')
+  const taskGroups = groupByUnit(rows)
+  ok(rows.every(r => r.unit), '八上的今日任务每词都带单元号（不会出现「未分单元」那张表）')
+  ok(taskGroups.every(g => /^Unit [1-8]$/.test(g.label)), '每张表的标题都是「Unit N」',
+    taskGroups.map(g => g.label).join(','))
+  eq(taskGroups.reduce((n, g) => n + g.rows.length, 0), 40, '分组后词数合计不变（没有丢词）')
+  // 整本书按单元分组 = 8 张表，合计仍是整份词表
+  const allGroups = groupByUnit(wordStore.wordList)
+  eq(allGroups.map(g => g.label), ['Unit 1', 'Unit 2', 'Unit 3', 'Unit 4', 'Unit 5', 'Unit 6', 'Unit 7', 'Unit 8'],
+    '整份八上词表正好分成 8 张单元表')
+  eq(allGroups.reduce((n, g) => n + g.rows.length, 0), grade8Words.length, '8 张表合计 = 整份词表词数')
+  // 单元切换：整本书里直接跳到任意一个单元
+  eq(allGroups.map(g => g.rows.length), [75, 62, 71, 68, 66, 59, 67, 70], '各单元词数')
+  const unit5 = pickUnitGroup(allGroups, '5')
+  eq(unit5.length, 1, '切到 Unit 5 只拿一张表')
+  eq(unit5[0].label, 'Unit 5', '切过去的表标题是 Unit 5')
+  eq(unit5[0].rows.length, 66, 'Unit 5 的 66 个词都在（不用从 Unit 1 翻下来）')
+  eq(pickUnitGroup(allGroups, '8')[0].rows.length, 70, 'Unit 8 也能直接切过去')
+}
+
+// ------------------------------------------------- 22. 错词必现：每日任务
+section('22. 错词必现：每日任务里优先复现')
+reset()
+{
+  const { bookStore, wordStore } = await boot()
+  const bookId = bookStore.currentBookId
+  const wrongIds = wordStore.rawWords.slice(300, 305).map(w => w.id)
+  wrongIds.forEach(id => wordStore.markWrong(id))
+
+  const task = wordStore.ensureDailyTask(bookId, true)
+  eq(task.ids.length, 40, '有错词时任务量仍是 40')
+  ok(wrongIds.every(id => task.ids.includes(id)), '记过的错词都会在今日任务里再出现')
+  ok(wrongIds.every(id => task.reviewIds.includes(id)), '错词占的是回顾名额')
+  eq(task.reviewIds.slice(0, wrongIds.length).slice().sort(), wrongIds.slice().sort(),
+    '错词排在回顾清单最前面（先复习错的）')
+  const extra = wordStore.wrongWordList.filter(w => !wrongIds.includes(w.id))
+  eq(extra.length, 0, '错题本里只有这 5 个词')
+}
+
+reset()
+{
+  const { bookStore, wordStore } = await boot()
+  const bookId = bookStore.currentBookId
+  const many = wordStore.rawWords.slice(400, 440).map(w => w.id)
+  many.forEach(id => wordStore.markWrong(id))
+
+  const task = wordStore.ensureDailyTask(bookId, true)
+  eq(task.ids.length, 40, '错词很多时任务量仍是 40')
+  eq(task.reviewIds.length, 16, '错词最多占四成（40 × 0.4 = 16）')
+  ok(task.reviewIds.every(id => many.includes(id)), '这 16 个名额全给错词')
+  const freshCount = task.ids.filter(id => !many.includes(id)).length
+  eq(freshCount, 24, '剩下六成还是新词（不会被错词挤掉）')
+}
+
+// ------------------------------------------------- 23. 测试卷优先收录错词
+section('23. 测试卷优先收录错词')
+reset()
+{
+  const { wordStore } = await boot()
+  const list = wordStore.wordList
+  const priorityIds = list.slice(100, 108).map(w => w.id)
+
+  const rounds = 10
+  const papers = Array.from({ length: rounds }, () => pickExamWords(list, 20, Math.random, { priorityIds }))
+  ok(papers.every(p => p.length === 20), '优先收错词时仍抽满 20 题')
+  ok(papers.every(p => new Set(p.map(w => w.id)).size === 20), '20 题不重复')
+  ok(papers.every(p => priorityIds.every(id => p.some(w => w.id === id))),
+    `${rounds} 卷每卷都把 8 个错词考到`)
+  ok(papers.every(p => p.every(w => w.word && w.mean)), '每道题都有词和释义')
+
+  const tooMany = list.slice(0, 30).map(w => w.id)
+  const p3 = pickExamWords(list, 10, Math.random, { priorityIds: tooMany })
+  eq(p3.length, 10, '错词比题量还多时只出题量那么多')
+  ok(p3.every(w => tooMany.includes(w.id)), '这 10 题全是错词')
+  eq(pickExamWords(list, 20).length, 20, '不传错词清单时行为照旧')
+}
+
+reset()
+{
+  const { wordStore } = await boot()
+  const ids = wordStore.rawWords.slice(500, 503).map(w => w.id)
+  ids.forEach(id => wordStore.markWrong(id))
+  const priorityIds = wordStore.wrongWordList.map(w => w.id)
+  eq(priorityIds.slice().sort(), ids.slice().sort(), '错题本能直接当测试卷的优先清单')
+  const paper = pickExamWords(wordStore.wordList, 30, Math.random, { priorityIds })
+  ok(ids.every(id => paper.some(w => w.id === id)), '从错题本抽出的清单每卷都覆盖到')
 }
 
 console.log(`\n===== 逻辑自测结果：${pass} 通过，${fails.length} 失败 =====`)

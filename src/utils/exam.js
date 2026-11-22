@@ -10,13 +10,32 @@ export function examGrade(score) {
   return { label: 'Come on', score: n, tip: '别急，先把今日任务里的词背熟再来' }
 }
 
-/** 抽 count 个可出题的词（有释义），顺序随机；词不够就有多少出多少 */
-export function pickExamWords(words, count = EXAM_SIZE, rand = Math.random) {
-  const pool = (words || []).filter(w => w && w.word && w.mean)
-  const arr = pool.slice()
+function shuffle(arr, rand) {
   for (let i = arr.length - 1; i > 0; i--) {
     const j = Math.floor(rand() * (i + 1))
     ;[arr[i], arr[j]] = [arr[j], arr[i]]
   }
-  return arr.slice(0, Math.max(1, Number(count) || EXAM_SIZE))
+  return arr
+}
+
+/**
+ * 抽 count 个可出题的词（有释义），顺序随机；词不够就有多少出多少。
+ * opts.priorityIds 里的词（错题本）优先占位，保证记过的错词一定会被考到。
+ */
+export function pickExamWords(words, count = EXAM_SIZE, rand = Math.random, opts = {}) {
+  const pool = (words || []).filter(w => w && w.word && w.mean)
+  const size = Math.max(1, Number(count) || EXAM_SIZE)
+  const priorityIds = new Set(opts.priorityIds || [])
+  const must = []
+  const rest = []
+  for (const w of pool) {
+    if (priorityIds.size && priorityIds.has(w.id)) must.push(w)
+    else rest.push(w)
+  }
+  shuffle(must, rand)
+  shuffle(rest, rand)
+  const picked = must.slice(0, size)
+  if (picked.length < size) picked.push(...rest.slice(0, size - picked.length))
+  // 再洗一次，错词不固定占卷首
+  return shuffle(picked, rand)
 }

@@ -513,7 +513,11 @@ async function readDailyTable() {
     (() => {
       const page = document.querySelector('.daily-words-page')
       const rows = [...page.querySelectorAll('.el-table__body tr')]
-        .map(tr => [...tr.querySelectorAll('td')].map(td => (td.textContent || '').replace(/\\s+/g, ' ').trim()))
+        .map(tr => [...tr.querySelectorAll('td')].map(td => {
+          const w = td.querySelector('.cell-word')
+          if (w) return w.textContent.trim()
+          return (td.textContent || '').replace(/\\s+/g, ' ').trim()
+        }))
       return {
         sub: (page.querySelector('.page-sub')?.textContent || '').replace(/\\s+/g, ' ').trim(),
         rows,
@@ -871,9 +875,25 @@ section('6. 学生档案：新建、切换、数据隔离')
   await waitFor(`document.querySelector('.home-page .greeting')?.textContent.includes('默认学生')`, '切回默认学生', 20000)
   eq('默认学生进度保留 3/40', await text('.task-count'), '3/40')
   await go('/wrong')
-  await waitFor(`!!document.querySelector('.wrong-page')`, '默认学生错题本')
-  const defaultWrong = await exists('.wrong-page .el-table') ? await count('.wrong-page .el-table__body tr') : 0
-  eq('默认学生错题本不受张小明影响（0 行）', defaultWrong, 0)
+  await waitFor(`!!document.querySelector('.wrong-page .el-table__body tr')`, '默认学生错题本')
+  const isolation = await evaluate(`
+    (() => {
+      const list = JSON.parse(localStorage.getItem('word_review_students') || '[]')
+      const def = list.find(x => x.name === '默认学生')
+      const other = list.find(x => x.name === '张小明')
+      const own = JSON.parse(localStorage.getItem('wr_' + def.id + '_wrong') || '[]')
+      const theirs = JSON.parse(localStorage.getItem('wr_' + other.id + '_wrong') || '[]')
+      const rows = [...document.querySelectorAll('.wrong-page .el-table__body tr')]
+      return { own, theirs, rows: rows.map(tr => (tr.querySelector('td strong')?.textContent || '').trim()) }
+    })()
+  `)
+  const defaultWrong = isolation.rows.length
+  // 第 4 段拼错的那个词还在错题本里（新规则：跨天答对 2 次才除名），所以这里不再期望 0 行，
+  // 而是核对「页面上看到的全是自己的词，张小明的一条都没漏进来」
+  eq('默认学生错题本只显示自己的错词', defaultWrong, isolation.own.length)
+  ok('张小明的错词没混进默认学生错题本',
+    isolation.theirs.every(id => !isolation.own.includes(id)),
+    JSON.stringify(isolation))
   eq('张小明错题本数据仍保留在 localStorage', await evaluate(`
     (() => {
       const list = JSON.parse(localStorage.getItem('word_review_students') || '[]')
@@ -1148,6 +1168,7 @@ section('10. 乱序抽查开关可点、今日单词表整表可读')
     before.rows.filter(c => (c[5] || '').length > 10).length + ' 行有例句')
   ok('发音列每行都有按钮', (await count('.daily-words-page .cell-speak')) === 40)
   ok('表头有「今日单词表」标题', (await text('.daily-words-page .page-title')) === '今日单词表')
+  eq('没有单元号的词本不显示单元切换栏', await count('.daily-words-page .unit-tab'), 0)
 
   // 点开关核心：必须真的切换（is-checked + 头部标签 + 顺序变化）
   await go('/study')
@@ -1997,11 +2018,337 @@ section('15. 12 项需求逐条自测（表情 / 烟花 / 字母键盘 / 发音 
     ok('对错两次的频率序列完全相同（听不出对错，不能靠声音改答案）',
       JSON.stringify(rightSeq.map(t => t.freq)) === JSON.stringify(wrongSeq.map(t => t.freq)),
       `对 ${JSON.stringify(rightSeq.map(t => t.freq))} 错 ${JSON.stringify(wrongSeq.map(t => t.freq))}`)
+
+    // 用完就关：留着的标签页会在后面各节清库时靠 storage 事件把旧数据写回来，制造竞态
+    await browser.send('Target.closeTarget', { targetId: tab.targetId })
+    sessions.delete(tab.sessionId)
   }
 }
 
-// ================================================================ 16. 控制台
-section('16. 运行期控制台')
+// ======================================== 16. 八上词本：今日单词表按单元分组
+section('16. 今日单词表按单元分组（2025 秋八上词本）')
+{
+  await navigate(`${BASE}/manifest.json`)
+  await evaluate('localStorage.clear()')
+  await navigate(`${BASE}/#/`)
+  await waitFor(`!!document.querySelector('.home-page .task-count')`, '分单元：首次进入')
+
+  const g8 = await evaluate(`
+    (() => {
+      const books = JSON.parse(localStorage.getItem('word_review_local_books') || '[]')
+      const hit = books.find(b => b.name === '2025秋八上英语单词表')
+      return { bookId: hit ? hit.id : '', names: books.map(b => b.name) }
+    })()
+  `)
+  ok('八上词本已种入', !!g8.bookId, JSON.stringify(g8))
+
+  // 切到八上词本，并把每日任务量拉到 200（40 词只够摊到 Unit 1，看不出分组）
+  await evaluate(`
+    (() => {
+      const sid = localStorage.getItem('word_review_current_student')
+      localStorage.setItem('wr_' + sid + '_book', ${JSON.stringify(g8.bookId)})
+      localStorage.setItem('wr_' + sid + '_settings', JSON.stringify({ dailySize: 200, shuffle: false }))
+      localStorage.removeItem('wr_' + sid + '_tasks')
+      return true
+    })()
+  `)
+  await browser.send('Page.reload', {}, S)
+  await sleep(400)
+  await waitFor(`document.querySelector('.home-page .task-count')?.textContent.trim() === '0/200'`,
+    '分单元：切到八上 200 词')
+
+  await go('/daily-words')
+  await waitFor(`document.querySelectorAll('.daily-words-page .unit-title').length >= 2`, '分单元：多张单元表')
+  const daily = await evaluate(`
+    (() => {
+      const page = document.querySelector('.daily-words-page')
+      const title = t => String(t || '').replace(/\\s+/g, ' ').trim()
+      const blocks = [...page.querySelectorAll('.unit-block')].map(b => ({
+        title: title(b.querySelector('.unit-title')?.textContent),
+        rows: b.querySelectorAll('.el-table__body tr').length
+      }))
+      return {
+        pageTitle: title(page.querySelector('.page-title')?.textContent),
+        sub: title(page.querySelector('.page-sub')?.textContent),
+        blocks,
+        counts: [...page.querySelectorAll('.unit-count')].map(e => parseInt(e.textContent, 10) || 0),
+        words: [...page.querySelectorAll('.cell-word')].map(e => e.textContent.trim()),
+        speakBtns: page.querySelectorAll('.cell-speak').length,
+        wrongTags: page.querySelectorAll('.tag-wrong').length,
+        reviewTags: [...page.querySelectorAll('.el-tag')].filter(t => t.textContent.trim() === '回顾').length,
+        firstRow: [...(page.querySelector('.el-table__body tr')?.querySelectorAll('td') || [])]
+          .map(td => td.textContent.replace(/\\s+/g, ' ').trim())
+      }
+    })()
+  `)
+  eq('标题仍是「今日单词表」', daily.pageTitle, '今日单词表')
+  ok('副标题标出 200 词', daily.sub.includes('共 200 词'), daily.sub)
+  ok('每张表标题都是 Unit N',
+    daily.blocks.length >= 2 && daily.blocks.every(b => /^Unit [1-8]$/.test(b.title)),
+    daily.blocks.map(b => b.title).join(','))
+  const unitNums = daily.blocks.map(b => Number(b.title.replace('Unit ', '')))
+  eq('单元按 1→8 升序排列', unitNums.slice().sort((a, b) => a - b), unitNums)
+  eq('每组标题旁的词数 = 该表行数', daily.blocks.map(b => b.rows), daily.counts)
+  eq('各单元词数合计 = 200', daily.counts.reduce((a, b) => a + b, 0), 200)
+  eq('单词列合计 200（分组没丢词没重复）', daily.words.length, 200)
+  ok('单词列只有英文（不掺中文，允许 / 与 ’ 这类词表写法）',
+    daily.words.every(w => /^[A-Za-z]/.test(w) && !/[\u4e00-\u9fa5]/.test(w)),
+    daily.words.filter(w => !/^[A-Za-z]/.test(w) || /[\u4e00-\u9fa5]/.test(w)).slice(0, 5).join('|'))
+  eq('发音列每行一个按钮', daily.speakBtns, 200)
+  ok('每行都有中文释义', /[\u4e00-\u9fa5]/.test(daily.firstRow[4] || ''), daily.firstRow.join('|'))
+  eq('八上词本不出现「未分单元」那张表',
+    daily.blocks.filter(b => b.title === '未分单元').length, 0)
+  eq('没有错词时不出「错词复现」标签', daily.wrongTags, 0)
+  ok('回顾词仍带「回顾」标签', daily.reviewTags >= 0, String(daily.reviewTags))
+
+  // 切单元：标签栏 = 今日任务 + 整本书 8 个单元，一眼看到、点一下就跳过去，不用从 Unit 1 往下翻
+  const tabs = await evaluate(`
+    (() => {
+      return [...document.querySelectorAll('.daily-words-page .unit-tab')].map(b => ({
+        unit: b.dataset.unit,
+        name: (b.querySelector('.unit-tab-name')?.textContent || '').trim(),
+        count: parseInt(b.querySelector('.unit-tab-count')?.textContent || '0', 10) || 0,
+        active: b.classList.contains('active'),
+        top: Math.round(b.getBoundingClientRect().top)
+      }))
+    })()
+  `)
+  // 期望值从 localStorage 自己算一遍：每个单元整本书里多少词、其中几个落在今天的任务里
+  const expect = await evaluate(`
+    (() => {
+      const sid = localStorage.getItem('word_review_current_student')
+      const book = (JSON.parse(localStorage.getItem('word_review_local_books') || '[]'))
+        .find(b => b.name === '2025秋八上英语单词表') || {}
+      const words = (JSON.parse(localStorage.getItem('word_review_local_words') || '[]'))
+        .filter(w => w.book_id === book.id)
+      const tasks = JSON.parse(localStorage.getItem('wr_' + sid + '_tasks') || '{}')
+      const ids = new Set((tasks[book.id] || {}).ids || [])
+      const units = ['1', '2', '3', '4', '5', '6', '7', '8'].map(u => ({
+        unit: u,
+        total: words.filter(w => String(w.unit) === u).length,
+        today: words.filter(w => String(w.unit) === u && ids.has(w.id)).length
+      }))
+      return { units, taskSize: ids.size, bookSize: words.length }
+    })()
+  `)
+  eq('八上整本 538 词、今天任务 200 词', [expect.bookSize, expect.taskSize], [538, 200])
+  eq('标签数 = 今日任务 + 8 个单元', tabs.length, 9)
+  eq('标签依次是「今日任务」和 Unit 1→8', tabs.map(t => t.name),
+    ['今日任务', 'Unit 1', 'Unit 2', 'Unit 3', 'Unit 4', 'Unit 5', 'Unit 6', 'Unit 7', 'Unit 8'])
+  eq('标签上的词数 = 整本该单元的词数（不是今天那批里有几个）',
+    tabs.slice(1).map(t => t.count), expect.units.map(u => u.total))
+  eq('8 个单元词数仍是 75/62/71/68/66/59/67/70',
+    expect.units.map(u => u.total), [75, 62, 71, 68, 66, 59, 67, 70])
+  eq('「今日任务」标签标的是今天的 200 词', tabs[0].count, 200)
+  eq('默认停在「今日任务」', tabs.filter(t => t.active).map(t => t.unit), ['today'])
+  ok('标签都在首屏，不用往下翻就能点到', tabs.every(t => t.top >= 0 && t.top < 600),
+    tabs.map(t => t.top).join(','))
+
+  await click('.daily-words-page .unit-tab[data-unit="5"]')
+  await waitFor(`document.querySelectorAll('.daily-words-page .unit-block').length === 1`,
+    '切到 Unit 5：只剩一张表')
+  const u5 = await evaluate(`
+    (() => {
+      const page = document.querySelector('.daily-words-page')
+      const title = t => String(t || '').replace(/\\s+/g, ' ').trim()
+      return {
+        titles: [...page.querySelectorAll('.unit-title')].map(e => title(e.textContent)),
+        rows: page.querySelectorAll('.el-table__body tr').length,
+        words: page.querySelectorAll('.cell-word').length,
+        active: page.querySelector('.unit-tab.active')?.dataset.unit || '',
+        sub: title(page.querySelector('.page-sub')?.textContent),
+        todayTags: [...page.querySelectorAll('.el-tag')].filter(t => t.textContent.trim() === '今日').length
+      }
+    })()
+  `)
+  const u5Expect = expect.units.find(u => u.unit === '5')
+  eq('Unit 5 的期望词数就是整本的 66 词', u5Expect.total, 66)
+  eq('点 Unit 5 只显示一张表', u5.titles, ['Unit 5'])
+  eq('Unit 5 表里是整本书该单元的全部词', u5.rows, u5Expect.total)
+  eq('单词列 = 该单元词数（不是今天那 200 词里的那几个）', u5.words, u5Expect.total)
+  ok('今天的任务没铺满这本书（否则「整本」这条断言没意义）',
+    u5Expect.today < u5Expect.total, JSON.stringify(u5Expect))
+  eq('选中的标签是 Unit 5', u5.active, '5')
+  ok('副标题说明这是整本 Unit 5', u5.sub.includes('Unit 5') && u5.sub.includes('整本'), u5.sub)
+  eq('今天任务里的 Unit 5 词带「今日」标签', u5.todayTags, u5Expect.today)
+  ok('副标题写清其中今天任务含几词',
+    u5Expect.today > 0
+      ? u5.sub.includes(`含 ${u5Expect.today} 词`)
+      : !u5.sub.includes('其中'),
+    u5.sub)
+
+  await click('.daily-words-page .unit-tab[data-unit="today"]')
+  await waitFor(`document.querySelectorAll('.daily-words-page .unit-block').length === ${daily.blocks.length}`,
+    '切回「今日任务」')
+  eq('切回今日任务：单词列恢复 200', await count('.daily-words-page .cell-word'), 200)
+}
+
+// ============================================= 17. 错词必现：任务/表/卷/错题本
+section('17. 错词必现：每日任务、单词表、测试卷、错题本')
+{
+  const optionTexts = sel => evaluate(`
+    (() => [...document.querySelectorAll(${JSON.stringify(sel)})]
+      .map(e => (e.textContent || '').replace(/\\s+/g, ' ').trim()))()
+  `)
+  const clickNth = (sel, n) => evaluate(`
+    (() => {
+      const el = document.querySelectorAll(${JSON.stringify(sel)})[${n}]
+      if (!el) return false
+      el.click()
+      return true
+    })()
+  `)
+
+  const WRONG_STATE_JS = `
+    (() => {
+      const sid = localStorage.getItem('word_review_current_student')
+      const ids = JSON.parse(localStorage.getItem('wr_' + sid + '_wrong') || '[]')
+      const counts = JSON.parse(localStorage.getItem('wr_' + sid + '_wrong_counts') || '{}')
+      const words = JSON.parse(localStorage.getItem('word_review_local_words') || '[]')
+      const byId = new Map(words.map(w => [w.id, w.word]))
+      return { ids, words: ids.map(id => byId.get(id) || ''), counts }
+    })()
+  `
+  await navigate(`${BASE}/manifest.json`)
+  await evaluate('localStorage.clear()')
+  await navigate(`${BASE}/#/`)
+  await waitFor(`!!document.querySelector('.home-page .task-count')`, '错词必现：首页')
+
+  // 选择题里故意答错 3 道不同的题，制造 3 个「记过的错词」
+  // （答错的词只会被插回队列第 4 位，所以连着的 3 题一定是 3 个不同的词）
+  await go('/study')
+  await waitFor(`!!document.querySelector('.mode-selector')`, '错词必现：背诵页')
+  ok('切到选择题模式', await clickByText('.mode-selector .el-radio-button', '选择'))
+  await waitFor(`!!document.querySelector('.quiz-word')`, '错词必现：选择题出题')
+  const marked = []
+  for (let q = 0; q < 3; q++) {
+    await waitFor(`(() => {
+      const w = (document.querySelector('.quiz-word')?.textContent || '').trim()
+      return !!w && !${JSON.stringify(marked)}.includes(w)
+    })()`, `错词必现：第 ${q + 1} 题出题`)
+    const word = norm(await text('.quiz-word'))
+    const opts = await optionTexts('.quiz-option .option-text')
+    const mean = norm(await meanOf(word))
+    const wrongIdx = opts.findIndex(t => coreMean(t) !== coreMean(mean))
+    ok(`第 ${q + 1} 题挑一个明显不对的释义（${word}）`, wrongIdx >= 0, JSON.stringify(opts))
+    await clickNth('.quiz-option', wrongIdx < 0 ? opts.length - 1 : wrongIdx)
+    await waitFor(`(() => { const b = document.querySelector('.quiz-confirm'); return !!b && !b.disabled })()`,
+      `第 ${q + 1} 题确认按钮解锁`)
+    await click('.quiz-confirm')
+    await waitFor(`!!document.querySelector('.quiz-feedback .feedback-wrong')`, `第 ${q + 1} 题答错反馈`)
+    marked.push(word)
+    if (q < 2) {
+      ok(`第 ${q + 1} 题点「下一题」`, await clickByText('.quiz-feedback button', '下一题'))
+      await sleep(150)
+    }
+  }
+  const wrongState = await evaluate(WRONG_STATE_JS)
+  eq('答错 3 题进了 3 个错词', wrongState.ids.length, 3)
+  eq('错词就是刚才答错的那 3 个词', wrongState.words.slice().sort(), marked.slice().sort())
+  eq('每个错词记了 1 次错误', wrongState.ids.map(id => wrongState.counts[id]?.count || 0), [1, 1, 1])
+  eq('还没答对过（passes = 0）', wrongState.ids.map(id => wrongState.counts[id]?.passes || 0), [0, 0, 0])
+
+  // 「后面抽查」= 下一次生成任务：清掉今天的任务缓存后重排
+  await go('/')
+  await waitFor(`!!document.querySelector('.home-page .task-count')`, '错词必现：回首页')
+  await evaluate(`
+    (() => {
+      const sid = localStorage.getItem('word_review_current_student')
+      localStorage.removeItem('wr_' + sid + '_tasks')
+      return true
+    })()
+  `)
+  await browser.send('Page.reload', {}, S)
+  await waitFor(`/^\\d+\\/40$/.test((document.querySelector('.home-page .task-count')?.textContent || '').trim())`,
+    '错词必现：重排任务')
+  const task = await currentTask()
+  eq('重排后任务仍是 40 词', task?.ids?.length, 40)
+  ok('3 个错词全部回到今日任务', wrongState.ids.every(id => task.ids.includes(id)),
+    JSON.stringify({ wrong: wrongState.ids, hit: wrongState.ids.filter(id => task.ids.includes(id)) }))
+  ok('错词占的是回顾名额', wrongState.ids.every(id => (task.reviewIds || []).includes(id)),
+    JSON.stringify(task.reviewIds))
+
+  const daily = await readDailyTable()
+  eq('今日单词表仍是 40 行', daily.rows.length, 40)
+  const tagged = await evaluate(`
+    (() => {
+      const page = document.querySelector('.daily-words-page')
+      return [...page.querySelectorAll('.el-table__body tr')]
+        .filter(tr => tr.querySelector('.tag-wrong'))
+        .map(tr => (tr.querySelector('.cell-word')?.textContent || '').trim())
+    })()
+  `)
+  eq('错词行都带「错词复现」标签', tagged.slice().sort(), wrongState.words.slice().sort())
+  eq('标签文案是「错词复现」', norm(await text('.daily-words-page .tag-wrong')), '错词复现')
+
+  // 错题本：多了「还需答对」列，并且说明跨天 2 次才移出
+  await go('/wrong')
+  await waitFor(`!!document.querySelector('.wrong-page .el-table')`, '错题本表格')
+  const headers = await evaluate(`[...document.querySelectorAll('.wrong-page .el-table th')].map(th => th.textContent.trim())`)
+  ok('错题本有「错误次数」列', headers.includes('错误次数'), headers.join('|'))
+  ok('错题本有「还需答对」列', headers.includes('还需答对'), headers.join('|'))
+  ok('错题本有「最近错误」列', headers.includes('最近错误'), headers.join('|'))
+  eq('错题本 3 行', await count('.wrong-page .el-table__body tr'), 3)
+  eq('每个错词都显示「还需答对 2 次」',
+    await evaluate(`[...document.querySelectorAll('.wrong-page .cell-need')].map(e => e.textContent.trim())`),
+    ['2 次', '2 次', '2 次'])
+  ok('复习建议说明错词会继续出现在任务和测试卷里',
+    (await text('.wrong-page .review-tip')).includes('跨天答对 2 次才移出错题本'),
+    await text('.wrong-page .review-tip'))
+
+  // 答对一次：同一天只算 1 次，仍留在错题本
+  await clickByText('.wrong-page .quick-review-card button', '开始复习')
+  await waitFor(`!!document.querySelector('.flashcard-mode .word-text')`, '错词必现：快速复习')
+  await evaluate(`(document.querySelector('.flashcard-wrapper').click(), true)`)
+  await waitFor(`(() => { const b = document.querySelector('.rating-good'); return !!b && !b.disabled })()`,
+    '快速复习评分解锁', 6000)
+  await evaluate(`(document.querySelector('.rating-good').click(), true)`)
+  await sleep(250)
+  const afterRight = await evaluate(WRONG_STATE_JS)
+  eq('答对一次仍留在错题本（要跨天答对 2 次）', afterRight.ids.length, 3)
+  eq('答对一次记 1 次通过', Object.values(afterRight.counts).map(c => c.passes || 0).sort(), [0, 0, 1])
+  await go('/wrong')
+  await waitFor(`!!document.querySelector('.wrong-page .el-table')`, '回错题本')
+  const needTexts = await evaluate(`[...document.querySelectorAll('.wrong-page .cell-need')].map(e => e.textContent.trim()).sort()`)
+  eq('答对过的词「还需答对」降到 1 次', needTexts, ['1 次', '2 次', '2 次'])
+
+  // 测试卷：开始页写明错词数量，100 题里必须考到全部错词
+  await go('/exam')
+  await waitFor(`!!document.querySelector('.exam-intro')`, '测试卷开始页')
+  ok('开始页提示错词会优先收进卷子', await exists('.exam-intro .priority-note'), await text('.exam-intro'))
+  eq('提示里写清几个错词', await text('.priority-count'), '3')
+  await click('.exam-start')
+  await waitFor(`!!document.querySelector('.exam-word')`, '测试卷第 1 题')
+  const paper = await evaluate(`
+    (async () => {
+      const N = t => String(t || '').replace(/\\s+/g, ' ').trim()
+      const tick = (ms = 25) => new Promise(r => setTimeout(r, ms))
+      const seen = []
+      for (let q = 0; q < 100; q++) {
+        const word = N(document.querySelector('.exam-word')?.textContent)
+        if (!word) return { ok: false, at: q + 1, seen }
+        seen.push(word)
+        const btns = [...document.querySelectorAll('.exam-actions button')]
+        const next = btns.find(b => (b.textContent || '').includes('下一题'))
+        if (!next) break
+        next.click()
+        await tick()
+      }
+      return { ok: true, seen }
+    })()
+  `)
+  ok('能一题题走到第 100 题', paper?.ok && paper.seen.length === 100, JSON.stringify(paper).slice(0, 200))
+  eq('100 题不重复', new Set(paper.seen).size, paper.seen.length)
+  ok('3 个错词都被考到（不是碰运气）',
+    wrongState.words.every(w => paper.seen.includes(w)),
+    JSON.stringify({ wrong: wrongState.words, hit: wrongState.words.filter(w => paper.seen.includes(w)) }))
+
+  await go('/')
+  await waitFor(`!!document.querySelector('.home-page .task-count')`, '错词必现：回首页')
+}
+
+// ================================================================ 18. 控制台
+section('18. 运行期控制台')
 {
   ok('无 console.error', consoleErrors.length === 0, consoleErrors.slice(0, 3).join(' | '))
   if (consoleWarnings.length) console.log(`  INFO  出现 ${consoleWarnings.length} 条 warning：${consoleWarnings.slice(0, 3).join(' | ')}`)

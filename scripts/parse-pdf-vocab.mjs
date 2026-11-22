@@ -562,7 +562,8 @@ function splitColumns(lines, splitX) {
   return { left, right };
 }
 
-const NOISE = [/^Vocabulary in Each Unit/, /^Words and Expressions/, /^\d+$/, /^Unit \d+$/, /^（注：/, /^\(注：/];
+// 单元标题行不在这里过滤：collectEntries 要拿它给后面的词打 unit 标记
+const NOISE = [/^Vocabulary in Each Unit/, /^Words and Expressions/, /^\d+$/, /^（注：/, /^\(注：/];
 
 // 连字/未映射 CID 被解成控制字符。实测本 PDF 只有 4 种：
 // 0x1c=孤立符号（丢弃）、0x1d=fl、0x1e=tt、0x1f=ft（夹在两个中文字之间时是间隔号 ·）
@@ -649,12 +650,14 @@ function parseEntry(raw) {
 function collectEntries(columnLines) {
   const entries = [];
   let buffer = [];
+  // 当前所属单元号，从「Unit N」标题行往下一直沿用（含续页）
+  let unit = '';
   const flush = () => {
     if (!buffer.length) return;
     const raw = buffer.join(' ');
     buffer = [];
     const e = parseEntry(raw);
-    if (e) entries.push(e);
+    if (e) entries.push({ ...e, unit });
   };
   const POSSTART = new RegExp('^(?:' + POS + ')\\s*\\.');
   const body = columnLines.map((l) => l.text.trim()).filter((t) => t && !NOISE.some((re) => re.test(t)));
@@ -663,6 +666,12 @@ function collectEntries(columnLines) {
   for (let i = 0; i < body.length; i++) {
     const text = body[i];
     const next = body[i + 1];
+    const unitHit = /^Unit\s+(\d+)$/.exec(text);
+    if (unitHit) {
+      flush();
+      unit = unitHit[1];
+      continue;
+    }
     // 上一条还没结束就撞上新词头（如 mix 的 "n. 混合…" 之后紧跟 bake），先把上一条收掉
     if (buffer.length && startsEntry(text) && buffer.some((t) => CJK.test(t))) flush();
     buffer.push(text);
@@ -727,7 +736,7 @@ for (const e of allEntries) {
   const key = e.word.toLowerCase();
   if (!key || seen.has(key)) continue;
   seen.add(key);
-  words.push({ word: e.word, phonetic: e.phonetic, mean: e.mean, sentence: '' });
+  words.push({ word: e.word, phonetic: e.phonetic, mean: e.mean, sentence: '', unit: e.unit || '' });
 }
 
 fs.writeFileSync(OUT, JSON.stringify(words, null, 2) + '\n');
@@ -735,6 +744,12 @@ const noPhonetic = words.filter((w) => !w.phonetic).length;
 const noMean = words.filter((w) => !/[^\x00-\x7f]/.test(w.mean) && !w.mean).length;
 console.log('pages:', pages.length, 'entries:', allEntries.length, 'unique:', words.length);
 console.log('missing phonetic:', noPhonetic, 'missing mean:', noMean);
+const unitCount = {};
+for (const w of words) {
+  const key = w.unit || '(未分单元)';
+  unitCount[key] = (unitCount[key] || 0) + 1;
+}
+console.log('units:', JSON.stringify(unitCount));
 if (process.env.DEBUG_PARSE === '1' || process.env.DEBUG_SAMPLE === '1') {
   for (const w of words.slice(0, 30)) console.log(JSON.stringify(w));
 }

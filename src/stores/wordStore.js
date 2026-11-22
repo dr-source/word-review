@@ -4,17 +4,20 @@ import { supabase } from '../utils/supabase'
 import { LocalStore } from '../utils/localStore'
 import {
   getProgress, saveProgress, getWrongIds, getWrongCounts, addWrong, removeWrong,
+  noteWrongRight, PASS_DAYS,
   trackStudy, getTodayStudiedIds, getSettings, saveSettings, getTasks, saveTask,
   intervalMs, todayStr
 } from '../utils/profile'
 import { sentenceFor } from '../utils/sentences'
 import { coreMean } from '../utils/distractors'
 
-// 缓存格式变了就换前缀，避免老缓存里没有例句
-const CACHE_PREFIX = 'cache_words_v2_'
+// 缓存格式变了就换前缀，避免老缓存里没有例句/单元
+const CACHE_PREFIX = 'cache_words_v3_'
 const MAX_LEVEL = 7
 /** 每日任务里回顾旧词的比例：约八成新词、两成回顾 */
 const REVIEW_RATIO = 0.2
+/** 错题在本期任务里最多占的比例：记过的错词必须再出现，但不该占满一期 */
+const WRONG_RATIO = 0.4
 /** 回顾候选窗口：最近几天学过、且今天没排到的词可以被抽中复习 */
 const REVIEW_WINDOW_DAYS = 3
 const DAY_MS = 24 * 60 * 60 * 1000
@@ -109,6 +112,7 @@ export const useWordStore = defineStore('word', () => {
       phonetic: w.phonetic || '',
       mean: w.mean || '',
       sentence: w.sentence || sentenceFor(w.word) || '',
+      unit: w.unit || '',
       star: false,
       note: '',
       learnLevel: 0,
@@ -129,11 +133,16 @@ export const useWordStore = defineStore('word', () => {
     const counts = getWrongCounts()
     return wordList.value
       .filter(item => item.wrong)
-      .map(item => ({
-        ...item,
-        wrongCount: counts[item.id]?.count || 1,
-        lastWrongAt: counts[item.id]?.lastAt || 0
-      }))
+      .map(item => {
+        const passes = counts[item.id]?.passes || 0
+        return {
+          ...item,
+          wrongCount: counts[item.id]?.count || 1,
+          lastWrongAt: counts[item.id]?.lastAt || 0,
+          passes,
+          need: Math.max(0, PASS_DAYS - passes)
+        }
+      })
   })
 
   /** 今日任务单词，按任务顺序（开启乱序后按当天固定种子洗牌） */
@@ -300,7 +309,8 @@ export const useWordStore = defineStore('word', () => {
       lastLevelDate: date,
       lastSeenAt: now
     })
-    removeWrong(id)
+    // 错词要跨天答对够次数才移出错题本，一次答对不够
+    noteWrongRight(id)
     trackStudy(id)
     refreshToday()
     syncWordItem(id)
@@ -369,8 +379,29 @@ export const useWordStore = defineStore('word', () => {
     const usedMeans = new Set()
     const reviewTarget = size >= 10 ? Math.min(size - 1, Math.round(size * REVIEW_RATIO)) : 0
     const reviewIds = []
+    // 错题优先：记过的错词一定要在本期任务里再出现，先按错误次数从多到少排
+    const wrongIds = new Set(getWrongIds())
+    const wrongCounts = getWrongCounts()
+    const wrongPool = rawWords.value
+      .filter(w => wrongIds.has(w.id))
+      .sort((a, b) => {
+        const ca = wrongCounts[a.id]?.count || 0
+        const cb = wrongCounts[b.id]?.count || 0
+        if (cb !== ca) return cb - ca
+        return (wrongCounts[b.id]?.lastAt || 0) - (wrongCounts[a.id]?.lastAt || 0)
+      })
+    const wrongQuota = Math.min(wrongPool.length, Math.max(1, Math.round(size * WRONG_RATIO)), size)
+    for (const w of wrongPool) {
+      if (reviewIds.length >= wrongQuota) break
+      if (picked.has(w.id)) continue
+      picked.add(w.id)
+      const core = coreMean(w.mean)
+      if (core) usedMeans.add(core)
+      reviewIds.push(w.id)
+    }
+    const reviewBudget = Math.min(size - 1, Math.max(reviewTarget, reviewIds.length))
     for (const { w } of [...due, ...recent]) {
-      if (reviewIds.length >= reviewTarget) break
+      if (reviewIds.length >= reviewBudget) break
       if (picked.has(w.id)) continue
       picked.add(w.id)
       const core = coreMean(w.mean)
